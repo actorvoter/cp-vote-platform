@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>个人资料 · CP 热力榜</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .profile-container { max-width:400px; margin:40px auto 0; padding:0 20px; }
+        .profile-container h2 { text-align:center; margin-bottom:8px; font-size:24px; }
+        .profile-container .subtitle { text-align:center; color:#9ca3af; font-size:14px; margin-bottom:30px; }
+        .profile-container .btn-primary { width:100%; padding:14px; font-size:16px; border-radius:12px; margin-top:8px; }
+        .profile-container .back-link { display:block; text-align:center; margin-top:20px; color:#9ca3af; font-size:14px; }
+        .profile-container .back-link a { color:#6c5ce7; }
+        .section-title { font-weight:bold; margin:20px 0 12px 0; color:#1a1a2e; border-bottom:1px solid #ede9fe; padding-bottom:8px; }
+        .email-display { background:#f8f6ff; padding:12px 16px; border-radius:12px; color:#4b5563; font-size:14px; margin-bottom:16px; }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <h2>👤 个人资料</h2>
+        <p class="subtitle">管理你的昵称</p>
+
+        <div class="email-display">
+            📧 当前账号：<strong id="userEmailDisplay">加载中...</strong>
+        </div>
+
+        <div class="section-title">📝 昵称设置</div>
+        <div class="form-group">
+            <label>显示昵称（评论区显示）</label>
+            <input type="text" id="nicknameInput" placeholder="输入你的昵称" />
+        </div>
+        <button class="btn-primary" id="updateNicknameBtn" style="margin-top:0;">更新昵称</button>
+
+        <div class="section-title">🔑 设置密码</div>
+        <div class="form-group">
+            <label>新密码</label>
+            <input type="password" id="newPasswordInput" placeholder="输入新密码（至少6位）" />
+        </div>
+        <div class="form-group">
+            <label>确认密码</label>
+            <input type="password" id="confirmPasswordInput" placeholder="再次输入新密码" />
+        </div>
+        <button class="btn-primary" id="updatePasswordBtn" style="margin-top:0;">设置密码</button>
+
+        <p class="back-link"><a href="index.html">← 返回首页</a></p>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        var currentUser = getCurrentUser();
+
+        if (!currentUser) {
+            showToast('请先登录');
+            setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+        }
+
+        document.getElementById('userEmailDisplay').textContent = currentUser.email || '未设置';
+
+        // ============================================================
+        // 加载昵称
+        // ============================================================
+        async function loadUserProfile() {
+            try {
+                var client = getClient();
+                var { data, error } = await client
+                    .from('users')
+                    .select('nickname')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
+                if (error) throw error;
+                if (data && data.nickname) {
+                    document.getElementById('nicknameInput').value = data.nickname;
+                }
+            } catch (err) {
+                console.error('加载用户信息失败:', err);
+            }
+        }
+
+        // ============================================================
+        // 更新昵称
+        // ============================================================
+        document.getElementById('updateNicknameBtn').addEventListener('click', async function() {
+            var nickname = document.getElementById('nicknameInput').value.trim();
+            if (!nickname) { showToast('请输入昵称'); return; }
+
+            try {
+                var client = getClient();
+                var { data: existing } = await client
+                    .from('users')
+                    .select('id')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
+
+                if (existing) {
+                    await client.from('users').update({ nickname: nickname }).eq('id', currentUser.id);
+                } else {
+                    await client.from('users').insert({
+                        id: currentUser.id,
+                        email: currentUser.email,
+                        nickname: nickname
+                    });
+                }
+                await trackActivity('profile_update', currentUser.id, 'user', { field: 'nickname' });
+                showToast('昵称更新成功 ✅');
+            } catch (err) {
+                console.error('更新昵称失败:', err);
+                showToast('更新失败，请重试');
+            }
+        });
+
+        // ============================================================
+        // 设置密码
+        // ============================================================
+        document.getElementById('updatePasswordBtn').addEventListener('click', async function() {
+            var newPwd = document.getElementById('newPasswordInput').value.trim();
+            var confirmPwd = document.getElementById('confirmPasswordInput').value.trim();
+
+            if (!newPwd || newPwd.length < 6) {
+                showToast('密码至少6位');
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                showToast('两次密码不一致');
+                return;
+            }
+
+            try {
+                var client = getClient();
+                var { error } = await client.auth.updateUser({
+                    password: newPwd
+                });
+
+                if (error) throw error;
+
+                await trackActivity('password_set', currentUser.id, 'user', { method: 'first_setup' });
+
+                showToast('密码设置成功 ✅');
+                document.getElementById('newPasswordInput').value = '';
+                document.getElementById('confirmPasswordInput').value = '';
+
+            } catch (err) {
+                console.error('设置密码失败:', err);
+                showToast('设置失败，请重试');
+            }
+        });
+
+        loadUserProfile();
+        console.log('✅ 个人资料页已加载');
+    </script>
+</body>
+</html>

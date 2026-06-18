@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>CP 详情</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+    <div class="header">
+        <h1 id="detailTitle">💬 CP 讨论</h1>
+        <a href="javascript:history.back()" class="btn-secondary">← 返回</a>
+    </div>
+
+    <div id="detailBody"></div>
+
+    <!-- 评论输入区 -->
+    <div class="comment-input-area" id="commentInputArea" style="position:sticky;bottom:0;background:#fff;border-top:1px solid #ede9fe;padding:12px 0;margin-top:16px;">
+        <input type="text" id="commentNickname" placeholder="昵称（选填）" style="flex:0.6;padding:10px 14px;border:1px solid #e5e7eb;border-radius:24px;font-size:14px;outline:none;" />
+        <input type="text" id="commentContent" placeholder="写评论..." style="flex:1;padding:10px 14px;border:1px solid #e5e7eb;border-radius:24px;font-size:14px;outline:none;" />
+        <button class="send-btn" id="sendCommentBtn">发送</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        var myDeviceId = getDeviceId();
+        var cpId = parseInt(new URLSearchParams(window.location.search).get('id'));
+
+        if (!cpId) {
+            document.getElementById('detailBody').innerHTML = '<div class="empty-state" style="color:#ef4444;">参数错误</div>';
+        } else {
+            loadDetail(cpId);
+        }
+
+        async function loadDetail(cpId) {
+            var body = document.getElementById('detailBody');
+            try {
+                var client = getClient();
+
+                var { data: cpData, error: cpError } = await client
+                    .from('cp_submissions')
+                    .select('id, male_actor, female_actor, genre, status, votes ( id )')
+                    .eq('id', cpId)
+                    .maybeSingle();
+
+                if (cpError || !cpData) { throw new Error('CP 不存在'); }
+
+                var voteCount = cpData.votes ? cpData.votes.length : 0;
+
+                var { data: comments, error: commentError } = await client
+                    .from('comments')
+                    .select('id, nickname, content, created_at, device_id')
+                    .eq('submission_id', cpId)
+                    .order('created_at', { ascending: false });
+
+                if (commentError) { throw commentError; }
+
+                var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
+                document.getElementById('detailTitle').textContent = '💬 ' + title;
+
+                var commentHtml = '';
+                if (!comments || comments.length === 0) {
+                    commentHtml = '<div class="comment-empty">还没有评论，来说点什么吧 💬</div>';
+                } else {
+                    comments.forEach(function(c) {
+                        var isMe = (c.device_id === myDeviceId);
+                        commentHtml += `
+                            <div class="comment-item">
+                                <span class="comment-nickname">${escapeHtml(c.nickname || '匿名')}${isMe ? ' (我)' : ''}</span>
+                                <span class="comment-time">${formatTime(c.created_at)}</span>
+                                <div class="comment-content">${escapeHtml(c.content)}</div>
+                            </div>
+                        `;
+                    });
+                }
+
+                body.innerHTML = `
+                    <div class="cp-summary" style="background:#f8f6ff;border-radius:12px;padding:16px;margin-bottom:16px;">
+                        <div style="font-size:20px;font-weight:600;">${escapeHtml(cpData.male_actor)} ✕ ${escapeHtml(cpData.female_actor)}</div>
+                        <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:#6b7280;">
+                            <span style="background:#ede9fe;color:#6c5ce7;padding:2px 12px;border-radius:20px;">${escapeHtml(cpData.genre)}</span>
+                            <span>❤️ ${voteCount} 票</span>
+                            <span style="color:#9ca3af;">${cpData.status === 'approved' ? '✅ 已上线' : '⏳ 审核中'}</span>
+                        </div>
+                    </div>
+                    <div id="commentList">${commentHtml}</div>
+                `;
+
+                document.getElementById('sendCommentBtn').onclick = function() { handleSendComment(cpId); };
+                document.getElementById('commentContent').onkeydown = function(e) {
+                    if (e.key === 'Enter') { e.preventDefault(); handleSendComment(cpId); }
+                };
+                document.getElementById('commentNickname').onkeydown = function(e) {
+                    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('commentContent').focus(); }
+                };
+
+            } catch (err) {
+                console.error('加载详情失败:', err);
+                body.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败</div>';
+            }
+        }
+
+        async function handleSendComment(cpId) {
+            var contentInput = document.getElementById('commentContent');
+            var nicknameInput = document.getElementById('commentNickname');
+
+            var content = contentInput.value.trim();
+            var nickname = nicknameInput.value.trim() || '匿名观众';
+
+            if (!content) { showToast('请输入评论内容'); return; }
+
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                var client = getClient();
+                var { error } = await client.from('comments').insert({
+                    submission_id: cpId,
+                    user_id: user.id,
+                    nickname: nickname,
+                    content: content,
+                    device_id: user.id
+                });
+                if (error) throw error;
+                showToast('评论发送成功 ✅');
+                contentInput.value = '';
+                loadDetail(cpId);
+            } catch (err) {
+                console.error('发送评论失败:', err);
+                showToast('发送失败，请重试');
+            }
+        }
+    </script>
+</body>
+</html>

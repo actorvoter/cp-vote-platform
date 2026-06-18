@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>🔥 CP 热力榜</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+    <!-- ===== 头部 ===== -->
+    <div class="header">
+        <h1>🔥 CP 热力榜</h1>
+        <div class="user-area">
+            <a href="login.html" id="loginBtn" class="btn-secondary">登录</a>
+            <div id="userInfo" style="display:none; align-items:center; gap:8px;">
+                <span class="avatar" id="userAvatar">我</span>
+                <span id="userName" style="font-size:14px;font-weight:500;"></span>
+                <a href="profile.html" class="btn-outline" style="font-size:12px;padding:2px 10px;">⚙️</a>
+                <button class="btn-outline" onclick="logout()" style="font-size:12px;padding:2px 10px;">退出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 每日任务横幅 ===== -->
+    <div class="daily-banner" id="dailyBanner">
+        <div>
+            <span class="info-item">🎁 今日道具：</span>
+            <span class="info-item" id="itemDisplay">🪄 3个 · 📢 0个 · 🚀 0个</span>
+        </div>
+        <button class="share-btn" id="shareBtn">📤 分享得道具</button>
+    </div>
+
+    <!-- ===== 快捷入口 ===== -->
+    <div style="display:flex; gap:10px; margin-bottom:16px;">
+        <button class="btn-primary" id="openModalBtn" style="flex:1;">+ 提名 CP</button>
+        <a href="mycp.html" class="btn-secondary" style="flex:1; text-align:center; padding:8px 0;">👤 我的 CP</a>
+    </div>
+
+    <!-- ===== 榜单列表 ===== -->
+    <div id="rankingList">
+        <p style="text-align:center; color:#9ca3af; padding:40px 0;">加载中...</p>
+    </div>
+
+    <!-- ===== 免责声明 ===== -->
+    <div class="footer-disclaimer">
+        ⚠️ 本平台所有CP组合由用户自发投票产生，仅代表观众审美偏好，<br />
+        不构成对任何艺人肖像权、名誉权的商业使用。<br />
+        <a href="#">用户协议</a> · <a href="#">隐私政策</a>
+    </div>
+
+    <!-- ===== 底部导航 ===== -->
+    <div class="bottom-nav">
+        <a href="index.html" class="tab active"><span class="icon">🔥</span> 榜单</a>
+        <a href="mycp.html" class="tab"><span class="icon">👤</span> 我的 CP</a>
+        <a href="profile.html" class="tab"><span class="icon">⚙️</span> 个人中心</a>
+        <a href="login.html" class="tab"><span class="icon">📱</span> 登录</a>
+    </div>
+
+    <!-- ===== 提名弹窗 ===== -->
+    <div class="modal-overlay" id="submitModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>🏷️ 提名新 CP</h3>
+                <button class="close-btn" id="closeSubmitModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>男演员</label>
+                    <input type="text" id="maleInput" placeholder="例如：张晚意" />
+                </div>
+                <div class="form-group">
+                    <label>女演员</label>
+                    <input type="text" id="femaleInput" placeholder="例如：王楚然" />
+                </div>
+                <div class="form-group">
+                    <label>题材</label>
+                    <select id="genreInput">
+                        <option value="古装仙侠">古装仙侠</option>
+                        <option value="现代霸总">现代霸总</option>
+                        <option value="悬疑推理">悬疑推理</option>
+                        <option value="民国虐恋">民国虐恋</option>
+                        <option value="青春校园">青春校园</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="confirmSubmitBtn" style="width:100%;padding:14px;font-size:16px;">提交投票</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script src="js/supabase.js"></script>
+    <script src="js/daily.js"></script>
+    <script>
+        // ============================================================
+        // 全局变量
+        // ============================================================
+        var myDeviceId = getDeviceId();
+
+        // 页面加载时记录访问
+        trackPageView('index');
+
+        // ============================================================
+        // 更新用户界面
+        // ============================================================
+        function updateUserUI() {
+            var user = getCurrentUser();
+            var loginBtn = document.getElementById('loginBtn');
+            var userInfo = document.getElementById('userInfo');
+            if (user) {
+                loginBtn.style.display = 'none';
+                userInfo.style.display = 'flex';
+                var displayName = user.email || user.phone || '用户';
+                document.getElementById('userAvatar').textContent = displayName.substr(0, 1).toUpperCase();
+                document.getElementById('userName').textContent = displayName;
+            } else {
+                loginBtn.style.display = 'block';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        // ============================================================
+        // 更新道具显示
+        // ============================================================
+        async function updateItemDisplay() {
+            var user = getCurrentUser();
+            var userId = user ? user.id : myDeviceId;
+            var items = await getRemainingItems(userId);
+            if (items) {
+                document.getElementById('itemDisplay').textContent =
+                    '🪄 ' + items.light + '个 · 📢 ' + items.billboard + '个 · 🚀 ' + items.rocket + '个';
+            }
+        }
+
+        // ============================================================
+        // 加载榜单
+        // ============================================================
+        async function loadRanking() {
+            var container = document.getElementById('rankingList');
+            try {
+                var client = getClient();
+                var { data, error } = await client
+                    .from('cp_submissions')
+                    .select('id, male_actor, female_actor, genre, status, votes ( id )')
+                    .eq('status', 'approved')
+                    .order('id', { ascending: false });
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><span class="big-icon">✨</span>还没有提名，快来创建第一对 CP 吧</div>';
+                    return;
+                }
+
+                var list = data.map(function(item) {
+                    return {
+                        id: item.id,
+                        male_actor: item.male_actor,
+                        female_actor: item.female_actor,
+                        genre: item.genre,
+                        vote_count: item.votes ? item.votes.length : 0
+                    };
+                });
+                list.sort(function(a, b) { return b.vote_count - a.vote_count; });
+
+                var html = '';
+                list.forEach(function(item, index) {
+                    var rank = index + 1;
+                    var rankClass = 'rank';
+                    if (rank === 1) rankClass += ' gold';
+                    else if (rank === 2) rankClass += ' silver';
+                    else if (rank === 3) rankClass += ' bronze';
+
+                    html += `
+                        <div class="card" data-id="${item.id}">
+                            <div class="${rankClass}">#${rank}</div>
+                            <div class="info">
+                                <div class="name">${escapeHtml(item.male_actor)} <span class="vs">✕</span> ${escapeHtml(item.female_actor)}</div>
+                                <span class="genre">${escapeHtml(item.genre)}</span>
+                                <div class="votes">❤️ ${item.vote_count} 票</div>
+                                <div class="card-actions">
+                                    <button class="vote-btn" data-id="${item.id}">❤️ 投票</button>
+                                    <button class="item-btn" data-id="${item.id}" data-type="light">🪄 +3</button>
+                                    <button class="item-btn" data-id="${item.id}" data-type="billboard">📢 +5</button>
+                                    <button class="item-btn" data-id="${item.id}" data-type="rocket">🚀 +10</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+
+                // 点击卡片进入详情
+                container.querySelectorAll('.card').forEach(function(card) {
+                    card.addEventListener('click', function(e) {
+                        if (e.target.closest('button')) return;
+                        var id = this.getAttribute('data-id');
+                        window.location.href = 'detail.html?id=' + id;
+                    });
+                });
+
+                // 投票按钮
+                container.querySelectorAll('.vote-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var id = parseInt(this.getAttribute('data-id'));
+                        handleVote(id);
+                    });
+                });
+
+                // 道具按钮
+                container.querySelectorAll('.item-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var cpId = parseInt(this.getAttribute('data-id'));
+                        var type = this.getAttribute('data-type');
+                        handleUseItem(cpId, type);
+                    });
+                });
+
+            } catch (err) {
+                console.error('加载榜单失败:', err);
+                container.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // ============================================================
+        // 投票
+        // ============================================================
+        async function handleVote(submissionId) {
+            var user = getCurrentUser();
+            var identifier = user ? user.id : myDeviceId;
+            var voterType = user ? 'registered' : 'anonymous';
+
+            try {
+                var client = getClient();
+
+                var activity = await initTodayActivity(identifier);
+                if (hasVotedToday(activity, submissionId)) {
+                    showToast('今天已经给这对CP投过票了 ❤️');
+                    return;
+                }
+
+                var ip = await getUserIP();
+                var { error } = await client.from('votes').insert({
+                    submission_id: submissionId,
+                    voter_type: voterType,
+                    device_id: identifier,
+                    ip_address: ip || ''
+                });
+                if (error) throw error;
+
+                var newVotes = [...activity.used_votes, String(submissionId)];
+                await client.from('daily_activities').update({ used_votes: newVotes }).eq('id', activity.id);
+
+                // 记录行为
+                await trackActivity('cp_vote', String(submissionId), 'cp', { source: 'base_vote' });
+
+                showToast('投票成功！❤️');
+                loadRanking();
+                updateItemDisplay();
+
+            } catch (err) {
+                console.error('投票失败:', err);
+                showToast('投票失败，请重试');
+            }
+        }
+
+        // ============================================================
+        // 使用道具
+        // ============================================================
+        async function handleUseItem(cpId, type) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var result = await useItem(user.id, cpId, type);
+            showToast(result.msg);
+
+            if (result.success) {
+                var client = getClient();
+                var voteMap = { light: 3, billboard: 5, rocket: 10 };
+                var ip = await getUserIP();
+                var { error } = await client.from('votes').insert({
+                    submission_id: cpId,
+                    voter_type: 'registered',
+                    user_id: user.id,
+                    device_id: user.id,
+                    ip_address: ip || ''
+                });
+                if (!error) {
+                    await trackActivity('cp_item', String(cpId), 'cp', {
+                        item_type: type,
+                        votes_added: voteMap[type]
+                    });
+                    loadRanking();
+                    updateItemDisplay();
+                }
+            }
+        }
+
+        // ============================================================
+        // 分享得道具
+        // ============================================================
+        document.getElementById('shareBtn').addEventListener('click', async function() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录');
+                return;
+            }
+            var result = await grantShareReward(user.id);
+            showToast(result.msg);
+            if (result.success) {
+                await trackActivity('cp_share', null, null, { source: 'share_button' });
+                updateItemDisplay();
+                loadRanking();
+            }
+        });
+
+        // ============================================================
+        // 弹窗控制
+        // ============================================================
+        function openModal() {
+            document.getElementById('submitModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('submitModal').classList.remove('active');
+        }
+
+        document.getElementById('openModalBtn').addEventListener('click', openModal);
+        document.getElementById('closeSubmitModal').addEventListener('click', closeModal);
+        document.getElementById('submitModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ============================================================
+        // 提交 CP（含重复提交提醒）
+        // ============================================================
+        document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
+            var male = document.getElementById('maleInput').value.trim();
+            var female = document.getElementById('femaleInput').value.trim();
+            var genre = document.getElementById('genreInput').value;
+
+            if (!male || !female) {
+                showToast('请填写男演员和女演员名字');
+                return;
+            }
+
+            var user = getCurrentUser();
+            var deviceId = user ? user.id : myDeviceId;
+
+            try {
+                var client = getClient();
+
+                var { data: existing } = await client
+                    .from('cp_submissions')
+                    .select('id, device_id')
+                    .eq('male_actor', male)
+                    .eq('female_actor', female)
+                    .eq('genre', genre)
+                    .maybeSingle();
+
+                if (existing) {
+                    var isMine = (existing.device_id === deviceId);
+                    if (isMine) {
+                        showToast('你已经提过这对 CP 啦，等待审核中 📝');
+                    } else {
+                        showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
+                    }
+                    return;
+                }
+
+                var ip = await getUserIP();
+                var { error } = await client.from('cp_submissions').insert({
+                    male_actor: male,
+                    female_actor: female,
+                    genre: genre,
+                    ip: ip || '',
+                    device_id: deviceId,
+                    status: 'pending'
+                });
+
+                if (error) throw error;
+
+                await trackActivity('cp_submit', null, null, {
+                    male_actor: male,
+                    female_actor: female,
+                    genre: genre
+                });
+
+                showToast('提交成功！等待审核 ✨');
+                document.getElementById('maleInput').value = '';
+                document.getElementById('femaleInput').value = '';
+                closeModal();
+                loadRanking();
+
+            } catch (err) {
+                console.error('提交失败:', err);
+                showToast('提交失败，请重试');
+            }
+        });
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        updateUserUI();
+        loadRanking();
+        updateItemDisplay();
+        console.log('✅ CP 热力榜已启动');
+    </script>
+</body>
+</html>
