@@ -198,24 +198,39 @@
                 // ============================================================
                 // ✅ 修复：点击卡片进入详情（跳转到 mycp.html）
                 // ============================================================
-                container.querySelectorAll('.card').forEach(function(card) {
-                    card.addEventListener('click', function(e) {
-                        // 如果点击的是按钮，不触发跳转
-                        if (e.target.closest('button')) return;
+                // 点击卡片进入详情（跳转到 mycp.html）
+				container.querySelectorAll('.card').forEach(function(card) {
+					card.addEventListener('click', function(e) {
+						if (e.target.closest('button')) return;
 
-                        // ✅ 使用 getAttribute 获取 data-id
-                        var id = this.getAttribute('data-id');
-                        console.log('点击卡片，ID:', id);
+						// 方法1：从 data-id 属性获取
+						var id = this.dataset.id || this.getAttribute('data-id');
+						console.log('点击卡片 - dataset.id:', this.dataset.id);
+						console.log('点击卡片 - getAttribute:', this.getAttribute('data-id'));
+						console.log('点击卡片 - 最终 ID:', id);
 
-                        if (id && !isNaN(id)) {
-                            // ✅ 直接拼接 URL，确保参数正确传递
-                            window.location.href = 'mycp.html?id=' + id;
-                        } else {
-                            console.warn('卡片 ID 无效:', id);
-                            showToast('无法获取 CP ID，请刷新重试');
-                        }
-                    });
-                });
+						// 方法2：如果 data-id 获取失败，尝试从卡片文本中解析（备用）
+						if (!id || isNaN(id)) {
+							var nameEl = this.querySelector('.name');
+							if (nameEl) {
+								var text = nameEl.textContent || '';
+								console.log('尝试从文本解析:', text);
+								// 这里可以添加从文本解析 ID 的逻辑，但最好还是修复 data-id
+							}
+							showToast('无法获取 CP ID，请刷新重试');
+							return;
+						}
+
+						// 确保 ID 是数字
+						var numId = parseInt(id);
+						if (!isNaN(numId) && numId > 0) {
+							console.log('跳转到: mycp.html?id=' + numId);
+							window.location.href = 'mycp.html?id=' + numId;
+						} else {
+							showToast('CP ID 无效');
+						}
+					});
+				});
 
                 // 投票按钮
                 container.querySelectorAll('.vote-btn').forEach(function(btn) {
