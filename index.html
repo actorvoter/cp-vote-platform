@@ -145,55 +145,80 @@
         // ============================================================
         // 更新访问统计
         // ============================================================
-        async function updateSiteStats() {
-            try {
-                var client = getClient();
-                var today = new Date().toISOString().split('T')[0];
+        // ============================================================
+		// 更新访问统计（修复版）
+		// ============================================================
+		async function updateSiteStats() {
+			var statsEl = document.getElementById('siteStats');
+			try {
+				var client = getClient();
+				var today = new Date().toISOString().split('T')[0];
 
-                // 检查今天是否已记录
-                var { data: todayData, error: todayError } = await client
-                    .from('daily_visits')
-                    .select('*')
-                    .eq('visit_date', today)
-                    .maybeSingle();
+				// ✅ 1. 确保 site_stats 表有数据
+				var { data: statsData, error: statsError } = await client
+					.from('site_stats')
+					.select('*')
+					.maybeSingle();
 
-                if (todayData) {
-                    await client
-                        .from('daily_visits')
-                        .update({
-                            page_view_count: (todayData.page_view_count || 0) + 1
-                        })
-                        .eq('visit_date', today);
-                } else {
-                    await client
-                        .from('daily_visits')
-                        .insert({
-                            visit_date: today,
-                            page_view_count: 1,
-                            visitor_count: 1
-                        });
-                }
+				if (statsError || !statsData) {
+					// 如果没有数据，创建一条
+					await client.from('site_stats').insert({
+						page_views: 1,
+						unique_visitors: 1
+					});
+					if (statsEl) statsEl.textContent = '👁️ 1 次访问';
+					return;
+				}
 
-                var { data: statsData } = await client
-                    .from('site_stats')
-                    .select('page_views, unique_visitors')
-                    .maybeSingle();
+				// ✅ 2. 更新总访问量
+				var newViews = (statsData.page_views || 0) + 1;
+				await client
+					.from('site_stats')
+					.update({ page_views: newViews })
+					.eq('id', statsData.id);
 
-                var statsEl = document.getElementById('siteStats');
-                if (statsEl && statsData) {
-                    var totalViews = statsData.page_views || 0;
-                    if (totalViews >= 10000) {
-                        statsEl.textContent = '👁️ ' + (totalViews / 10000).toFixed(1) + '万 次访问';
-                    } else {
-                        statsEl.textContent = '👁️ ' + totalViews + ' 次访问';
-                    }
-                }
-            } catch (err) {
-                console.warn('更新统计失败:', err);
-                var statsEl = document.getElementById('siteStats');
-                if (statsEl) statsEl.textContent = '👁️ 统计加载中';
-            }
-        }
+				// ✅ 3. 更新每日访问
+				var { data: todayData } = await client
+					.from('daily_visits')
+					.select('*')
+					.eq('visit_date', today)
+					.maybeSingle();
+
+				if (todayData) {
+					await client
+						.from('daily_visits')
+						.update({
+							page_view_count: (todayData.page_view_count || 0) + 1
+						})
+						.eq('visit_date', today);
+				} else {
+					await client
+						.from('daily_visits')
+						.insert({
+							visit_date: today,
+							page_view_count: 1,
+							visitor_count: 1
+						});
+				}
+
+				// ✅ 4. 显示格式化数字
+				if (statsEl) {
+					var totalViews = newViews;
+					if (totalViews >= 10000) {
+						statsEl.textContent = '👁️ ' + (totalViews / 10000).toFixed(1) + '万 次访问';
+					} else {
+						statsEl.textContent = '👁️ ' + totalViews + ' 次访问';
+					}
+				}
+
+			} catch (err) {
+				console.warn('更新统计失败:', err);
+				if (statsEl) {
+					// 显示友好的错误提示
+					statsEl.textContent = '👁️ 统计加载中...';
+				}
+			}
+		}
 
         // ============================================================
         // 渲染 CP 列表
