@@ -129,229 +129,232 @@
 
     <div class="toast" id="toast"></div>
 
-    <script src="js/supabase.js">
-    </script>
-    <script>
-        // ============================================================
-        // 工具函数（如果 supabase.js 中没有）
-        // ============================================================
-        function getDeviceId() {
-            var id = localStorage.getItem('cp_device_id');
-            if (!id) {
-                id = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('cp_device_id', id);
-            }
-            return id;
-        }
+	<script src="js/supabase.js"></script>
+	<script>
+		// ============================================================
+		// 工具函数（如果 supabase.js 中没有）
+		// ============================================================
+		function getDeviceId() {
+			var id = localStorage.getItem('cp_device_id');
+			if (!id) {
+				id = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+				localStorage.setItem('cp_device_id', id);
+			}
+			return id;
+		}
 
-        function getCurrentUser() {
-            var userStr = localStorage.getItem('cp_user');
-            if (!userStr) return null;
-            try { return JSON.parse(userStr); } catch (e) { return null; }
-        }
+		function getCurrentUser() {
+			var userStr = localStorage.getItem('cp_user');
+			if (!userStr) return null;
+			try { return JSON.parse(userStr); } catch (e) { return null; }
+		}
 
-        function showToast(msg) {
-            var t = document.getElementById('toast');
-            if (!t) { alert(msg); return; }
-            t.textContent = msg;
-            t.classList.add('show');
-            clearTimeout(t._hideTimer);
-            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
-        }
+		function showToast(msg) {
+			var t = document.getElementById('toast');
+			if (!t) { alert(msg); return; }
+			t.textContent = msg;
+			t.classList.add('show');
+			clearTimeout(t._hideTimer);
+			t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+		}
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            var div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+		function escapeHtml(text) {
+			if (!text) return '';
+			var div = document.createElement('div');
+			div.textContent = text;
+			return div.innerHTML;
+		}
 
-        function formatTime(iso) {
-            var d = new Date(iso);
-            return d.getMonth() + 1 + '/' + d.getDate() + ' ' +
-                String(d.getHours()).padStart(2, '0') + ':' +
-                String(d.getMinutes()).padStart(2, '0');
-        }
+		function formatTime(iso) {
+			var d = new Date(iso);
+			return d.getMonth() + 1 + '/' + d.getDate() + ' ' +
+				String(d.getHours()).padStart(2, '0') + ':' +
+				String(d.getMinutes()).padStart(2, '0');
+		}
 
-        // ============================================================
-        // 从 URL 获取 ID（支持多种方式）
-        // ============================================================
-        function getCpIdFromUrl() {
-            // 方式1：从 ?id= 参数获取
-            var params = new URLSearchParams(window.location.search);
-            var id = params.get('id');
-            if (id && !isNaN(id)) return parseInt(id);
+		// ============================================================
+		// 从 URL 获取 ID（多种方式）
+		// ============================================================
+		function getCpIdFromUrl() {
+			console.log('=== 调试 URL 信息 ===');
+			console.log('window.location.href:', window.location.href);
+			console.log('window.location.search:', window.location.search);
+			console.log('window.location.pathname:', window.location.pathname);
+			console.log('window.location.hash:', window.location.hash);
 
-            // 方式2：从路径中获取（例如 /mycp/4）
-            var pathParts = window.location.pathname.split('/');
-            for (var i = pathParts.length - 1; i >= 0; i--) {
-                if (pathParts[i] && !isNaN(pathParts[i])) {
-                    return parseInt(pathParts[i]);
-                }
-            }
+			// 方法1：从 ?id= 参数获取
+			var urlParams = new URLSearchParams(window.location.search);
+			var id = urlParams.get('id');
+			console.log('从 ?id= 获取:', id);
+			if (id && !isNaN(id)) {
+				return parseInt(id);
+			}
 
-            // 方式3：从 hash 获取（例如 #id=4）
-            if (window.location.hash) {
-                var hashParams = new URLSearchParams(window.location.hash.substring(1));
-                var hashId = hashParams.get('id');
-                if (hashId && !isNaN(hashId)) return parseInt(hashId);
-            }
+			// 方法2：从路径中获取（例如 /mycp/4）
+			var pathParts = window.location.pathname.split('/');
+			for (var i = pathParts.length - 1; i >= 0; i--) {
+				var part = pathParts[i];
+				if (part && !isNaN(part) && part.trim() !== '') {
+					console.log('从路径获取:', part);
+					return parseInt(part);
+				}
+			}
 
-            return null;
-        }
+			// 方法3：从 hash 获取（例如 #id=4）
+			if (window.location.hash) {
+				var hashParams = new URLSearchParams(window.location.hash.substring(1));
+				var hashId = hashParams.get('id');
+				console.log('从 hash 获取:', hashId);
+				if (hashId && !isNaN(hashId)) {
+					return parseInt(hashId);
+				}
+			}
 
-        // ============================================================
-        // 加载 CP 详情
-        // ============================================================
-        var myDeviceId = getDeviceId();
-        var cpId = getCpIdFromUrl();
+			// 方法4：从 URL 中匹配数字
+			var match = window.location.href.match(/\/(\d+)(?:\?|$)/);
+			console.log('正则匹配:', match);
+			if (match && match[1]) {
+				return parseInt(match[1]);
+			}
 
-        console.log('当前 CP ID:', cpId);
+			console.warn('所有方法都无法获取 ID');
+			return null;
+		}
 
-        var body = document.getElementById('detailBody');
-        var commentArea = document.getElementById('commentInputArea');
+		// ============================================================
+		// 主逻辑
+		// ============================================================
+		var myDeviceId = getDeviceId();
+		var cpId = getCpIdFromUrl();
 
-        if (!cpId) {
-            body.innerHTML = '<div class="error-state">❌ 参数错误，请从首页进入</div>';
-            commentArea.style.display = 'none';
-        } else {
-            loadDetail(cpId);
-        }
+		console.log('最终 cpId:', cpId);
 
-        async function loadDetail(cpId) {
-            try {
-                var client = window.supabase.createClient(
-                    'https://grsxmjvjtqmvylyxmktt.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA'
-                );
+		var body = document.getElementById('detailBody');
+		var commentArea = document.getElementById('commentInputArea');
 
-                // 查询 CP 信息
-                var { data: cpData, error: cpError } = await client
-                    .from('cp_submissions')
-                    .select('id, male_actor, female_actor, genre, status, votes ( id )')
-                    .eq('id', cpId)
-                    .maybeSingle();
+		if (!cpId) {
+			body.innerHTML = '<div class="error-state">❌ 参数错误，请从首页进入</div>';
+			commentArea.style.display = 'none';
+		} else {
+			loadDetail(cpId);
+		}
 
-                if (cpError || !cpData) {
-                    console.error('CP 不存在:', cpError);
-                    body.innerHTML = '<div class="error-state">❌ CP 不存在或已被删除</div>';
-                    commentArea.style.display = 'none';
-                    return;
-                }
+		async function loadDetail(cpId) {
+			try {
+				var client = getClient();
 
-                var voteCount = cpData.votes ? cpData.votes.length : 0;
+				var { data: cpData, error: cpError } = await client
+					.from('cp_submissions')
+					.select('id, male_actor, female_actor, genre, status, votes ( id )')
+					.eq('id', cpId)
+					.maybeSingle();
 
-                // 查询评论
-                var { data: comments, error: commentError } = await client
-                    .from('comments')
-                    .select('id, nickname, content, created_at, device_id')
-                    .eq('submission_id', cpId)
-                    .order('created_at', { ascending: false });
+				if (cpError || !cpData) {
+					console.error('CP 不存在:', cpError);
+					body.innerHTML = '<div class="error-state">❌ CP 不存在或已被删除</div>';
+					commentArea.style.display = 'none';
+					return;
+				}
 
-                if (commentError) {
-                    console.warn('加载评论失败:', commentError);
-                    comments = [];
-                }
+				var voteCount = cpData.votes ? cpData.votes.length : 0;
 
-                // 渲染页面
-                var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
-                document.getElementById('detailTitle').textContent = '💬 ' + title;
+				var { data: comments, error: commentError } = await client
+					.from('comments')
+					.select('id, nickname, content, created_at, device_id')
+					.eq('submission_id', cpId)
+					.order('created_at', { ascending: false });
 
-                var commentHtml = '';
-                if (!comments || comments.length === 0) {
-                    commentHtml = '<div class="comment-empty">还没有评论，来说点什么吧 💬</div>';
-                } else {
-                    comments.forEach(function(c) {
-                        var isMe = (c.device_id === myDeviceId);
-                        commentHtml += `
-                                <div class="comment-item">
-                                    <span class="comment-nickname">${escapeHtml(c.nickname || '匿名')}${isMe ? ' (我)' : ''}</span>
-                                    <span class="comment-time">${formatTime(c.created_at)}</span>
-                                    <div class="comment-content">${escapeHtml(c.content)}</div>
-                                </div>
-                            `;
-                    });
-                }
+				if (commentError) {
+					console.warn('加载评论失败:', commentError);
+					comments = [];
+				}
 
-                body.innerHTML = `
-                        <div class="cp-summary">
-                            <div class="cp-title">${escapeHtml(cpData.male_actor)} ✕ ${escapeHtml(cpData.female_actor)}</div>
-                            <div class="cp-meta">
-                                <span class="genre-tag">${escapeHtml(cpData.genre)}</span>
-                                <span>❤️ ${voteCount} 票</span>
-                                <span class="status-tag">${cpData.status === 'approved' ? '✅ 已上线' : '⏳ 审核中'}</span>
-                            </div>
-                        </div>
-                        <div id="commentList">${commentHtml}</div>
-                    `;
+				var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
+				document.getElementById('detailTitle').textContent = '💬 ' + title;
 
-                // 显示评论输入区
-                commentArea.style.display = 'flex';
+				var commentHtml = '';
+				if (!comments || comments.length === 0) {
+					commentHtml = '<div class="comment-empty">还没有评论，来说点什么吧 💬</div>';
+				} else {
+					comments.forEach(function(c) {
+						var isMe = (c.device_id === myDeviceId);
+						commentHtml += `
+								<div class="comment-item">
+									<span class="comment-nickname">${escapeHtml(c.nickname || '匿名')}${isMe ? ' (我)' : ''}</span>
+									<span class="comment-time">${formatTime(c.created_at)}</span>
+									<div class="comment-content">${escapeHtml(c.content)}</div>
+								</div>
+							`;
+					});
+				}
 
-                // 绑定评论事件
-                document.getElementById('sendCommentBtn').onclick = function() { handleSendComment(cpId); };
-                document.getElementById('commentContent').onkeydown = function(e) {
-                    if (e.key === 'Enter') { e.preventDefault();
-                        handleSendComment(cpId); }
-                };
-                document.getElementById('commentNickname').onkeydown = function(e) {
-                    if (e.key === 'Enter') { e.preventDefault();
-                        document.getElementById('commentContent').focus(); }
-                };
+				body.innerHTML = `
+						<div class="cp-summary">
+							<div class="cp-title">${escapeHtml(cpData.male_actor)} ✕ ${escapeHtml(cpData.female_actor)}</div>
+							<div class="cp-meta">
+								<span class="genre-tag">${escapeHtml(cpData.genre)}</span>
+								<span>❤️ ${voteCount} 票</span>
+								<span class="status-tag">${cpData.status === 'approved' ? '✅ 已上线' : '⏳ 审核中'}</span>
+							</div>
+						</div>
+						<div id="commentList">${commentHtml}</div>
+					`;
 
-            } catch (err) {
-                console.error('加载详情失败:', err);
-                body.innerHTML = '<div class="error-state">❌ 加载失败，请刷新重试</div>';
-                commentArea.style.display = 'none';
-            }
-        }
+				commentArea.style.display = 'flex';
 
-        // ============================================================
-        // 发送评论
-        // ============================================================
-        async function handleSendComment(cpId) {
-            var contentInput = document.getElementById('commentContent');
-            var nicknameInput = document.getElementById('commentNickname');
+				document.getElementById('sendCommentBtn').onclick = function() { handleSendComment(cpId); };
+				document.getElementById('commentContent').onkeydown = function(e) {
+					if (e.key === 'Enter') { e.preventDefault();
+						handleSendComment(cpId); }
+				};
+				document.getElementById('commentNickname').onkeydown = function(e) {
+					if (e.key === 'Enter') { e.preventDefault();
+						document.getElementById('commentContent').focus(); }
+				};
 
-            var content = contentInput.value.trim();
-            var nickname = nicknameInput.value.trim() || '匿名观众';
+			} catch (err) {
+				console.error('加载详情失败:', err);
+				body.innerHTML = '<div class="error-state">❌ 加载失败，请刷新重试</div>';
+				commentArea.style.display = 'none';
+			}
+		}
 
-            if (!content) { showToast('请输入评论内容'); return; }
+		async function handleSendComment(cpId) {
+			var contentInput = document.getElementById('commentContent');
+			var nicknameInput = document.getElementById('commentNickname');
 
-            var user = getCurrentUser();
-            if (!user) {
-                showToast('请先登录 🚀');
-                window.location.href = 'login.html';
-                return;
-            }
+			var content = contentInput.value.trim();
+			var nickname = nicknameInput.value.trim() || '匿名观众';
 
-            try {
-                var client = window.supabase.createClient(
-                    'https://grsxmjvjtqmvylyxmktt.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA'
-                );
+			if (!content) { showToast('请输入评论内容'); return; }
 
-                var { error } = await client.from('comments').insert({
-                    submission_id: cpId,
-                    user_id: String(user.id),
-                    nickname: nickname,
-                    content: content,
-                    device_id: String(user.id)
-                });
+			var user = getCurrentUser();
+			if (!user) {
+				showToast('请先登录 🚀');
+				window.location.href = 'login.html';
+				return;
+			}
 
-                if (error) throw error;
+			try {
+				var client = getClient();
+				var { error } = await client.from('comments').insert({
+					submission_id: cpId,
+					user_id: String(user.id),
+					nickname: nickname,
+					content: content,
+					device_id: String(user.id)
+				});
+				if (error) throw error;
+				showToast('评论发送成功 ✅');
+				contentInput.value = '';
+				loadDetail(cpId);
+			} catch (err) {
+				console.error('发送评论失败:', err);
+				showToast('发送失败，请重试');
+			}
+		}
 
-                showToast('评论发送成功 ✅');
-                contentInput.value = '';
-                loadDetail(cpId);
-
-            } catch (err) {
-                console.error('发送评论失败:', err);
-                showToast('发送失败，请重试');
-            }
-        }
-
-        console.log('✅ CP 详情页已加载');
-    </script>
+		console.log('✅ CP 详情页已加载');
+	</script>
 </body>
 </html>
