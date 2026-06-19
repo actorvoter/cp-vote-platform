@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的 CP · CP 热力榜</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .mycp-container { max-width:480px; margin:0 auto; padding:0 0 80px 0; }
+        .mycp-header { display:flex; justify-content:space-between; align-items:center; padding:16px 0; }
+        .mycp-header h1 { font-size:22px; }
+        .mycp-stats { background:#f8f6ff; border-radius:12px; padding:16px; margin-bottom:16px; display:flex; justify-content:space-around; text-align:center; }
+        .mycp-stats .stat-item .number { font-size:24px; font-weight:700; color:#6c5ce7; }
+        .mycp-stats .stat-item .label { font-size:12px; color:#9ca3af; }
+        .cp-list-item { background:#fff; border-radius:12px; padding:14px 16px; margin-bottom:10px; border:1px solid #ede9fe; cursor:pointer; transition:background 0.15s; }
+        .cp-list-item:active { background:#f8f6ff; }
+        .cp-list-item .cp-name { font-size:16px; font-weight:600; }
+        .cp-list-item .cp-meta { display:flex; gap:12px; font-size:13px; color:#6b7280; margin-top:4px; }
+        .cp-list-item .cp-meta .genre-tag { background:#ede9fe; color:#6c5ce7; padding:0 10px; border-radius:20px; }
+        .cp-list-item .cp-status { font-size:12px; padding:2px 10px; border-radius:20px; }
+        .cp-list-item .cp-status.approved { background:#d1fae5; color:#065f46; }
+        .cp-list-item .cp-status.pending { background:#fef3c7; color:#92400e; }
+        .empty-state { text-align:center; padding:60px 20px; color:#9ca3af; }
+        .empty-state .big-icon { font-size:48px; display:block; margin-bottom:12px; }
+        .loading-state { text-align:center; padding:40px 0; color:#9ca3af; }
+    </style>
+</head>
+<body>
+
+    <div class="mycp-container">
+        <!-- 头部 -->
+        <div class="mycp-header">
+            <a href="index.html" class="btn-secondary">← 返回</a>
+            <h1>👤 我的 CP</h1>
+            <div style="width:60px;"></div>
+        </div>
+
+        <!-- 统计 -->
+        <div class="mycp-stats" id="statsArea" style="display:none;">
+            <div class="stat-item">
+                <div class="number" id="totalCount">0</div>
+                <div class="label">总共提交</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="approvedCount">0</div>
+                <div class="label">已上线</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="pendingCount">0</div>
+                <div class="label">审核中</div>
+            </div>
+        </div>
+
+        <!-- CP 列表 -->
+        <div id="cpList">
+            <div class="loading-state">加载中...</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if (!t) { alert(msg); return; }
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        // 加载我的 CP
+        // ============================================================
+        async function loadMyCPs() {
+            var user = getCurrentUser();
+            var listContainer = document.getElementById('cpList');
+            var statsArea = document.getElementById('statsArea');
+
+            // 检查登录状态
+            if (!user) {
+                listContainer.innerHTML = `
+                        <div class="empty-state">
+                            <span class="big-icon">🔒</span>
+                            请先登录查看你的 CP<br />
+                            <a href="login.html" class="btn-primary" style="display:inline-block;margin-top:16px;">去登录</a>
+                        </div>
+                    `;
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                // ✅ 查询当前用户提交的所有 CP（使用 user_id）
+                var { data, error } = await client
+                    .from('cp_submissions')
+                    .select('id, male_actor, female_actor, genre, status, created_at, votes ( id )')
+                    .eq('user_id', user.id)  // 关键：用 user_id 关联
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // 更新统计
+                var total = data ? data.length : 0;
+                var approved = data ? data.filter(function(item) { return item.status === 'approved'; }).length : 0;
+                var pending = data ? data.filter(function(item) { return item.status === 'pending'; }).length : 0;
+
+                document.getElementById('totalCount').textContent = total;
+                document.getElementById('approvedCount').textContent = approved;
+                document.getElementById('pendingCount').textContent = pending;
+
+                if (total > 0) {
+                    statsArea.style.display = 'flex';
+                } else {
+                    statsArea.style.display = 'none';
+                }
+
+                // 渲染列表
+                if (!data || data.length === 0) {
+                    listContainer.innerHTML = `
+                            <div class="empty-state">
+                                <span class="big-icon">📝</span>
+                                你还没有提交过 CP<br />
+                                <a href="index.html" class="btn-primary" style="display:inline-block;margin-top:16px;">去提名</a>
+                            </div>
+                        `;
+                    return;
+                }
+
+                var html = '';
+                data.forEach(function(item) {
+                    var voteCount = item.votes ? item.votes.length : 0;
+                    var statusClass = item.status === 'approved' ? 'approved' : 'pending';
+                    var statusText = item.status === 'approved' ? '✅ 已上线' : '⏳ 审核中';
+
+                    html += `
+                            <div class="cp-list-item" data-id="${item.id}">
+                                <div class="cp-name">${escapeHtml(item.male_actor)} ✕ ${escapeHtml(item.female_actor)}</div>
+                                <div class="cp-meta">
+                                    <span class="genre-tag">${escapeHtml(item.genre)}</span>
+                                    <span>❤️ ${voteCount} 票</span>
+                                    <span class="cp-status ${statusClass}">${statusText}</span>
+                                </div>
+                            </div>
+                        `;
+                });
+
+                listContainer.innerHTML = html;
+
+                // ✅ 点击 CP 进入详情页
+                listContainer.querySelectorAll('.cp-list-item').forEach(function(item) {
+                    item.addEventListener('click', function() {
+                        var id = this.getAttribute('data-id');
+                        window.location.href = 'mycp.html?id=' + id;
+                    });
+                });
+
+            } catch (err) {
+                console.error('加载我的 CP 失败:', err);
+                listContainer.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        loadMyCPs();
+        console.log('✅ 我的 CP 页面已加载');
+    </script>
+</body>
+</html>

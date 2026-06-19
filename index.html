@@ -36,7 +36,8 @@
     <!-- ===== 快捷入口 ===== -->
     <div style="display:flex; gap:10px; margin-bottom:16px;">
         <button class="btn-primary" id="openModalBtn" style="flex:1;">+ 提名 CP</button>
-        <a href="mycp.html" class="btn-secondary" style="flex:1; text-align:center; padding:8px 0;">👤 我的 CP</a>
+        <!-- ✅ 修改：指向 my-submissions.html -->
+        <a href="my-submissions.html" class="btn-secondary" style="flex:1; text-align:center; padding:8px 0;">👤 我的 CP</a>
     </div>
 
     <!-- ===== 榜单列表 ===== -->
@@ -54,7 +55,8 @@
     <!-- ===== 底部导航 ===== -->
     <div class="bottom-nav">
         <a href="index.html" class="tab active"><span class="icon">🔥</span> 榜单</a>
-        <a href="mycp.html" class="tab"><span class="icon">👤</span> 我的 CP</a>
+        <!-- ✅ 修改：指向 my-submissions.html -->
+        <a href="my-submissions.html" class="tab"><span class="icon">👤</span> 我的 CP</a>
         <a href="profile.html" class="tab"><span class="icon">⚙️</span> 个人中心</a>
         <a href="login.html" class="tab"><span class="icon">📱</span> 登录</a>
     </div>
@@ -196,41 +198,21 @@
                 container.innerHTML = html;
 
                 // ============================================================
-                // ✅ 修复：点击卡片进入详情（跳转到 mycp.html）
+                // ✅ 点击卡片进入详情（跳转到 mycp.html）
                 // ============================================================
-                // 点击卡片进入详情（跳转到 mycp.html）
-				container.querySelectorAll('.card').forEach(function(card) {
-					card.addEventListener('click', function(e) {
-						if (e.target.closest('button')) return;
-
-						// 方法1：从 data-id 属性获取
-						var id = this.dataset.id || this.getAttribute('data-id');
-						console.log('点击卡片 - dataset.id:', this.dataset.id);
-						console.log('点击卡片 - getAttribute:', this.getAttribute('data-id'));
-						console.log('点击卡片 - 最终 ID:', id);
-
-						// 方法2：如果 data-id 获取失败，尝试从卡片文本中解析（备用）
-						if (!id || isNaN(id)) {
-							var nameEl = this.querySelector('.name');
-							if (nameEl) {
-								var text = nameEl.textContent || '';
-								console.log('尝试从文本解析:', text);
-								// 这里可以添加从文本解析 ID 的逻辑，但最好还是修复 data-id
-							}
-							showToast('无法获取 CP ID，请刷新重试');
-							return;
-						}
-
-						// 确保 ID 是数字
-						var numId = parseInt(id);
-						if (!isNaN(numId) && numId > 0) {
-							console.log('跳转到: mycp.html?id=' + numId);
-							window.location.href = 'mycp.html?id=' + numId;
-						} else {
-							showToast('CP ID 无效');
-						}
-					});
-				});
+                container.querySelectorAll('.card').forEach(function(card) {
+                    card.addEventListener('click', function(e) {
+                        if (e.target.closest('button')) return;
+                        var id = this.getAttribute('data-id');
+                        console.log('点击卡片，ID:', id);
+                        if (id && !isNaN(id)) {
+                            window.location.href = 'mycp.html?id=' + id;
+                        } else {
+                            console.warn('卡片 ID 无效:', id);
+                            showToast('无法获取 CP ID，请刷新重试');
+                        }
+                    });
+                });
 
                 // 投票按钮
                 container.querySelectorAll('.vote-btn').forEach(function(btn) {
@@ -286,7 +268,6 @@
                 var newVotes = [...activity.used_votes, String(submissionId)];
                 await client.from('daily_activities').update({ used_votes: newVotes }).eq('id', activity.id);
 
-                // 记录行为
                 await trackActivity('cp_vote', String(submissionId), 'cp', { source: 'base_vote' });
 
                 showToast('投票成功！❤️');
@@ -414,6 +395,7 @@
                     genre: genre,
                     ip: ip || '',
                     device_id: deviceId,
+                    user_id: user ? user.id : null,  // ✅ 保存登录用户 ID
                     status: 'approved'
                 });
 
