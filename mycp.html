@@ -2,10 +2,112 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CP 详情</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+        /* 页面内联样式（已移至外部 style.css，此处仅保留必要的覆盖） */
+        .cp-summary {
+            background: #f8f6ff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .cp-summary .cp-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .cp-summary .cp-meta {
+            margin-top: 8px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .cp-summary .cp-meta .genre-tag {
+            background: #ede9fe;
+            color: #6c5ce7;
+            padding: 2px 12px;
+            border-radius: 20px;
+        }
+        .cp-summary .cp-meta .status-tag {
+            color: #9ca3af;
+        }
+        .comment-input-area {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            border-top: 1px solid #ede9fe;
+            padding: 12px 0;
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+        }
+        .comment-input-area input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+        }
+        .comment-input-area input:focus {
+            border-color: #6c5ce7;
+        }
+        .comment-input-area .send-btn {
+            background: #6c5ce7;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .comment-input-area .send-btn:active {
+            transform: scale(0.95);
+        }
+        .comment-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .comment-item .comment-nickname {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1a1a2e;
+        }
+        .comment-item .comment-time {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-left: 8px;
+        }
+        .comment-item .comment-content {
+            font-size: 14px;
+            color: #374151;
+            margin-top: 2px;
+            word-break: break-word;
+        }
+        .comment-empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 30px 0;
+            font-size: 14px;
+        }
+        .error-state {
+            text-align: center;
+            color: #ef4444;
+            padding: 40px 20px;
+            font-size: 16px;
+        }
+        .loading-state {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px 0;
+        }
+    </style>
 </head>
 <body>
 
@@ -14,48 +116,116 @@
         <a href="javascript:history.back()" class="btn-secondary">← 返回</a>
     </div>
 
-    <div id="detailBody"></div>
+    <div id="detailBody">
+        <div class="loading-state">加载中...</div>
+    </div>
 
     <!-- 评论输入区 -->
-    <div class="comment-input-area" id="commentInputArea" style="position:sticky;bottom:0;background:#fff;border-top:1px solid #ede9fe;padding:12px 0;margin-top:16px;">
-        <input type="text" id="commentNickname" placeholder="昵称（选填）" style="flex:0.6;padding:10px 14px;border:1px solid #e5e7eb;border-radius:24px;font-size:14px;outline:none;" />
-        <input type="text" id="commentContent" placeholder="写评论..." style="flex:1;padding:10px 14px;border:1px solid #e5e7eb;border-radius:24px;font-size:14px;outline:none;" />
+    <div class="comment-input-area" id="commentInputArea" style="display:none;">
+        <input type="text" id="commentNickname" placeholder="昵称（选填）" style="flex:0.6;" />
+        <input type="text" id="commentContent" placeholder="写评论..." style="flex:1;" />
         <button class="send-btn" id="sendCommentBtn">发送</button>
     </div>
 
     <div class="toast" id="toast"></div>
 
-    <script src="js/supabase.js"></script>
+    <script src="js/supabase.js">
+    </script>
     <script>
-        var myDeviceId = getDeviceId();
-
-        // ✅ 修复：更稳健的 ID 解析
-        var urlParams = new URLSearchParams(window.location.search);
-        var cpId = parseInt(urlParams.get('id'));
-
-        // ✅ 如果 id 无效，尝试从 URL 路径中提取
-        if (!cpId || isNaN(cpId)) {
-            var pathParts = window.location.pathname.split('/');
-            var lastPart = pathParts[pathParts.length - 1];
-            if (lastPart && !isNaN(lastPart)) {
-                cpId = parseInt(lastPart);
+        // ============================================================
+        // 工具函数（如果 supabase.js 中没有）
+        // ============================================================
+        function getDeviceId() {
+            var id = localStorage.getItem('cp_device_id');
+            if (!id) {
+                id = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('cp_device_id', id);
             }
+            return id;
         }
+
+        function getCurrentUser() {
+            var userStr = localStorage.getItem('cp_user');
+            if (!userStr) return null;
+            try { return JSON.parse(userStr); } catch (e) { return null; }
+        }
+
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if (!t) { alert(msg); return; }
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(iso) {
+            var d = new Date(iso);
+            return d.getMonth() + 1 + '/' + d.getDate() + ' ' +
+                String(d.getHours()).padStart(2, '0') + ':' +
+                String(d.getMinutes()).padStart(2, '0');
+        }
+
+        // ============================================================
+        // 从 URL 获取 ID（支持多种方式）
+        // ============================================================
+        function getCpIdFromUrl() {
+            // 方式1：从 ?id= 参数获取
+            var params = new URLSearchParams(window.location.search);
+            var id = params.get('id');
+            if (id && !isNaN(id)) return parseInt(id);
+
+            // 方式2：从路径中获取（例如 /mycp/4）
+            var pathParts = window.location.pathname.split('/');
+            for (var i = pathParts.length - 1; i >= 0; i--) {
+                if (pathParts[i] && !isNaN(pathParts[i])) {
+                    return parseInt(pathParts[i]);
+                }
+            }
+
+            // 方式3：从 hash 获取（例如 #id=4）
+            if (window.location.hash) {
+                var hashParams = new URLSearchParams(window.location.hash.substring(1));
+                var hashId = hashParams.get('id');
+                if (hashId && !isNaN(hashId)) return parseInt(hashId);
+            }
+
+            return null;
+        }
+
+        // ============================================================
+        // 加载 CP 详情
+        // ============================================================
+        var myDeviceId = getDeviceId();
+        var cpId = getCpIdFromUrl();
 
         console.log('当前 CP ID:', cpId);
 
-        if (!cpId || isNaN(cpId)) {
-            document.getElementById('detailBody').innerHTML = '<div class="empty-state" style="color:#ef4444;">参数错误，请从首页进入</div>';
-            document.getElementById('commentInputArea').style.display = 'none';
+        var body = document.getElementById('detailBody');
+        var commentArea = document.getElementById('commentInputArea');
+
+        if (!cpId) {
+            body.innerHTML = '<div class="error-state">❌ 参数错误，请从首页进入</div>';
+            commentArea.style.display = 'none';
         } else {
             loadDetail(cpId);
         }
 
         async function loadDetail(cpId) {
-            var body = document.getElementById('detailBody');
             try {
-                var client = getClient();
+                var client = window.supabase.createClient(
+                    'https://grsxmjvjtqmvylyxmktt.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA'
+                );
 
+                // 查询 CP 信息
                 var { data: cpData, error: cpError } = await client
                     .from('cp_submissions')
                     .select('id, male_actor, female_actor, genre, status, votes ( id )')
@@ -63,14 +233,15 @@
                     .maybeSingle();
 
                 if (cpError || !cpData) {
-                    console.error('CP 不存在或查询失败:', cpError);
-                    body.innerHTML = '<div class="empty-state" style="color:#ef4444;">CP 不存在或已被删除</div>';
-                    document.getElementById('commentInputArea').style.display = 'none';
+                    console.error('CP 不存在:', cpError);
+                    body.innerHTML = '<div class="error-state">❌ CP 不存在或已被删除</div>';
+                    commentArea.style.display = 'none';
                     return;
                 }
 
                 var voteCount = cpData.votes ? cpData.votes.length : 0;
 
+                // 查询评论
                 var { data: comments, error: commentError } = await client
                     .from('comments')
                     .select('id, nickname, content, created_at, device_id')
@@ -82,6 +253,7 @@
                     comments = [];
                 }
 
+                // 渲染页面
                 var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
                 document.getElementById('detailTitle').textContent = '💬 ' + title;
 
@@ -92,45 +264,51 @@
                     comments.forEach(function(c) {
                         var isMe = (c.device_id === myDeviceId);
                         commentHtml += `
-                            <div class="comment-item">
-                                <span class="comment-nickname">${escapeHtml(c.nickname || '匿名')}${isMe ? ' (我)' : ''}</span>
-                                <span class="comment-time">${formatTime(c.created_at)}</span>
-                                <div class="comment-content">${escapeHtml(c.content)}</div>
-                            </div>
-                        `;
+                                <div class="comment-item">
+                                    <span class="comment-nickname">${escapeHtml(c.nickname || '匿名')}${isMe ? ' (我)' : ''}</span>
+                                    <span class="comment-time">${formatTime(c.created_at)}</span>
+                                    <div class="comment-content">${escapeHtml(c.content)}</div>
+                                </div>
+                            `;
                     });
                 }
 
                 body.innerHTML = `
-                    <div class="cp-summary" style="background:#f8f6ff;border-radius:12px;padding:16px;margin-bottom:16px;">
-                        <div style="font-size:20px;font-weight:600;">${escapeHtml(cpData.male_actor)} ✕ ${escapeHtml(cpData.female_actor)}</div>
-                        <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:#6b7280;">
-                            <span style="background:#ede9fe;color:#6c5ce7;padding:2px 12px;border-radius:20px;">${escapeHtml(cpData.genre)}</span>
-                            <span>❤️ ${voteCount} 票</span>
-                            <span style="color:#9ca3af;">${cpData.status === 'approved' ? '✅ 已上线' : '⏳ 审核中'}</span>
+                        <div class="cp-summary">
+                            <div class="cp-title">${escapeHtml(cpData.male_actor)} ✕ ${escapeHtml(cpData.female_actor)}</div>
+                            <div class="cp-meta">
+                                <span class="genre-tag">${escapeHtml(cpData.genre)}</span>
+                                <span>❤️ ${voteCount} 票</span>
+                                <span class="status-tag">${cpData.status === 'approved' ? '✅ 已上线' : '⏳ 审核中'}</span>
+                            </div>
                         </div>
-                    </div>
-                    <div id="commentList">${commentHtml}</div>
-                `;
+                        <div id="commentList">${commentHtml}</div>
+                    `;
 
-                // ✅ 显示评论输入区
-                document.getElementById('commentInputArea').style.display = 'flex';
+                // 显示评论输入区
+                commentArea.style.display = 'flex';
 
+                // 绑定评论事件
                 document.getElementById('sendCommentBtn').onclick = function() { handleSendComment(cpId); };
                 document.getElementById('commentContent').onkeydown = function(e) {
-                    if (e.key === 'Enter') { e.preventDefault(); handleSendComment(cpId); }
+                    if (e.key === 'Enter') { e.preventDefault();
+                        handleSendComment(cpId); }
                 };
                 document.getElementById('commentNickname').onkeydown = function(e) {
-                    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('commentContent').focus(); }
+                    if (e.key === 'Enter') { e.preventDefault();
+                        document.getElementById('commentContent').focus(); }
                 };
 
             } catch (err) {
                 console.error('加载详情失败:', err);
-                body.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败，请刷新重试</div>';
-                document.getElementById('commentInputArea').style.display = 'none';
+                body.innerHTML = '<div class="error-state">❌ 加载失败，请刷新重试</div>';
+                commentArea.style.display = 'none';
             }
         }
 
+        // ============================================================
+        // 发送评论
+        // ============================================================
         async function handleSendComment(cpId) {
             var contentInput = document.getElementById('commentContent');
             var nicknameInput = document.getElementById('commentNickname');
@@ -148,7 +326,11 @@
             }
 
             try {
-                var client = getClient();
+                var client = window.supabase.createClient(
+                    'https://grsxmjvjtqmvylyxmktt.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA'
+                );
+
                 var { error } = await client.from('comments').insert({
                     submission_id: cpId,
                     user_id: String(user.id),
@@ -156,15 +338,20 @@
                     content: content,
                     device_id: String(user.id)
                 });
+
                 if (error) throw error;
+
                 showToast('评论发送成功 ✅');
                 contentInput.value = '';
                 loadDetail(cpId);
+
             } catch (err) {
                 console.error('发送评论失败:', err);
                 showToast('发送失败，请重试');
             }
         }
+
+        console.log('✅ CP 详情页已加载');
     </script>
 </body>
 </html>
