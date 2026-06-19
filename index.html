@@ -452,20 +452,71 @@
         // ============================================================
         // 分享得道具
         // ============================================================
-        document.getElementById('shareBtn').addEventListener('click', async function() {
-            var user = getCurrentUser();
-            if (!user) {
-                showToast('请先登录');
-                return;
-            }
-            var result = await grantShareReward(user.id);
-            showToast(result.msg);
-            if (result.success) {
-                await trackActivity('cp_share', null, null, { source: 'share_button' });
-                updateItemDisplay();
-                loadRanking();
-            }
-        });
+        // ============================================================
+		// 分享得道具（升级版：追踪实际分享行为）
+		// ============================================================
+		document.getElementById('shareBtn').addEventListener('click', async function() {
+			var user = getCurrentUser();
+			if (!user) {
+				showToast('请先登录才能领取奖励 🚀');
+				window.location.href = 'login.html';
+				return;
+			}
+
+			// 检查今天是否已经分享过
+			var activity = await getTodayActivity(user.id);
+			if (activity && activity.shared_today) {
+				showToast('今天已经领取过分享奖励啦 🎁 明天再来吧');
+				return;
+			}
+
+			// 构建分享内容
+			var shareData = {
+				title: '🔥 CP 热力榜',
+				text: '我正在 CP 热力榜为喜欢的 CP 打 call！快来一起投票吧！',
+				url: window.location.href
+			};
+
+			try {
+				// ✅ 使用 Web Share API（移动端原生分享）
+				if (navigator.share) {
+					await navigator.share(shareData);
+					// 用户完成分享后，发放奖励
+					await grantShareReward(user.id);
+					showToast('🎉 分享成功！获得 20个人气灯 + 20个广告牌 + 10个火箭！');
+					updateItemDisplay();
+					loadRanking();
+					await trackActivity('share_success', null, null, { 
+						source: 'web_share_api',
+						platform: navigator.userAgent
+					});
+				} else {
+					// ✅ 桌面端：复制链接 + 手动确认
+					await navigator.clipboard.writeText(window.location.href);
+					// 弹窗让用户确认是否真的分享了
+					if (confirm('📋 链接已复制！\n\n分享到你的社交圈后，点击"确定"领取奖励 🎁')) {
+						await grantShareReward(user.id);
+						showToast('🎉 奖励已发放！获得 20个人气灯 + 20个广告牌 + 10个火箭！');
+						updateItemDisplay();
+						loadRanking();
+						await trackActivity('share_success', null, null, { 
+							source: 'clipboard_manual',
+							platform: navigator.userAgent
+						});
+					} else {
+						showToast('分享后记得回来领取奖励哦 📤');
+					}
+				}
+			} catch (err) {
+				console.warn('分享失败:', err);
+				// 用户取消分享也会进入这里
+				if (err.name !== 'AbortError') {
+					showToast('分享取消，没有领取奖励');
+				} else {
+					showToast('分享取消，没有领取奖励');
+				}
+			}
+		});
 
         // ============================================================
         // 弹窗控制

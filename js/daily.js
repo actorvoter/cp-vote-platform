@@ -97,6 +97,9 @@ async function useItem(userId, cpId, itemType) {
     return { success: true, msg: '🎉 加油成功！' };
 }
 
+// ============================================================
+// 发放分享奖励（10倍版）
+// ============================================================
 async function grantShareReward(userId) {
     var activity = await getTodayActivity(userId);
     if (!activity) return { success: false, msg: '请先登录' };
@@ -105,9 +108,11 @@ async function grantShareReward(userId) {
     }
 
     var client = getClient();
-    var newLight = (activity.items_light || 0) + 2;
-    var newBillboard = (activity.items_billboard || 0) + 2;
-    var newRocket = (activity.items_rocket || 0) + 1;
+    
+    // ✅ 奖励翻10倍：原来 2+2+1 → 现在 20+20+10
+    var newLight = (activity.items_light || 0) + 20;
+    var newBillboard = (activity.items_billboard || 0) + 20;
+    var newRocket = (activity.items_rocket || 0) + 10;
 
     var { error } = await client
         .from('daily_activities')
@@ -124,5 +129,5 @@ async function grantShareReward(userId) {
         console.error('发放奖励失败:', error);
         return { success: false, msg: '领取失败，请重试' };
     }
-    return { success: true, msg: '🎁 获得 2个人气灯 + 2个广告牌 + 1个火箭！' };
+    return { success: true, msg: '🎁 获得 20个人气灯 + 20个广告牌 + 10个火箭！' };
 }
