@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🔥 CP 热力榜</title>
-    <!-- ✅ 替换为 jsdelivr CDN，解决 Tracking Prevention 拦截问题 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -36,13 +36,17 @@
     <!-- ===== 快捷入口 ===== -->
     <div style="display:flex; gap:10px; margin-bottom:16px;">
         <button class="btn-primary" id="openModalBtn" style="flex:1;">+ 提名 CP</button>
-        <!-- ✅ 修改：指向 my-submissions.html -->
         <a href="my-submissions.html" class="btn-secondary" style="flex:1; text-align:center; padding:8px 0;">👤 我的 CP</a>
     </div>
 
     <!-- ===== 榜单列表 ===== -->
     <div id="rankingList">
         <p style="text-align:center; color:#9ca3af; padding:40px 0;">加载中...</p>
+    </div>
+
+    <!-- ===== 访问统计 ===== -->
+    <div style="text-align:center; font-size:12px; color:#9ca3af; padding:12px 0; border-top:1px solid #ede9fe; margin-top:12px;">
+        <span id="siteStats">👁️ 加载中...</span>
     </div>
 
     <!-- ===== 免责声明 ===== -->
@@ -55,7 +59,6 @@
     <!-- ===== 底部导航 ===== -->
     <div class="bottom-nav">
         <a href="index.html" class="tab active"><span class="icon">🔥</span> 榜单</a>
-        <!-- ✅ 修改：指向 my-submissions.html -->
         <a href="my-submissions.html" class="tab"><span class="icon">👤</span> 我的 CP</a>
         <a href="profile.html" class="tab"><span class="icon">⚙️</span> 个人中心</a>
         <a href="login.html" class="tab"><span class="icon">📱</span> 登录</a>
@@ -140,6 +143,157 @@
         }
 
         // ============================================================
+        // 更新访问统计
+        // ============================================================
+        async function updateSiteStats() {
+            try {
+                var client = getClient();
+                var today = new Date().toISOString().split('T')[0];
+
+                // 检查今天是否已记录
+                var { data: todayData, error: todayError } = await client
+                    .from('daily_visits')
+                    .select('*')
+                    .eq('visit_date', today)
+                    .maybeSingle();
+
+                if (todayData) {
+                    await client
+                        .from('daily_visits')
+                        .update({
+                            page_view_count: (todayData.page_view_count || 0) + 1
+                        })
+                        .eq('visit_date', today);
+                } else {
+                    await client
+                        .from('daily_visits')
+                        .insert({
+                            visit_date: today,
+                            page_view_count: 1,
+                            visitor_count: 1
+                        });
+                }
+
+                var { data: statsData } = await client
+                    .from('site_stats')
+                    .select('page_views, unique_visitors')
+                    .maybeSingle();
+
+                var statsEl = document.getElementById('siteStats');
+                if (statsEl && statsData) {
+                    var totalViews = statsData.page_views || 0;
+                    if (totalViews >= 10000) {
+                        statsEl.textContent = '👁️ ' + (totalViews / 10000).toFixed(1) + '万 次访问';
+                    } else {
+                        statsEl.textContent = '👁️ ' + totalViews + ' 次访问';
+                    }
+                }
+            } catch (err) {
+                console.warn('更新统计失败:', err);
+                var statsEl = document.getElementById('siteStats');
+                if (statsEl) statsEl.textContent = '👁️ 统计加载中';
+            }
+        }
+
+        // ============================================================
+        // 渲染 CP 列表
+        // ============================================================
+        function renderCPList(container, list, isDefault) {
+            if (!list || list.length === 0) {
+                container.innerHTML =
+                    '<div class="empty-state"><span class="big-icon">✨</span>还没有提名，快来创建第一对 CP 吧</div>';
+                return;
+            }
+
+            var html = '';
+            list.forEach(function(item, index) {
+                var rank = index + 1;
+                var rankClass = 'rank';
+                if (rank === 1) rankClass += ' gold';
+                else if (rank === 2) rankClass += ' silver';
+                else if (rank === 3) rankClass += ' bronze';
+
+                var voteDisplay = item.vote_count;
+                if (isDefault && item.vote_count > 10000) {
+                    if (item.vote_count >= 100000000) {
+                        voteDisplay = (item.vote_count / 100000000).toFixed(1) + '亿';
+                    } else if (item.vote_count >= 10000) {
+                        voteDisplay = (item.vote_count / 10000).toFixed(1) + '万';
+                    }
+                }
+
+                var defaultBadge = isDefault ?
+                    '<span style="font-size:10px;background:#fef3c7;color:#d97706;padding:0 8px;border-radius:10px;margin-left:4px;">⭐ 推荐</span>' :
+                    '';
+
+                var actionsHtml = '';
+                if (!isDefault && item.id) {
+                    actionsHtml = `
+                            <div class="card-actions">
+                                <button class="vote-btn" data-id="${item.id}">❤️ 投票</button>
+                                <button class="item-btn" data-id="${item.id}" data-type="light">🪄 +3</button>
+                                <button class="item-btn" data-id="${item.id}" data-type="billboard">📢 +5</button>
+                                <button class="item-btn" data-id="${item.id}" data-type="rocket">🚀 +10</button>
+                            </div>
+                        `;
+                } else if (isDefault) {
+                    actionsHtml = `
+                            <div style="font-size:12px;color:#9ca3af;margin-top:4px;">⭐ 系统推荐 · 快来提名你心中的 CP</div>
+                        `;
+                }
+
+                var cardDataId = item.id || 'default_' + index;
+
+                html += `
+                        <div class="card" data-id="${cardDataId}" data-default="${isDefault ? 'true' : 'false'}">
+                            <div class="${rankClass}">#${rank}</div>
+                            <div class="info">
+                                <div class="name">${escapeHtml(item.male_actor)} <span class="vs">✕</span> ${escapeHtml(item.female_actor)} ${defaultBadge}</div>
+                                <span class="genre">${escapeHtml(item.genre)}</span>
+                                <div class="votes">❤️ ${voteDisplay} 票</div>
+                                ${actionsHtml}
+                            </div>
+                        </div>
+                    `;
+            });
+            container.innerHTML = html;
+
+            // 绑定点击事件（只对非默认数据）
+            container.querySelectorAll('.card:not([data-default="true"])').forEach(function(card) {
+                card.addEventListener('click', function(e) {
+                    if (e.target.closest('button')) return;
+                    var id = this.getAttribute('data-id');
+                    if (id && !isNaN(id)) {
+                        window.location.href = 'mycp.html?id=' + id;
+                    }
+                });
+            });
+
+            // 绑定投票按钮（只对非默认数据）
+            container.querySelectorAll('.card:not([data-default="true"]) .vote-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var id = parseInt(this.getAttribute('data-id'));
+                    if (!isNaN(id)) {
+                        handleVote(id);
+                    }
+                });
+            });
+
+            // 绑定道具按钮（只对非默认数据）
+            container.querySelectorAll('.card:not([data-default="true"]) .item-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var cpId = parseInt(this.getAttribute('data-id'));
+                    var type = this.getAttribute('data-type');
+                    if (!isNaN(cpId)) {
+                        handleUseItem(cpId, type);
+                    }
+                });
+            });
+        }
+
+        // ============================================================
         // 加载榜单
         // ============================================================
         async function loadRanking() {
@@ -154,8 +308,18 @@
 
                 if (error) throw error;
 
+                // ✅ 如果数据库没有数据，使用默认明星 CP 榜单
                 if (!data || data.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><span class="big-icon">✨</span>还没有提名，快来创建第一对 CP 吧</div>';
+                    var defaultCPs = [
+                        { male_actor: '张凌赫', female_actor: '田曦薇', genre: '古装仙侠', vote_count: 428000000 },
+                        { male_actor: '宋威龙', female_actor: '赵今麦', genre: '现代霸总', vote_count: 30130000 },
+                        { male_actor: '李昀锐', female_actor: '关晓彤', genre: '现代霸总', vote_count: 88300000 },
+                        { male_actor: '侯明昊', female_actor: '谭松韵', genre: '古装仙侠', vote_count: 28600000 },
+                        { male_actor: '王鹤棣', female_actor: '孟子义', genre: '古装仙侠', vote_count: 15000000 },
+                        { male_actor: '刘宇宁', female_actor: '赵露思', genre: '古装仙侠', vote_count: 12000000 },
+                        { male_actor: '林一', female_actor: '卢昱晓', genre: '现代霸总', vote_count: 8000000 }
+                    ];
+                    renderCPList(container, defaultCPs, true);
                     return;
                 }
 
@@ -169,73 +333,17 @@
                     };
                 });
                 list.sort(function(a, b) { return b.vote_count - a.vote_count; });
-
-                var html = '';
-                list.forEach(function(item, index) {
-                    var rank = index + 1;
-                    var rankClass = 'rank';
-                    if (rank === 1) rankClass += ' gold';
-                    else if (rank === 2) rankClass += ' silver';
-                    else if (rank === 3) rankClass += ' bronze';
-
-                    html += `
-                        <div class="card" data-id="${item.id}">
-                            <div class="${rankClass}">#${rank}</div>
-                            <div class="info">
-                                <div class="name">${escapeHtml(item.male_actor)} <span class="vs">✕</span> ${escapeHtml(item.female_actor)}</div>
-                                <span class="genre">${escapeHtml(item.genre)}</span>
-                                <div class="votes">❤️ ${item.vote_count} 票</div>
-                                <div class="card-actions">
-                                    <button class="vote-btn" data-id="${item.id}">❤️ 投票</button>
-                                    <button class="item-btn" data-id="${item.id}" data-type="light">🪄 +3</button>
-                                    <button class="item-btn" data-id="${item.id}" data-type="billboard">📢 +5</button>
-                                    <button class="item-btn" data-id="${item.id}" data-type="rocket">🚀 +10</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-
-                // ============================================================
-                // ✅ 点击卡片进入详情（跳转到 mycp.html）
-                // ============================================================
-                container.querySelectorAll('.card').forEach(function(card) {
-                    card.addEventListener('click', function(e) {
-                        if (e.target.closest('button')) return;
-                        var id = this.getAttribute('data-id');
-                        console.log('点击卡片，ID:', id);
-                        if (id && !isNaN(id)) {
-                            window.location.href = 'mycp.html?id=' + id;
-                        } else {
-                            console.warn('卡片 ID 无效:', id);
-                            showToast('无法获取 CP ID，请刷新重试');
-                        }
-                    });
-                });
-
-                // 投票按钮
-                container.querySelectorAll('.vote-btn').forEach(function(btn) {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        var id = parseInt(this.getAttribute('data-id'));
-                        handleVote(id);
-                    });
-                });
-
-                // 道具按钮
-                container.querySelectorAll('.item-btn').forEach(function(btn) {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        var cpId = parseInt(this.getAttribute('data-id'));
-                        var type = this.getAttribute('data-type');
-                        handleUseItem(cpId, type);
-                    });
-                });
+                renderCPList(container, list, false);
 
             } catch (err) {
                 console.error('加载榜单失败:', err);
-                container.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败，请刷新重试</div>';
+                // ✅ 出错时也显示默认榜单
+                var defaultCPs = [
+                    { male_actor: '张凌赫', female_actor: '田曦薇', genre: '古装仙侠', vote_count: 428000000 },
+                    { male_actor: '宋威龙', female_actor: '赵今麦', genre: '现代霸总', vote_count: 30130000 },
+                    { male_actor: '李昀锐', female_actor: '关晓彤', genre: '现代霸总', vote_count: 88300000 }
+                ];
+                renderCPList(container, defaultCPs, true);
             }
         }
 
@@ -395,7 +503,7 @@
                     genre: genre,
                     ip: ip || '',
                     device_id: deviceId,
-                    user_id: user ? user.id : null,  // ✅ 保存登录用户 ID
+                    user_id: user ? user.id : null,
                     status: 'approved'
                 });
 
@@ -425,6 +533,7 @@
         updateUserUI();
         loadRanking();
         updateItemDisplay();
+        updateSiteStats();
         console.log('✅ CP 热力榜已启动');
     </script>
 </body>
