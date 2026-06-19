@@ -125,7 +125,7 @@
                 var client = getClient();
                 var { error } = await client.from('comments').insert({
                     submission_id: cpId,
-                    user_id: user.id,
+                    user_id: String(user.id),
                     nickname: nickname,
                     content: content,
                     device_id: user.id
