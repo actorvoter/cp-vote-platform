@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>CP 详情</title>
-    <!-- ✅ 替换为 jsdelivr CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -29,10 +28,25 @@
     <script src="js/supabase.js"></script>
     <script>
         var myDeviceId = getDeviceId();
-        var cpId = parseInt(new URLSearchParams(window.location.search).get('id'));
 
-        if (!cpId) {
-            document.getElementById('detailBody').innerHTML = '<div class="empty-state" style="color:#ef4444;">参数错误</div>';
+        // ✅ 修复：更稳健的 ID 解析
+        var urlParams = new URLSearchParams(window.location.search);
+        var cpId = parseInt(urlParams.get('id'));
+
+        // ✅ 如果 id 无效，尝试从 URL 路径中提取
+        if (!cpId || isNaN(cpId)) {
+            var pathParts = window.location.pathname.split('/');
+            var lastPart = pathParts[pathParts.length - 1];
+            if (lastPart && !isNaN(lastPart)) {
+                cpId = parseInt(lastPart);
+            }
+        }
+
+        console.log('当前 CP ID:', cpId);
+
+        if (!cpId || isNaN(cpId)) {
+            document.getElementById('detailBody').innerHTML = '<div class="empty-state" style="color:#ef4444;">参数错误，请从首页进入</div>';
+            document.getElementById('commentInputArea').style.display = 'none';
         } else {
             loadDetail(cpId);
         }
@@ -48,7 +62,12 @@
                     .eq('id', cpId)
                     .maybeSingle();
 
-                if (cpError || !cpData) { throw new Error('CP 不存在'); }
+                if (cpError || !cpData) {
+                    console.error('CP 不存在或查询失败:', cpError);
+                    body.innerHTML = '<div class="empty-state" style="color:#ef4444;">CP 不存在或已被删除</div>';
+                    document.getElementById('commentInputArea').style.display = 'none';
+                    return;
+                }
 
                 var voteCount = cpData.votes ? cpData.votes.length : 0;
 
@@ -58,7 +77,10 @@
                     .eq('submission_id', cpId)
                     .order('created_at', { ascending: false });
 
-                if (commentError) { throw commentError; }
+                if (commentError) {
+                    console.warn('加载评论失败:', commentError);
+                    comments = [];
+                }
 
                 var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
                 document.getElementById('detailTitle').textContent = '💬 ' + title;
@@ -91,6 +113,9 @@
                     <div id="commentList">${commentHtml}</div>
                 `;
 
+                // ✅ 显示评论输入区
+                document.getElementById('commentInputArea').style.display = 'flex';
+
                 document.getElementById('sendCommentBtn').onclick = function() { handleSendComment(cpId); };
                 document.getElementById('commentContent').onkeydown = function(e) {
                     if (e.key === 'Enter') { e.preventDefault(); handleSendComment(cpId); }
@@ -101,7 +126,8 @@
 
             } catch (err) {
                 console.error('加载详情失败:', err);
-                body.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败</div>';
+                body.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败，请刷新重试</div>';
+                document.getElementById('commentInputArea').style.display = 'none';
             }
         }
 
@@ -128,7 +154,7 @@
                     user_id: String(user.id),
                     nickname: nickname,
                     content: content,
-                    device_id: user.id
+                    device_id: String(user.id)
                 });
                 if (error) throw error;
                 showToast('评论发送成功 ✅');

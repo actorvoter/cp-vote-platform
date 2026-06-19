@@ -372,7 +372,7 @@
                 if (existing) {
                     var isMine = (existing.device_id === deviceId);
                     if (isMine) {
-                        showToast('你已经提过这对 CP 啦，等待审核中 📝');
+                        showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');  // ✅ 修改了提示
                     } else {
                         showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
                     }
@@ -386,7 +386,7 @@
                     genre: genre,
                     ip: ip || '',
                     device_id: deviceId,
-                    status: 'approved'
+                    status: 'approved'  // ✅ 已经是 approved
                 });
 
                 if (error) throw error;
@@ -397,7 +397,7 @@
                     genre: genre
                 });
 
-                showToast('提交成功！等待审核 ✨');
+                showToast('提交成功！已上线 🎉');  // ✅ 修改了提示
                 document.getElementById('maleInput').value = '';
                 document.getElementById('femaleInput').value = '';
                 closeModal();
