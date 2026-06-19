@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>个人资料 · CP 热力榜</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- ✅ 替换为 jsdelivr CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
         .profile-container { max-width:400px; margin:40px auto 0; padding:0 20px; }
@@ -15,17 +16,19 @@
         .profile-container .back-link a { color:#6c5ce7; }
         .section-title { font-weight:bold; margin:20px 0 12px 0; color:#1a1a2e; border-bottom:1px solid #ede9fe; padding-bottom:8px; }
         .email-display { background:#f8f6ff; padding:12px 16px; border-radius:12px; color:#4b5563; font-size:14px; margin-bottom:16px; }
+        .password-hint { font-size:13px; color:#9ca3af; margin-bottom:12px; }
     </style>
 </head>
 <body>
     <div class="profile-container">
         <h2>👤 个人资料</h2>
-        <p class="subtitle">管理你的昵称</p>
+        <p class="subtitle">管理你的昵称和密码</p>
 
         <div class="email-display">
             📧 当前账号：<strong id="userEmailDisplay">加载中...</strong>
         </div>
 
+        <!-- ===== 昵称设置 ===== -->
         <div class="section-title">📝 昵称设置</div>
         <div class="form-group">
             <label>显示昵称（评论区显示）</label>
@@ -33,7 +36,9 @@
         </div>
         <button class="btn-primary" id="updateNicknameBtn" style="margin-top:0;">更新昵称</button>
 
-        <div class="section-title">🔑 设置密码</div>
+        <!-- ===== 密码设置 ===== -->
+        <div class="section-title" id="passwordSectionTitle">🔑 设置密码</div>
+        <p class="password-hint" id="passwordHint">设置密码后可使用密码登录</p>
         <div class="form-group">
             <label>新密码</label>
             <input type="password" id="newPasswordInput" placeholder="输入新密码（至少6位）" />
@@ -44,6 +49,7 @@
         </div>
         <button class="btn-primary" id="updatePasswordBtn" style="margin-top:0;">设置密码</button>
 
+        <!-- ===== 返回 ===== -->
         <p class="back-link"><a href="index.html">← 返回首页</a></p>
     </div>
 
@@ -51,6 +57,9 @@
 
     <script src="js/supabase.js"></script>
     <script>
+        // ============================================================
+        // 当前用户
+        // ============================================================
         var currentUser = getCurrentUser();
 
         if (!currentUser) {
@@ -58,10 +67,23 @@
             setTimeout(function() { window.location.href = 'login.html'; }, 1500);
         }
 
-        document.getElementById('userEmailDisplay').textContent = currentUser.email || '未设置';
+        document.getElementById('userEmailDisplay').textContent = currentUser ? currentUser.email : '未设置';
 
         // ============================================================
-        // 加载昵称
+        // 检测是否首次登录（从 login.html 跳转过来）
+        // ============================================================
+        var urlParams = new URLSearchParams(window.location.search);
+        var isFirstLogin = urlParams.get('first_login') === 'true';
+
+        if (isFirstLogin) {
+            document.getElementById('passwordSectionTitle').textContent = '🔑 设置登录密码（首次登录必填）';
+            document.getElementById('passwordHint').textContent = '请设置一个密码，以后可以使用密码登录';
+            showToast('请设置你的登录密码 🔑');
+            document.getElementById('newPasswordInput').focus();
+        }
+
+        // ============================================================
+        // 加载用户昵称
         // ============================================================
         async function loadUserProfile() {
             try {
@@ -113,71 +135,88 @@
         });
 
         // ============================================================
-        // 设置密码
+        // 设置密码（含首次登录标记）
         // ============================================================
         document.getElementById('updatePasswordBtn').addEventListener('click', async function() {
-		var newPwd = document.getElementById('newPasswordInput').value.trim();
-		var confirmPwd = document.getElementById('confirmPasswordInput').value.trim();
+            var newPwd = document.getElementById('newPasswordInput').value.trim();
+            var confirmPwd = document.getElementById('confirmPasswordInput').value.trim();
 
-		if (!newPwd || newPwd.length < 6) {
-			showToast('密码至少6位');
-			return;
-		}
-		if (newPwd !== confirmPwd) {
-			showToast('两次密码不一致');
-			return;
-		}
+            if (!newPwd || newPwd.length < 6) {
+                showToast('密码至少6位');
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                showToast('两次密码不一致');
+                return;
+            }
 
-		// 禁用按钮，防止重复点击
-		this.disabled = true;
-		this.textContent = '设置中...';
+            this.disabled = true;
+            this.textContent = '设置中...';
 
-		try {
-			var client = getClient();
-			// 先获取当前会话，确保用户已认证
-			var { data: sessionData, error: sessionError } = await client.auth.getSession();
-			if (sessionError || !sessionData.session) {
-				// 如果没有会话，尝试刷新
-				var { data: refreshData, error: refreshError } = await client.auth.refreshSession();
-				if (refreshError) {
-					throw new Error('会话已过期，请重新登录');
-				}
-			}
+            try {
+                var client = getClient();
 
-			// 更新密码
-			var { error } = await client.auth.updateUser({
-				password: newPwd
-			});
+                // 验证会话
+                var { data: sessionData, error: sessionError } = await client.auth.getSession();
+                if (sessionError || !sessionData.session) {
+                    var { data: refreshData, error: refreshError } = await client.auth.refreshSession();
+                    if (refreshError) {
+                        throw new Error('会话已过期，请重新登录');
+                    }
+                }
 
-			if (error) {
-				// 如果是会话过期错误，引导重新登录
-				if (error.message && error.message.includes('session')) {
-					showToast('会话已过期，请重新登录 🔑');
-					setTimeout(() => {
-						window.location.href = 'login.html';
-					}, 1500);
-					return;
-				}
-				throw error;
-			}
+                // 更新密码
+                var { error } = await client.auth.updateUser({
+                    password: newPwd
+                });
 
-			await trackActivity('password_set', currentUser.id, 'user', { method: 'profile_update' });
+                if (error) {
+                    if (error.message && error.message.includes('session')) {
+                        showToast('会话已过期，请重新登录 🔑');
+                        setTimeout(() => { window.location.href = 'login.html'; }, 1500);
+                        return;
+                    }
+                    throw error;
+                }
 
-			showToast('密码设置成功 ✅');
-			document.getElementById('newPasswordInput').value = '';
-			document.getElementById('confirmPasswordInput').value = '';
+                // ✅ 标记用户已设置密码
+                var { error: updateError } = await client
+                    .from('users')
+                    .update({ has_password: true })
+                    .eq('id', currentUser.id);
 
-		} catch (err) {
-			console.error('设置密码失败:', err);
-			showToast('设置失败：' + (err.message || '请重试'));
-		} finally {
-			// 恢复按钮状态
-			this.disabled = false;
-			this.textContent = '设置密码';
-		}
-	});
+                if (updateError) {
+                    console.warn('更新 has_password 失败:', updateError);
+                }
 
-        loadUserProfile();
+                await trackActivity('password_set', currentUser.id, 'user', { method: 'profile_update' });
+
+                showToast('密码设置成功 ✅');
+                document.getElementById('newPasswordInput').value = '';
+                document.getElementById('confirmPasswordInput').value = '';
+
+                // ✅ 如果是首次登录，跳转到首页
+                if (isFirstLogin) {
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                }
+
+            } catch (err) {
+                console.error('设置密码失败:', err);
+                showToast('设置失败：' + (err.message || '请重试'));
+            } finally {
+                this.disabled = false;
+                this.textContent = '设置密码';
+            }
+        });
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        if (currentUser) {
+            loadUserProfile();
+        }
         console.log('✅ 个人资料页已加载');
     </script>
 </body>

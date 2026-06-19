@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>登录 · CP 热力榜</title>
-    <!-- ✅ 替换为 jsdelivr CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
@@ -17,24 +16,59 @@
         .login-container .btn-primary { width:100%; padding:14px; font-size:16px; border-radius:12px; margin-top:8px; }
         .login-container .back-link { display:block; text-align:center; margin-top:20px; color:#9ca3af; font-size:14px; }
         .login-container .back-link a { color:#6c5ce7; }
+        .login-container .tab-switch { display:flex; gap:0; margin-bottom:20px; border-radius:12px; overflow:hidden; border:1px solid #e5e7eb; }
+        .login-container .tab-switch button { flex:1; padding:12px; border:none; background:#f9fafb; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+        .login-container .tab-switch button.active { background:#6c5ce7; color:#fff; }
+        .login-container .tab-switch button:not(.active):hover { background:#f3f4f6; }
+        .login-container .password-input { display:none; }
+        .login-container .otp-input { display:block; }
+        .login-container .password-input.active { display:block; }
+        .login-container .otp-input.hidden { display:none; }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>📧 邮箱登录</h2>
+        <h2>📧 登录 CP 热力榜</h2>
         <p class="subtitle">登录后可以评论、使用道具、管理你的 CP</p>
-        <div class="form-group">
-            <label>邮箱</label>
-            <input type="email" id="emailInput" placeholder="请输入邮箱" />
+        
+        <!-- 登录方式切换 -->
+        <div class="tab-switch">
+            <button id="otpTab" class="active">验证码登录</button>
+            <button id="passwordTab">密码登录</button>
         </div>
-        <div class="form-group">
-            <label>验证码</label>
-            <div class="code-row">
-                <input type="text" id="codeInput" placeholder="请输入验证码" maxlength="8" />
-                <button class="btn-secondary" id="sendCodeBtn">获取验证码</button>
+
+        <!-- 验证码登录 -->
+        <div id="otpForm" class="otp-input">
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="emailInput" placeholder="请输入邮箱" />
             </div>
+            <div class="form-group">
+                <label>验证码</label>
+                <div class="code-row">
+                    <input type="text" id="codeInput" placeholder="请输入验证码" maxlength="8" />
+                    <button class="btn-secondary" id="sendCodeBtn">获取验证码</button>
+                </div>
+            </div>
+            <button class="btn-primary" id="loginBtn">登录 / 注册</button>
         </div>
-        <button class="btn-primary" id="loginBtn">登录 / 注册</button>
+
+        <!-- 密码登录 -->
+        <div id="passwordForm" class="password-input" style="display:none;">
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="passwordEmailInput" placeholder="请输入邮箱" />
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="passwordInput" placeholder="请输入密码" />
+            </div>
+            <button class="btn-primary" id="passwordLoginBtn">密码登录</button>
+            <p style="text-align:center;margin-top:12px;font-size:13px;color:#9ca3af;">
+                忘记密码？<a href="#" onclick="switchToOtp()" style="color:#6c5ce7;">使用验证码登录</a>
+            </p>
+        </div>
+
         <p class="back-link"><a href="index.html">← 返回首页</a></p>
     </div>
     <div class="toast" id="toast"></div>
@@ -45,6 +79,30 @@
         var countdown = 0;
         var countdownTimer = null;
 
+        // ============================================================
+        // 切换登录方式
+        // ============================================================
+        document.getElementById('otpTab').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('passwordTab').classList.remove('active');
+            document.getElementById('otpForm').style.display = 'block';
+            document.getElementById('passwordForm').style.display = 'none';
+        });
+
+        document.getElementById('passwordTab').addEventListener('click', function() {
+            this.classList.add('active');
+            document.getElementById('otpTab').classList.remove('active');
+            document.getElementById('otpForm').style.display = 'none';
+            document.getElementById('passwordForm').style.display = 'block';
+        });
+
+        function switchToOtp() {
+            document.getElementById('otpTab').click();
+        }
+
+        // ============================================================
+        // 获取验证码
+        // ============================================================
         document.getElementById('sendCodeBtn').addEventListener('click', async function() {
             var email = document.getElementById('emailInput').value.trim();
             if (!email || !email.includes('@')) {
@@ -71,6 +129,9 @@
             }
         });
 
+        // ============================================================
+        // 验证码登录
+        // ============================================================
         document.getElementById('loginBtn').addEventListener('click', async function() {
             var email = document.getElementById('emailInput').value.trim();
             var code = document.getElementById('codeInput').value.trim();
@@ -93,15 +154,59 @@
             this.textContent = '登录 / 注册';
 
             if (success) {
+                // 登录成功，跳转由 verifyAndLogin 处理
+            }
+        });
+
+        // ============================================================
+        // 密码登录
+        // ============================================================
+        document.getElementById('passwordLoginBtn').addEventListener('click', async function() {
+            var email = document.getElementById('passwordEmailInput').value.trim();
+            var password = document.getElementById('passwordInput').value.trim();
+
+            if (!email || !email.includes('@')) {
+                showToast('请输入正确的邮箱');
+                return;
+            }
+            if (!password || password.length < 6) {
+                showToast('请输入密码（至少6位）');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '登录中...';
+
+            var success = await signInWithEmail(email, password);
+
+            this.disabled = false;
+            this.textContent = '密码登录';
+
+            if (success) {
                 window.location.href = 'index.html';
             }
         });
 
+        // ============================================================
+        // 回车键快捷登录
+        // ============================================================
         document.getElementById('codeInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 document.getElementById('loginBtn').click();
             }
         });
+
+        document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('passwordLoginBtn').click();
+            }
+        });
+
+        // ✅ 检测是否从首次登录跳转过来
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('first_login') === 'true') {
+            showToast('首次登录，请设置密码 🔑');
+        }
     </script>
 </body>
 </html>

@@ -25,6 +25,7 @@ async function sendVerificationCode(email) {
 // ============================================================
 // 2. 验证码登录
 // ============================================================
+// auth.js - 修改 verifyAndLogin 函数
 async function verifyAndLogin(email, code) {
     try {
         var client = getClient();
@@ -35,7 +36,6 @@ async function verifyAndLogin(email, code) {
         });
         if (error) { throw error; }
 
-        // 确保 user 对象存在
         if (!data || !data.user) {
             throw new Error('登录失败，未获取到用户信息');
         }
@@ -47,14 +47,31 @@ async function verifyAndLogin(email, code) {
         };
         setCurrentUser(user);
 
-        // 记录登录行为
         await trackActivity('login', user.id, 'user', { method: 'otp' });
 
-        // 尝试创建或更新用户记录
+        // 确保用户记录存在
         await ensureUserRecord(user.id, user.email);
 
-        showToast('登录成功！🎉');
+        // ✅ 新增：检测用户是否已有密码（首次登录标记）
+        var { data: userData, error: userError } = await client
+            .from('users')
+            .select('has_password, nickname')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        // 如果没有 has_password 字段，或者为 false，则认为是首次登录
+        var isFirstLogin = !userData || !userData.has_password;
+
+        if (isFirstLogin) {
+            showToast('首次登录，请设置密码 🔑');
+            // ✅ 跳转到密码设置页面，并标记为首次登录
+            window.location.href = 'profile.html?first_login=true';
+        } else {
+            showToast('登录成功！🎉');
+            window.location.href = 'index.html';
+        }
         return true;
+
     } catch (err) {
         console.error('验证失败:', err);
         showToast('验证码错误或已过期');
