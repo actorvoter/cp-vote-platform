@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🔥 CP 热力榜</title>
     <!-- ✅ 替换为 jsdelivr CDN，解决 Tracking Prevention 拦截问题 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -195,15 +195,27 @@
                 });
                 container.innerHTML = html;
 
-                // 点击卡片进入详情（跳转到 mycp.html）
-                // 点击卡片进入详情
-				container.querySelectorAll('.card').forEach(function(card) {
-					card.addEventListener('click', function(e) {
-						if (e.target.closest('button')) return;
-						var id = this.getAttribute('data-id');
-						window.location.href = 'mycp.html?id=' + id;
-					});
-				});
+                // ============================================================
+                // ✅ 修复：点击卡片进入详情（跳转到 mycp.html）
+                // ============================================================
+                container.querySelectorAll('.card').forEach(function(card) {
+                    card.addEventListener('click', function(e) {
+                        // 如果点击的是按钮，不触发跳转
+                        if (e.target.closest('button')) return;
+
+                        // ✅ 使用 getAttribute 获取 data-id
+                        var id = this.getAttribute('data-id');
+                        console.log('点击卡片，ID:', id);
+
+                        if (id && !isNaN(id)) {
+                            // ✅ 直接拼接 URL，确保参数正确传递
+                            window.location.href = 'mycp.html?id=' + id;
+                        } else {
+                            console.warn('卡片 ID 无效:', id);
+                            showToast('无法获取 CP ID，请刷新重试');
+                        }
+                    });
+                });
 
                 // 投票按钮
                 container.querySelectorAll('.vote-btn').forEach(function(btn) {
@@ -373,7 +385,7 @@
                 if (existing) {
                     var isMine = (existing.device_id === deviceId);
                     if (isMine) {
-                        showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');  // ✅ 修改了提示
+                        showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');
                     } else {
                         showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
                     }
@@ -387,7 +399,7 @@
                     genre: genre,
                     ip: ip || '',
                     device_id: deviceId,
-                    status: 'approved'  // ✅ 已经是 approved
+                    status: 'approved'
                 });
 
                 if (error) throw error;
@@ -398,7 +410,7 @@
                     genre: genre
                 });
 
-                showToast('提交成功！已上线 🎉');  // ✅ 修改了提示
+                showToast('提交成功！已上线 🎉');
                 document.getElementById('maleInput').value = '';
                 document.getElementById('femaleInput').value = '';
                 closeModal();
