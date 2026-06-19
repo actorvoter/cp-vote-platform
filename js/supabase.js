@@ -3,7 +3,7 @@
 // 1. Supabase 配置
 // ============================================================
 var SUPABASE_URL = 'https://grsxmjvjtqmvylyxmktt.supabase.co';
-var SUPABASE_KEY = 'sb_publishable_3xVvfY3SWS1h4WFgxa_2PA_j4hod9ZG';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA';
 
 var _supabaseClient = null;
 
