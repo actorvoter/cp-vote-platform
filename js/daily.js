@@ -71,6 +71,7 @@ async function getRemainingItems(userId) {
     };
 }
 
+// js/daily.js - 确保道具扣减正确
 async function useItem(userId, cpId, itemType) {
     var activity = await initTodayActivity(userId);
     if (!activity) return { success: false, msg: '系统错误' };

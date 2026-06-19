@@ -416,38 +416,77 @@
         // ============================================================
         // 使用道具
         // ============================================================
-        async function handleUseItem(cpId, type) {
-            var user = getCurrentUser();
-            if (!user) {
-                showToast('请先登录 🚀');
-                window.location.href = 'login.html';
-                return;
-            }
+        // ============================================================
+		// 使用道具（修正版：道具加成正确计算）
+		// ============================================================
+		async function handleUseItem(cpId, type) {
+			var user = getCurrentUser();
+			if (!user) {
+				showToast('请先登录 🚀');
+				window.location.href = 'login.html';
+				return;
+			}
 
-            var result = await useItem(user.id, cpId, type);
-            showToast(result.msg);
+			// ✅ 定义道具对应的票数加成
+			var voteMap = {
+				light: 3,
+				billboard: 5,
+				rocket: 10
+			};
 
-            if (result.success) {
-                var client = getClient();
-                var voteMap = { light: 3, billboard: 5, rocket: 10 };
-                var ip = await getUserIP();
-                var { error } = await client.from('votes').insert({
-                    submission_id: cpId,
-                    voter_type: 'registered',
-                    user_id: String(user.id),
-                    device_id: String(user.id),
-                    ip_address: ip || ''
-                });
-                if (!error) {
-                    await trackActivity('cp_item', String(cpId), 'cp', {
-                        item_type: type,
-                        votes_added: voteMap[type]
-                    });
-                    loadRanking();
-                    updateItemDisplay();
-                }
-            }
-        }
+			var bonusVotes = voteMap[type] || 0;
+			if (bonusVotes === 0) {
+				showToast('道具类型错误');
+				return;
+			}
+
+			// ✅ 先检查道具数量
+			var items = await getRemainingItems(user.id);
+			if (items[type] <= 0) {
+				showToast('道具不足，分享可得更多 🎁');
+				return;
+			}
+
+			// ✅ 使用道具
+			var result = await useItem(user.id, cpId, type);
+			if (!result.success) {
+				showToast(result.msg);
+				return;
+			}
+
+			try {
+				var client = getClient();
+				var ip = await getUserIP();
+
+				// ✅ 插入投票记录，每票一条
+				var votesToInsert = [];
+				for (var i = 0; i < bonusVotes; i++) {
+					votesToInsert.push({
+						submission_id: cpId,
+						voter_type: 'registered',
+						user_id: String(user.id),
+						device_id: String(user.id),
+						ip_address: ip || ''
+					});
+				}
+
+				var { error } = await client.from('votes').insert(votesToInsert);
+				if (error) throw error;
+
+				await trackActivity('cp_item', String(cpId), 'cp', {
+					item_type: type,
+					votes_added: bonusVotes
+				});
+
+				showToast('🎉 使用 ' + type + ' 成功！+' + bonusVotes + ' 票');
+				loadRanking();
+				updateItemDisplay();
+
+			} catch (err) {
+				console.error('使用道具失败:', err);
+				showToast('操作失败，请重试');
+			}
+		}
 
         
 		// ============================================================
