@@ -35,6 +35,11 @@ async function verifyAndLogin(email, code) {
         });
         if (error) { throw error; }
 
+        // 确保 user 对象存在
+        if (!data || !data.user) {
+            throw new Error('登录失败，未获取到用户信息');
+        }
+
         var user = {
             id: data.user.id,
             email: data.user.email,
@@ -45,22 +50,8 @@ async function verifyAndLogin(email, code) {
         // 记录登录行为
         await trackActivity('login', user.id, 'user', { method: 'otp' });
 
-        // 首次登录：创建用户记录
-        var { data: existingUser } = await client
-            .from('users')
-            .select('id')
-            .eq('id', user.id)
-            .maybeSingle();
-
-        if (!existingUser) {
-            var nickname = user.email.split('@')[0];
-            await client.from('users').insert({
-                id: user.id,
-                email: user.email,
-                nickname: nickname
-            });
-            showToast('首次登录，欢迎你！✨');
-        }
+        // 尝试创建或更新用户记录
+        await ensureUserRecord(user.id, user.email);
 
         showToast('登录成功！🎉');
         return true;
@@ -83,6 +74,10 @@ async function signInWithEmail(email, password) {
         });
         if (error) { throw error; }
 
+        if (!data || !data.user) {
+            throw new Error('登录失败，未获取到用户信息');
+        }
+
         var user = {
             id: data.user.id,
             email: data.user.email,
@@ -91,6 +86,9 @@ async function signInWithEmail(email, password) {
         setCurrentUser(user);
 
         await trackActivity('login', user.id, 'user', { method: 'password' });
+
+        // 尝试创建或更新用户记录
+        await ensureUserRecord(user.id, user.email);
 
         showToast('登录成功！🎉');
         return true;
@@ -117,7 +115,7 @@ async function signUpWithEmail(email, password) {
 
         if (error) { throw error; }
 
-        if (data.user) {
+        if (data && data.user) {
             var user = {
                 id: data.user.id,
                 email: data.user.email,
@@ -127,12 +125,8 @@ async function signUpWithEmail(email, password) {
 
             await trackActivity('login', user.id, 'user', { method: 'signup_password' });
 
-            var nickname = user.email.split('@')[0];
-            await client.from('users').insert({
-                id: user.id,
-                email: user.email,
-                nickname: nickname
-            });
+            // 尝试创建或更新用户记录
+            await ensureUserRecord(user.id, user.email);
 
             showToast('注册成功！🎉 已自动登录');
             return true;
@@ -142,5 +136,56 @@ async function signUpWithEmail(email, password) {
         console.error('注册失败:', err);
         showToast('注册失败，请重试');
         return false;
+    }
+}
+
+// 新增辅助函数：确保用户记录存在
+async function ensureUserRecord(userId, email) {
+    try {
+        var client = getClient();
+        // 检查用户是否存在
+        var { data: existingUser, error: findError } = await client
+            .from('users')
+            .select('id')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (findError) {
+            console.warn('查找用户记录失败，尝试创建:', findError);
+            // 如果查询失败，直接尝试插入
+            var nickname = email ? email.split('@')[0] : '用户';
+            await client.from('users').insert({
+                id: userId,
+                email: email || 'unknown@email.com',
+                nickname: nickname
+            });
+            console.log('✅ 已创建用户记录');
+            return;
+        }
+
+        // 如果用户不存在，创建新记录
+        if (!existingUser) {
+            var nickname = email ? email.split('@')[0] : '用户';
+            await client.from('users').insert({
+                id: userId,
+                email: email || 'unknown@email.com',
+                nickname: nickname
+            });
+            console.log('✅ 已创建用户记录');
+        } else {
+            // 如果用户存在但 email 字段为空，更新 email
+            var { data: userData } = await client
+                .from('users')
+                .select('email')
+                .eq('id', userId)
+                .single();
+            if (userData && !userData.email && email) {
+                await client.from('users').update({ email: email }).eq('id', userId);
+                console.log('✅ 已更新用户邮箱');
+            }
+        }
+    } catch (err) {
+        console.error('确保用户记录失败:', err);
+        // 不抛出错误，避免影响主登录流程
     }
 }

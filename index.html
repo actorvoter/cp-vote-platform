@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>🔥 CP 热力榜</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- ✅ 替换为 jsdelivr CDN，解决 Tracking Prevention 拦截问题 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -194,12 +195,12 @@
                 });
                 container.innerHTML = html;
 
-                // 点击卡片进入详情
+                // 点击卡片进入详情（跳转到 mycp.html）
                 container.querySelectorAll('.card').forEach(function(card) {
                     card.addEventListener('click', function(e) {
                         if (e.target.closest('button')) return;
                         var id = this.getAttribute('data-id');
-                        window.location.href = 'detail.html?id=' + id;
+                        window.location.href = 'mycp.html?id=' + id;
                     });
                 });
 
@@ -249,7 +250,7 @@
                 var { error } = await client.from('votes').insert({
                     submission_id: submissionId,
                     voter_type: voterType,
-                    device_id: identifier,
+                    device_id: String(identifier),
                     ip_address: ip || ''
                 });
                 if (error) throw error;
@@ -291,8 +292,8 @@
                 var { error } = await client.from('votes').insert({
                     submission_id: cpId,
                     voter_type: 'registered',
-                    user_id: user.id,
-                    device_id: user.id,
+                    user_id: String(user.id),
+                    device_id: String(user.id),
                     ip_address: ip || ''
                 });
                 if (!error) {
