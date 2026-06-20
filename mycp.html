@@ -430,16 +430,16 @@
                 // ✅ 查询粉丝心声（cp_reasons 表）
                 // ============================================================
                 var { data: reasons, error: reasonsError } = await client
-                    .from('cp_reasons')
-                    .select('id, user_id, nickname, reason, like_count, created_at, device_id')
-                    .eq('submission_id', cpId)
-                    .order('created_at', { ascending: false })
-                    .limit(10);
+					.from('cp_reasons')
+					.select('id, user_id, reason, like_count, created_at, device_id')
+					.eq('submission_id', cpId)
+					.order('created_at', { ascending: false })
+					.limit(10);
 
-                if (reasonsError) {
-                    console.warn('加载粉丝心声失败:', reasonsError);
-                    reasons = [];
-                }
+				if (reasonsError) {
+					console.warn('加载粉丝心声失败:', reasonsError);
+					reasons = [];
+				}
 
                 // 渲染页面
                 var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
@@ -477,16 +477,17 @@
                             <div class="reason-section">
                                 <div class="reason-title">💬 粉丝心声</div>
                                 ${reasons.map(function(r) {
-                                    var displayName = r.nickname || (r.user_id ? '用户' : '匿名');
-                                    var timeStr = formatTime(r.created_at);
-                                    return `
-                                        <div class="reason-item">
-                                            <div class="reason-author">${escapeHtml(displayName)} <span style="font-weight:400;color:#9ca3af;font-size:11px;">· ${timeStr}</span></div>
-                                            <div class="reason-text">“${escapeHtml(r.reason)}”</div>
-                                            ${r.like_count > 0 ? `<div class="reason-like">❤️ ${r.like_count}</div>` : ''}
-                                        </div>
-                                    `;
-                                }).join('')}
+									// ✅ 直接显示"用户"，不再从 r.nickname 读取
+									var displayName = '用户';
+									var timeStr = formatTime(r.created_at);
+									return `
+										<div class="reason-item">
+											<div class="reason-author">${escapeHtml(displayName)} <span style="font-weight:400;color:#9ca3af;font-size:11px;">· ${timeStr}</span></div>
+											<div class="reason-text">“${escapeHtml(r.reason)}”</div>
+											${r.like_count > 0 ? `<div class="reason-like">❤️ ${r.like_count}</div>` : ''}
+										</div>
+									`;
+								}).join('')}
                             </div>
                         `;
                 } else {
