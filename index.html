@@ -34,8 +34,15 @@
     </div>
 	
 	<!-- ===== 广告位（预留） ===== -->
-	<div id="adContainer" style="min-height:70px; margin:12px 0 16px 0; border-radius:12px; background:#f8f6ff; display:flex; align-items:center; justify-content:center; font-size:13px; color:#9ca3af; border:1px dashed #c4b5fd; text-align:center; padding:8px;">
-		📢 广告位预留 · 尺寸 728×90
+	<!-- ===== 内容推荐位（5秒自动轮播） ===== -->
+	<div id="adContainer" style="min-height:70px; margin:12px 0 16px 0; border-radius:12px; background:linear-gradient(135deg, #f8f6ff, #ede9fe); display:flex; align-items:center; justify-content:center; text-align:center; padding:8px 16px; border:1px solid #ede9fe; position:relative; overflow:hidden; cursor:pointer;" onclick="handleBannerClick()">
+		<div id="bannerContent" style="display:flex; align-items:center; gap:12px; transition:opacity 0.5s ease;">
+			<span id="bannerIcon" style="font-size:24px;">🌟</span>
+			<span id="bannerText" style="font-size:14px; color:#4b5563; font-weight:500;"></span>
+			<span id="bannerTag" style="font-size:12px; color:#6c5ce7; background:#fff; padding:2px 14px; border-radius:20px; font-weight:500; white-space:nowrap;"></span>
+		</div>
+		<!-- 进度条（可选） -->
+		<div style="position:absolute; bottom:0; left:0; height:3px; background:#6c5ce7; width:100%;" id="bannerProgress"></div>
 	</div>
 
     <!-- ===== 快捷入口 ===== -->
@@ -643,6 +650,112 @@
         loadRanking();
         updateItemDisplay();
         updateSiteStats();
+		
+		// ============================================================
+		// 内容推荐位（5秒自动轮播）
+		// ============================================================
+		var bannerData = [
+			{ icon: '🌟', text: '今日推荐：张凌赫 ✕ 田曦薇 · 《逐玉》', tag: '🔥 热度第一', link: 'mycp.html?id=1' },
+			{ icon: '🎉', text: '分享 CP 得 20 个人气灯 + 20 个广告牌 + 10 个火箭！', tag: '🎁 立即参与', link: '#' },
+			{ icon: '💬', text: '没有你喜欢的 CP？', tag: '✏️ 去提名', link: '#' },
+			{ icon: '❤️', text: '已有用户为喜欢的 CP 投票助力', tag: '📊 实时榜单', link: 'index.html' },
+			{ icon: '🔥', text: '宋威龙 ✕ 赵今麦 · 《骄阳似我》热度飙升', tag: '📈 上升最快', link: 'mycp.html?id=2' },
+			{ icon: '⭐', text: '李昀锐 ✕ 关晓彤 · 《耀眼》黑马逆袭', tag: '💥 暑期爆款', link: 'mycp.html?id=3' },
+			{ icon: '🚀', text: '使用火箭道具，CP 排名瞬间飙升！', tag: '💪 强力加持', link: '#' }
+		];
+
+		var bannerIndex = 0;
+		var bannerInterval = null;
+		var bannerProgress = null;
+
+		function initBanner() {
+			var progress = document.getElementById('bannerProgress');
+			if (progress) {
+				progress.style.transition = 'none';
+				progress.style.width = '100%';
+				// 触发重排后启动动画
+				void progress.offsetWidth;
+				progress.style.transition = 'width 5s linear';
+				progress.style.width = '0%';
+			}
+			showBanner(0);
+		}
+
+		function showBanner(index) {
+			var data = bannerData[index];
+			if (!data) return;
+
+			var iconEl = document.getElementById('bannerIcon');
+			var textEl = document.getElementById('bannerText');
+			var tagEl = document.getElementById('bannerTag');
+			var container = document.getElementById('adContainer');
+
+			if (iconEl) iconEl.textContent = data.icon;
+			if (textEl) textEl.textContent = data.text;
+			if (tagEl) tagEl.textContent = data.tag;
+
+			// 更新点击链接
+			if (container) {
+				container.dataset.link = data.link || '#';
+			}
+		}
+
+		function nextBanner() {
+			bannerIndex = (bannerIndex + 1) % bannerData.length;
+			showBanner(bannerIndex);
+
+			// 重置进度条
+			var progress = document.getElementById('bannerProgress');
+			if (progress) {
+				progress.style.transition = 'none';
+				progress.style.width = '100%';
+				void progress.offsetWidth;
+				progress.style.transition = 'width 5s linear';
+				progress.style.width = '0%';
+			}
+		}
+
+		// 点击横幅跳转
+		function handleBannerClick() {
+			var container = document.getElementById('adContainer');
+			var link = container ? container.dataset.link : '#';
+			if (link && link !== '#') {
+				window.location.href = link;
+			} else {
+				showToast('🎁 功能开发中，敬请期待！');
+			}
+		}
+
+		// ✅ 在页面加载完成后启动轮播
+		// 启动轮播
+		if (document.getElementById('adContainer')) {
+			initBanner();
+			bannerInterval = setInterval(nextBanner, 5000);
+		}
+
+		// ✅ 页面可见性变化时暂停/恢复轮播（用户切换标签页时节省资源）
+		document.addEventListener('visibilitychange', function() {
+			if (document.hidden) {
+				if (bannerInterval) {
+					clearInterval(bannerInterval);
+					bannerInterval = null;
+				}
+			} else {
+				if (!bannerInterval) {
+					bannerInterval = setInterval(nextBanner, 5000);
+					// 重置进度条
+					var progress = document.getElementById('bannerProgress');
+					if (progress) {
+						progress.style.transition = 'none';
+						progress.style.width = '100%';
+						void progress.offsetWidth;
+						progress.style.transition = 'width 5s linear';
+						progress.style.width = '0%';
+					}
+				}
+			}
+		});
+		
         console.log('✅ CP 热力榜已启动');
     </script>
 </body>
