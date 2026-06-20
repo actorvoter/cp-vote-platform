@@ -3,41 +3,113 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>登录 · CP 热力榜</title>
+    <title>登录 · 捣蛋选角</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        .login-container { max-width:400px; margin:60px auto 0; padding:0 20px; }
-        .login-container h2 { text-align:center; margin-bottom:8px; font-size:24px; }
-        .login-container .subtitle { text-align:center; color:#9ca3af; font-size:14px; margin-bottom:30px; }
-        .login-container .code-row { display:flex; gap:10px; }
-        .login-container .code-row input { flex:1; }
-        .login-container .code-row .btn-secondary { white-space:nowrap; padding:14px 16px; border-radius:12px; font-size:14px; }
-        .login-container .btn-primary { width:100%; padding:14px; font-size:16px; border-radius:12px; margin-top:8px; }
-        .login-container .back-link { display:block; text-align:center; margin-top:20px; color:#9ca3af; font-size:14px; }
-        .login-container .back-link a { color:#6c5ce7; }
-        .login-container .tab-switch { display:flex; gap:0; margin-bottom:20px; border-radius:12px; overflow:hidden; border:1px solid #e5e7eb; }
-        .login-container .tab-switch button { flex:1; padding:12px; border:none; background:#f9fafb; font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; }
-        .login-container .tab-switch button.active { background:#6c5ce7; color:#fff; }
-        .login-container .tab-switch button:not(.active):hover { background:#f3f4f6; }
-        .login-container .password-input { display:none; }
-        .login-container .otp-input { display:block; }
-        .login-container .password-input.active { display:block; }
-        .login-container .otp-input.hidden { display:none; }
+        .login-container {
+            max-width: 400px;
+            margin: 60px auto 0;
+            padding: 0 20px;
+        }
+        .login-container h2 {
+            text-align: center;
+            margin-bottom: 4px;
+            font-size: 24px;
+        }
+        .login-container .brand-slogan {
+            text-align: center;
+            color: #f59e0b;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        .login-container .subtitle {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .login-container .code-row {
+            display: flex;
+            gap: 10px;
+        }
+        .login-container .code-row input {
+            flex: 1;
+        }
+        .login-container .code-row .btn-secondary {
+            white-space: nowrap;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .login-container .btn-primary {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+        .login-container .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        .login-container .back-link a {
+            color: #6c5ce7;
+        }
+        .login-container .tab-switch {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        .login-container .tab-switch button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f9fafb;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .login-container .tab-switch button.active {
+            background: #6c5ce7;
+            color: #fff;
+        }
+        .login-container .tab-switch button:not(.active):hover {
+            background: #f3f4f6;
+        }
+        .login-container .password-input {
+            display: none;
+        }
+        .login-container .otp-input {
+            display: block;
+        }
+        .login-container .password-input.active {
+            display: block;
+        }
+        .login-container .otp-input.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>📧 登录 CP 热力榜</h2>
-        <p class="subtitle">登录后可以评论、使用道具、管理你的 CP</p>
-        
-        <!-- 登录方式切换 -->
+        <h2>🥚 登录捣蛋选角</h2>
+        <div class="brand-slogan">🎯 选角不公？捣蛋有理！</div>
+        <p class="subtitle">登录后可以投票、丢鸡蛋、管理你的 CP</p>
+
         <div class="tab-switch">
             <button id="otpTab" class="active">验证码登录</button>
             <button id="passwordTab">密码登录</button>
         </div>
 
-        <!-- 验证码登录 -->
         <div id="otpForm" class="otp-input">
             <div class="form-group">
                 <label>邮箱</label>
@@ -53,7 +125,6 @@
             <button class="btn-primary" id="loginBtn">登录 / 注册</button>
         </div>
 
-        <!-- 密码登录 -->
         <div id="passwordForm" class="password-input" style="display:none;">
             <div class="form-group">
                 <label>邮箱</label>
@@ -82,9 +153,6 @@
         var countdown = 0;
         var countdownTimer = null;
 
-        // ============================================================
-        // 切换登录方式
-        // ============================================================
         document.getElementById('otpTab').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('passwordTab').classList.remove('active');
@@ -103,9 +171,6 @@
             document.getElementById('otpTab').click();
         }
 
-        // ============================================================
-        // 获取验证码
-        // ============================================================
         document.getElementById('sendCodeBtn').addEventListener('click', async function() {
             var email = document.getElementById('emailInput').value.trim();
             if (!email || !email.includes('@')) {
@@ -132,9 +197,6 @@
             }
         });
 
-        // ============================================================
-        // 验证码登录
-        // ============================================================
         document.getElementById('loginBtn').addEventListener('click', async function() {
             var email = document.getElementById('emailInput').value.trim();
             var code = document.getElementById('codeInput').value.trim();
@@ -156,14 +218,9 @@
             this.disabled = false;
             this.textContent = '登录 / 注册';
 
-            if (success) {
-                // verifyAndLogin 会处理跳转
-            }
+            if (success) {}
         });
 
-        // ============================================================
-        // 密码登录
-        // ============================================================
         document.getElementById('passwordLoginBtn').addEventListener('click', async function() {
             var email = document.getElementById('passwordEmailInput').value.trim();
             var password = document.getElementById('passwordInput').value.trim();
@@ -190,9 +247,6 @@
             }
         });
 
-        // ============================================================
-        // 回车键快捷登录
-        // ============================================================
         document.getElementById('codeInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 document.getElementById('loginBtn').click();
@@ -205,7 +259,6 @@
             }
         });
 
-        // ✅ 检测是否从首次登录跳转过来
         var urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('first_login') === 'true') {
             showToast('首次登录，请设置密码 🔑');

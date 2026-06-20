@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CP 详情</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <title>CP 详情 · 捣蛋选角</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
         .cp-summary {
@@ -30,6 +31,9 @@
             color: #6c5ce7;
             padding: 2px 12px;
             border-radius: 20px;
+        }
+        .cp-summary .cp-meta .status-tag {
+            color: #9ca3af;
         }
         .comment-item {
             padding: 12px 0;
@@ -93,7 +97,6 @@
         .comment-item .comment-actions button:hover {
             color: #6c5ce7;
         }
-        /* 回复样式 */
         .comment-item .replies {
             margin-left: 36px;
             padding-left: 12px;
@@ -194,15 +197,30 @@
             color: #9ca3af;
             padding: 40px 0;
         }
-        /* 随机颜色 */
-        .avatar-color-0 { background: #6c5ce7; }
-        .avatar-color-1 { background: #e74c3c; }
-        .avatar-color-2 { background: #2ecc71; }
-        .avatar-color-3 { background: #f39c12; }
-        .avatar-color-4 { background: #3498db; }
-        .avatar-color-5 { background: #1abc9c; }
-        .avatar-color-6 { background: #e67e22; }
-        .avatar-color-7 { background: #9b59b6; }
+        .avatar-color-0 {
+            background: #6c5ce7;
+        }
+        .avatar-color-1 {
+            background: #e74c3c;
+        }
+        .avatar-color-2 {
+            background: #2ecc71;
+        }
+        .avatar-color-3 {
+            background: #f39c12;
+        }
+        .avatar-color-4 {
+            background: #3498db;
+        }
+        .avatar-color-5 {
+            background: #1abc9c;
+        }
+        .avatar-color-6 {
+            background: #e67e22;
+        }
+        .avatar-color-7 {
+            background: #9b59b6;
+        }
     </style>
 </head>
 <body>
@@ -216,7 +234,6 @@
         <div class="loading-state">加载中...</div>
     </div>
 
-    <!-- 评论输入区（自动识别用户） -->
     <div class="comment-input-area" id="commentInputArea" style="display:none;">
         <span class="user-badge" id="userBadge">👤 游客</span>
         <input type="text" id="commentContent" placeholder="写评论..." style="flex:1;" />
@@ -225,11 +242,9 @@
 
     <div class="toast" id="toast"></div>
 
-    <script src="js/supabase.js"></script>
+    <script src="js/supabase.js">
+    </script>
     <script>
-        // ============================================================
-        // 工具函数
-        // ============================================================
         function showToast(msg) {
             var t = document.getElementById('toast');
             if (!t) { alert(msg); return; }
@@ -270,9 +285,6 @@
             return name.substr(0, 1).toUpperCase();
         }
 
-        // ============================================================
-        // 从 URL 获取 ID
-        // ============================================================
         function getCpIdFromUrl() {
             var params = new URLSearchParams(window.location.search);
             var id = params.get('id');
@@ -287,9 +299,6 @@
             return null;
         }
 
-        // ============================================================
-        // 获取当前用户信息
-        // ============================================================
         function getUserInfo() {
             var user = getCurrentUser();
             if (user) {
@@ -306,9 +315,6 @@
             };
         }
 
-        // ============================================================
-        // 获取用户昵称（从数据库）
-        // ============================================================
         async function getUserNickname(userId) {
             if (!userId || userId.startsWith('guest_')) return null;
             try {
@@ -325,15 +331,11 @@
             }
         }
 
-        // ============================================================
-        // 主逻辑
-        // ============================================================
         var myDeviceId = getDeviceId();
         var cpId = getCpIdFromUrl();
         var currentUser = getUserInfo();
 
         console.log('当前 CP ID:', cpId);
-        console.log('当前用户:', currentUser);
 
         var body = document.getElementById('detailBody');
         var commentArea = document.getElementById('commentInputArea');
@@ -349,7 +351,6 @@
             try {
                 var client = getClient();
 
-                // 查询 CP 信息
                 var { data: cpData, error: cpError } = await client
                     .from('cp_submissions')
                     .select('id, male_actor, female_actor, genre, status, votes ( id )')
@@ -365,7 +366,6 @@
 
                 var voteCount = cpData.votes ? cpData.votes.length : 0;
 
-                // ✅ 查询评论 + 回复（使用 parent_id 字段）
                 var { data: comments, error: commentError } = await client
                     .from('comments')
                     .select('id, user_id, nickname, content, created_at, device_id, parent_id')
@@ -377,14 +377,11 @@
                     comments = [];
                 }
 
-                // 渲染页面
                 var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
                 document.getElementById('detailTitle').textContent = '💬 ' + title;
 
-                // ✅ 更新用户徽章
                 updateUserBadge();
 
-                // ✅ 构建评论树（支持回复）
                 var topComments = [];
                 var replyMap = {};
                 comments.forEach(function(c) {
@@ -411,16 +408,14 @@
                             <div class="cp-meta">
                                 <span class="genre-tag">${escapeHtml(cpData.genre)}</span>
                                 <span>❤️ ${voteCount} 票</span>
-                                <span style="color:#9ca3af;">${cpData.status === 'approved' ? '✅ 已上线' : '⏳ 审核中'}</span>
+                                <span class="status-tag">${cpData.status === 'approved' ? '✅ 已上线' : '⏳ 审核中'}</span>
                             </div>
                         </div>
                         <div id="commentList">${commentHtml}</div>
                     `;
 
-                // ✅ 显示评论输入区
                 commentArea.style.display = 'flex';
 
-                // ✅ 绑定发送事件
                 document.getElementById('sendCommentBtn').onclick = function() { handleSendComment(cpId, null); };
                 document.getElementById('commentContent').onkeydown = function(e) {
                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -429,7 +424,6 @@
                     }
                 };
 
-                // ✅ 绑定回复按钮和回复发送
                 document.querySelectorAll('.reply-btn').forEach(function(btn) {
                     btn.addEventListener('click', function() {
                         var parentId = this.getAttribute('data-parent-id');
@@ -457,9 +451,6 @@
             }
         }
 
-        // ============================================================
-        // 渲染单条评论（含回复）
-        // ============================================================
         function renderComment(comment, replyMap) {
             var isGuest = !comment.user_id || comment.user_id.startsWith('guest_');
             var displayName = comment.nickname || (isGuest ? '游客' : '用户');
@@ -511,9 +502,6 @@
                 `;
         }
 
-        // ============================================================
-        // 切换回复输入框
-        // ============================================================
         function toggleReplyInput(parentId) {
             var area = document.getElementById('reply_area_' + parentId);
             if (area) {
@@ -527,15 +515,11 @@
             }
         }
 
-        // ============================================================
-        // 更新用户徽章
-        // ============================================================
         function updateUserBadge() {
             var badge = document.getElementById('userBadge');
             if (!badge) return;
             var user = getCurrentUser();
             if (user) {
-                // 尝试获取昵称
                 getUserNickname(user.id).then(function(nickname) {
                     var display = nickname || user.email || '用户';
                     badge.textContent = '👤 ' + display;
@@ -546,9 +530,6 @@
             }
         }
 
-        // ============================================================
-        // 发送评论 / 回复
-        // ============================================================
         async function handleSendComment(cpId, parentId, prefillContent) {
             var contentInput = document.getElementById('commentContent');
             var content = prefillContent || contentInput.value.trim();
@@ -558,7 +539,6 @@
             var user = getCurrentUser();
             var isGuest = !user;
 
-            // 获取昵称
             var nickname = null;
             if (!isGuest) {
                 try {
@@ -588,7 +568,7 @@
                     device_id: isGuest ? myDeviceId : String(user.id),
                     nickname: nickname,
                     content: content,
-                    parent_id: parentId || null  // ✅ 支持回复
+                    parent_id: parentId || null
                 });
 
                 if (error) throw error;
@@ -597,7 +577,6 @@
                 if (!prefillContent) {
                     contentInput.value = '';
                 }
-                // 刷新详情
                 loadDetail(cpId);
 
             } catch (err) {
@@ -606,7 +585,7 @@
             }
         }
 
-        console.log('✅ CP 详情页已加载（支持回复）');
+        console.log('✅ 捣蛋选角 - CP详情页已加载');
     </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🔥 CP 热力榜</title>
+    <title>捣蛋选角 · 选角不公？捣蛋有理！</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
     </script>
     <link rel="stylesheet" href="css/style.css" />
@@ -12,7 +12,7 @@
 
     <!-- ===== 头部 ===== -->
     <div class="header">
-        <h1>🔥 CP 热力榜</h1>
+        <h1>🥚 捣蛋选角</h1>
         <div class="user-area">
             <a href="login.html" id="loginBtn" class="btn-secondary">登录</a>
             <div id="userInfo" style="display:none; align-items:center; gap:8px;">
@@ -24,36 +24,46 @@
         </div>
     </div>
 
+    <!-- ===== 品牌口号 ===== -->
+    <div style="text-align:center; font-size:14px; color:#f59e0b; margin-bottom:12px; font-weight:500; letter-spacing:1px;">
+        🎯 选角不公？捣蛋有理！
+    </div>
+
     <!-- ===== 每日任务横幅 ===== -->
     <div class="daily-banner" id="dailyBanner">
         <div>
-            <span class="info-item">🎁 今日道具：</span>
+            <span class="info-item">🎁 今日捣蛋工具：</span>
             <span class="info-item" id="itemDisplay">🪄 3个 · 📢 0个 · 🚀 0个</span>
         </div>
         <button class="share-btn" id="shareBtn">📤 分享得道具</button>
     </div>
-	
-	<!-- ===== 广告位（预留） ===== -->
-	<!-- ===== 内容推荐位（5秒自动轮播） ===== -->
-	<div id="adContainer" style="min-height:70px; margin:12px 0 16px 0; border-radius:12px; background:linear-gradient(135deg, #f8f6ff, #ede9fe); display:flex; align-items:center; justify-content:center; text-align:center; padding:8px 16px; border:1px solid #ede9fe; position:relative; overflow:hidden; cursor:pointer;" onclick="handleBannerClick()">
-		<div id="bannerContent" style="display:flex; align-items:center; gap:12px; transition:opacity 0.5s ease;">
-			<span id="bannerIcon" style="font-size:24px;">🌟</span>
-			<span id="bannerText" style="font-size:14px; color:#4b5563; font-weight:500;"></span>
-			<span id="bannerTag" style="font-size:12px; color:#6c5ce7; background:#fff; padding:2px 14px; border-radius:20px; font-weight:500; white-space:nowrap;"></span>
-		</div>
-		<!-- 进度条（可选） -->
-		<div style="position:absolute; bottom:0; left:0; height:3px; background:#6c5ce7; width:100%;" id="bannerProgress"></div>
-	</div>
 
     <!-- ===== 快捷入口 ===== -->
     <div style="display:flex; gap:10px; margin-bottom:16px;">
         <button class="btn-primary" id="openModalBtn" style="flex:1;">+ 提名 CP</button>
-        <a href="my-submissions.html" class="btn-secondary" style="flex:1; text-align:center; padding:8px 0;">👤 我的 CP</a>
+        <a href="my-submissions.html" class="btn-secondary" style="flex:1; text-align:center; padding:8px 0;">👤 我的捣蛋</a>
+    </div>
+
+    <!-- ===== Tab 切换 ===== -->
+    <div style="display:flex; gap:0; margin-bottom:16px; border-radius:12px; overflow:hidden; border:1px solid #ede9fe;">
+        <button id="tabHot" class="tab-btn active" style="flex:1; padding:10px; border:none; background:#6c5ce7; color:#fff; font-weight:600; cursor:pointer; font-size:14px;">🔥 热度榜</button>
+        <button id="tabControversy" class="tab-btn" style="flex:1; padding:10px; border:none; background:#f9fafb; color:#6b7280; font-weight:500; cursor:pointer; font-size:14px;">🥚 争议榜</button>
+        <button id="tabRising" class="tab-btn" style="flex:1; padding:10px; border:none; background:#f9fafb; color:#6b7280; font-weight:500; cursor:pointer; font-size:14px;">📈 飙升榜</button>
     </div>
 
     <!-- ===== 榜单列表 ===== -->
     <div id="rankingList">
         <p style="text-align:center; color:#9ca3af; padding:40px 0;">加载中...</p>
+    </div>
+
+    <!-- ===== 内容推荐位 ===== -->
+    <div id="adContainer" style="min-height:70px; margin:12px 0 16px 0; border-radius:12px; background:linear-gradient(135deg, #f8f6ff, #fef3c7); display:flex; align-items:center; justify-content:center; text-align:center; padding:8px 16px; border:1px solid #ede9fe; position:relative; overflow:hidden; cursor:pointer;" onclick="handleBannerClick()">
+        <div id="bannerContent" style="display:flex; align-items:center; gap:12px; transition:opacity 0.5s ease;">
+            <span id="bannerIcon" style="font-size:24px;">🌟</span>
+            <span id="bannerText" style="font-size:14px; color:#4b5563; font-weight:500;"></span>
+            <span id="bannerTag" style="font-size:12px; color:#6c5ce7; background:#fff; padding:2px 14px; border-radius:20px; font-weight:500; white-space:nowrap;"></span>
+        </div>
+        <div style="position:absolute; bottom:0; left:0; height:3px; background:#f59e0b; width:100%;" id="bannerProgress"></div>
     </div>
 
     <!-- ===== 访问统计 ===== -->
@@ -63,15 +73,16 @@
 
     <!-- ===== 免责声明 ===== -->
     <div class="footer-disclaimer">
-        ⚠️ 本平台所有CP组合由用户自发投票产生，仅代表观众审美偏好，<br />
+        ⚠️ 网友观点不代表平台立场。请理性讨论，勿人身攻击。<br />
+        本平台所有CP组合由用户自发投票产生，仅代表观众审美偏好。<br />
         不构成对任何艺人肖像权、名誉权的商业使用。<br />
         <a href="#">用户协议</a> · <a href="#">隐私政策</a>
     </div>
 
     <!-- ===== 底部导航 ===== -->
     <div class="bottom-nav">
-        <a href="index.html" class="tab active"><span class="icon">🔥</span> 榜单</a>
-        <a href="my-submissions.html" class="tab"><span class="icon">👤</span> 我的 CP</a>
+        <a href="index.html" class="tab active"><span class="icon">🥚</span> 捣蛋</a>
+        <a href="my-submissions.html" class="tab"><span class="icon">👤</span> 我的捣蛋</a>
         <a href="profile.html" class="tab"><span class="icon">⚙️</span> 个人中心</a>
         <a href="login.html" class="tab"><span class="icon">📱</span> 登录</a>
     </div>
@@ -95,15 +106,17 @@
                 <div class="form-group">
                     <label>题材</label>
                     <select id="genreInput">
-                        <option value="古装仙侠">古装仙侠</option>
+                        <option value="古装甜宠">古装甜宠</option>
+                        <option value="仙侠奇幻">仙侠奇幻</option>
                         <option value="现代霸总">现代霸总</option>
+                        <option value="都市情感">都市情感</option>
                         <option value="悬疑推理">悬疑推理</option>
                         <option value="民国虐恋">民国虐恋</option>
                         <option value="青春校园">青春校园</option>
                         <option value="其他">其他</option>
                     </select>
                 </div>
-                <button class="btn-primary" id="confirmSubmitBtn" style="width:100%;padding:14px;font-size:16px;">提交投票</button>
+                <button class="btn-primary" id="confirmSubmitBtn" style="width:100%;padding:14px;font-size:16px;">提交捣蛋</button>
             </div>
         </div>
     </div>
@@ -119,7 +132,6 @@
         // ============================================================
         var myDeviceId = getDeviceId();
 
-        // 页面加载时记录访问
         trackPageView('index');
 
         // ============================================================
@@ -157,80 +169,106 @@
         // ============================================================
         // 更新访问统计
         // ============================================================
+        async function updateSiteStats() {
+            var statsEl = document.getElementById('siteStats');
+            try {
+                var client = getClient();
+                var today = new Date().toISOString().split('T')[0];
+
+                var { data: statsData, error: statsError } = await client
+                    .from('site_stats')
+                    .select('*')
+                    .maybeSingle();
+
+                if (statsError || !statsData) {
+                    await client.from('site_stats').insert({
+                        page_views: 1,
+                        unique_visitors: 1
+                    });
+                    if (statsEl) statsEl.textContent = '👁️ 1 次访问';
+                    return;
+                }
+
+                var newViews = (statsData.page_views || 0) + 1;
+                await client
+                    .from('site_stats')
+                    .update({ page_views: newViews })
+                    .eq('id', statsData.id);
+
+                var { data: todayData } = await client
+                    .from('daily_visits')
+                    .select('*')
+                    .eq('visit_date', today)
+                    .maybeSingle();
+
+                if (todayData) {
+                    await client
+                        .from('daily_visits')
+                        .update({
+                            page_view_count: (todayData.page_view_count || 0) + 1
+                        })
+                        .eq('visit_date', today);
+                } else {
+                    await client
+                        .from('daily_visits')
+                        .insert({
+                            visit_date: today,
+                            page_view_count: 1,
+                            visitor_count: 1
+                        });
+                }
+
+                if (statsEl) {
+                    var totalViews = newViews;
+                    if (totalViews >= 10000) {
+                        statsEl.textContent = '👁️ ' + (totalViews / 10000).toFixed(1) + '万 次访问';
+                    } else {
+                        statsEl.textContent = '👁️ ' + totalViews + ' 次访问';
+                    }
+                }
+
+            } catch (err) {
+                console.warn('更新统计失败:', err);
+                if (statsEl) {
+                    statsEl.textContent = '👁️ 统计加载中...';
+                }
+            }
+        }
+
         // ============================================================
-		// 更新访问统计（修复版）
-		// ============================================================
-		async function updateSiteStats() {
-			var statsEl = document.getElementById('siteStats');
-			try {
-				var client = getClient();
-				var today = new Date().toISOString().split('T')[0];
+        // 当前榜单模式
+        // ============================================================
+        var currentTab = 'hot'; // hot, controversy, rising
 
-				// ✅ 1. 确保 site_stats 表有数据
-				var { data: statsData, error: statsError } = await client
-					.from('site_stats')
-					.select('*')
-					.maybeSingle();
+        // ============================================================
+        // Tab 切换
+        // ============================================================
+        document.getElementById('tabHot').addEventListener('click', function() {
+            switchTab('hot');
+        });
+        document.getElementById('tabControversy').addEventListener('click', function() {
+            switchTab('controversy');
+        });
+        document.getElementById('tabRising').addEventListener('click', function() {
+            switchTab('rising');
+        });
 
-				if (statsError || !statsData) {
-					// 如果没有数据，创建一条
-					await client.from('site_stats').insert({
-						page_views: 1,
-						unique_visitors: 1
-					});
-					if (statsEl) statsEl.textContent = '👁️ 1 次访问';
-					return;
-				}
-
-				// ✅ 2. 更新总访问量
-				var newViews = (statsData.page_views || 0) + 1;
-				await client
-					.from('site_stats')
-					.update({ page_views: newViews })
-					.eq('id', statsData.id);
-
-				// ✅ 3. 更新每日访问
-				var { data: todayData } = await client
-					.from('daily_visits')
-					.select('*')
-					.eq('visit_date', today)
-					.maybeSingle();
-
-				if (todayData) {
-					await client
-						.from('daily_visits')
-						.update({
-							page_view_count: (todayData.page_view_count || 0) + 1
-						})
-						.eq('visit_date', today);
-				} else {
-					await client
-						.from('daily_visits')
-						.insert({
-							visit_date: today,
-							page_view_count: 1,
-							visitor_count: 1
-						});
-				}
-
-				// ✅ 4. 显示格式化数字
-				if (statsEl) {
-					var totalViews = newViews;
-					if (totalViews >= 10000) {
-						statsEl.textContent = '👁️ ' + (totalViews / 10000).toFixed(1) + '万 次访问';
-					} else {
-						statsEl.textContent = '👁️ ' + totalViews + ' 次访问';
-					}
-				}
-
-			} catch (err) {
-				console.warn('更新统计失败:', err);
-				if (statsEl) {
-					// 显示友好的错误提示
-					statsEl.textContent = '👁️ 统计加载中...';
-				}
-			}
-		}
+        function switchTab(tab) {
+            currentTab = tab;
+            // 更新按钮样式
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+                btn.style.background = '#f9fafb';
+                btn.style.color = '#6b7280';
+            });
+            var activeBtn = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.style.background = '#6c5ce7';
+                activeBtn.style.color = '#fff';
+            }
+            loadRanking();
+        }
 
         // ============================================================
         // 渲染 CP 列表
@@ -295,7 +333,6 @@
             });
             container.innerHTML = html;
 
-            // 绑定点击事件（只对非默认数据）
             container.querySelectorAll('.card:not([data-default="true"])').forEach(function(card) {
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('button')) return;
@@ -306,7 +343,6 @@
                 });
             });
 
-            // 绑定投票按钮（只对非默认数据）
             container.querySelectorAll('.card:not([data-default="true"]) .vote-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -317,7 +353,6 @@
                 });
             });
 
-            // 绑定道具按钮（只对非默认数据）
             container.querySelectorAll('.card:not([data-default="true"]) .item-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -345,15 +380,14 @@
 
                 if (error) throw error;
 
-                // ✅ 如果数据库没有数据，使用默认明星 CP 榜单
                 if (!data || data.length === 0) {
                     var defaultCPs = [
-                        { male_actor: '张凌赫', female_actor: '田曦薇', genre: '古装仙侠', vote_count: 428000000 },
+                        { male_actor: '张凌赫', female_actor: '田曦薇', genre: '古装甜宠', vote_count: 428000000 },
                         { male_actor: '宋威龙', female_actor: '赵今麦', genre: '现代霸总', vote_count: 30130000 },
                         { male_actor: '李昀锐', female_actor: '关晓彤', genre: '现代霸总', vote_count: 88300000 },
-                        { male_actor: '侯明昊', female_actor: '谭松韵', genre: '古装仙侠', vote_count: 28600000 },
-                        { male_actor: '王鹤棣', female_actor: '孟子义', genre: '古装仙侠', vote_count: 15000000 },
-                        { male_actor: '刘宇宁', female_actor: '赵露思', genre: '古装仙侠', vote_count: 12000000 },
+                        { male_actor: '侯明昊', female_actor: '谭松韵', genre: '仙侠奇幻', vote_count: 28600000 },
+                        { male_actor: '王鹤棣', female_actor: '孟子义', genre: '古装甜宠', vote_count: 15000000 },
+                        { male_actor: '刘宇宁', female_actor: '赵露思', genre: '古装甜宠', vote_count: 12000000 },
                         { male_actor: '林一', female_actor: '卢昱晓', genre: '现代霸总', vote_count: 8000000 }
                     ];
                     renderCPList(container, defaultCPs, true);
@@ -369,14 +403,24 @@
                         vote_count: item.votes ? item.votes.length : 0
                     };
                 });
-                list.sort(function(a, b) { return b.vote_count - a.vote_count; });
+
+                // 根据当前 Tab 排序
+                if (currentTab === 'hot') {
+                    list.sort(function(a, b) { return b.vote_count - a.vote_count; });
+                } else if (currentTab === 'controversy') {
+                    // 争议榜：按反对票排序（目前先用票数模拟，等鲜花/鸡蛋功能上线后替换）
+                    list.sort(function(a, b) { return (a.vote_count % 7) - (b.vote_count % 7); });
+                } else if (currentTab === 'rising') {
+                    // 飙升榜：按 ID 倒序（最新提交的 CP）
+                    list.sort(function(a, b) { return b.id - a.id; });
+                }
+
                 renderCPList(container, list, false);
 
             } catch (err) {
                 console.error('加载榜单失败:', err);
-                // ✅ 出错时也显示默认榜单
                 var defaultCPs = [
-                    { male_actor: '张凌赫', female_actor: '田曦薇', genre: '古装仙侠', vote_count: 428000000 },
+                    { male_actor: '张凌赫', female_actor: '田曦薇', genre: '古装甜宠', vote_count: 428000000 },
                     { male_actor: '宋威龙', female_actor: '赵今麦', genre: '现代霸总', vote_count: 30130000 },
                     { male_actor: '李昀锐', female_actor: '关晓彤', genre: '现代霸总', vote_count: 88300000 }
                 ];
@@ -428,135 +472,126 @@
         // ============================================================
         // 使用道具
         // ============================================================
+        async function handleUseItem(cpId, type) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var voteMap = {
+                light: 3,
+                billboard: 5,
+                rocket: 10
+            };
+
+            var bonusVotes = voteMap[type] || 0;
+            if (bonusVotes === 0) {
+                showToast('道具类型错误');
+                return;
+            }
+
+            var items = await getRemainingItems(user.id);
+            if (items[type] <= 0) {
+                showToast('道具不足，分享可得更多 🎁');
+                return;
+            }
+
+            var result = await useItem(user.id, cpId, type);
+            if (!result.success) {
+                showToast(result.msg);
+                return;
+            }
+
+            try {
+                var client = getClient();
+                var ip = await getUserIP();
+
+                var votesToInsert = [];
+                for (var i = 0; i < bonusVotes; i++) {
+                    votesToInsert.push({
+                        submission_id: cpId,
+                        voter_type: 'registered',
+                        user_id: String(user.id),
+                        device_id: String(user.id),
+                        ip_address: ip || ''
+                    });
+                }
+
+                var { error } = await client.from('votes').insert(votesToInsert);
+                if (error) throw error;
+
+                await trackActivity('cp_item', String(cpId), 'cp', {
+                    item_type: type,
+                    votes_added: bonusVotes
+                });
+
+                showToast('🎉 使用 ' + type + ' 成功！+' + bonusVotes + ' 票');
+                loadRanking();
+                updateItemDisplay();
+
+            } catch (err) {
+                console.error('使用道具失败:', err);
+                showToast('操作失败，请重试');
+            }
+        }
+
         // ============================================================
-		// 使用道具（修正版：道具加成正确计算）
-		// ============================================================
-		async function handleUseItem(cpId, type) {
-			var user = getCurrentUser();
-			if (!user) {
-				showToast('请先登录 🚀');
-				window.location.href = 'login.html';
-				return;
-			}
+        // 分享得道具
+        // ============================================================
+        document.getElementById('shareBtn').addEventListener('click', async function() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录才能领取奖励 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
 
-			// ✅ 定义道具对应的票数加成
-			var voteMap = {
-				light: 3,
-				billboard: 5,
-				rocket: 10
-			};
+            var activity = await getTodayActivity(user.id);
+            if (activity && activity.shared_today) {
+                showToast('今天已经领取过分享奖励啦 🎁 明天再来吧');
+                return;
+            }
 
-			var bonusVotes = voteMap[type] || 0;
-			if (bonusVotes === 0) {
-				showToast('道具类型错误');
-				return;
-			}
+            var siteUrl = window.location.origin + window.location.pathname;
+            var shareData = {
+                title: '🥚 捣蛋选角',
+                text: '我在捣蛋选角为喜欢的 CP 投票！快来一起捣蛋吧！\n\n' + siteUrl,
+                url: siteUrl
+            };
 
-			// ✅ 先检查道具数量
-			var items = await getRemainingItems(user.id);
-			if (items[type] <= 0) {
-				showToast('道具不足，分享可得更多 🎁');
-				return;
-			}
-
-			// ✅ 使用道具
-			var result = await useItem(user.id, cpId, type);
-			if (!result.success) {
-				showToast(result.msg);
-				return;
-			}
-
-			try {
-				var client = getClient();
-				var ip = await getUserIP();
-
-				// ✅ 插入投票记录，每票一条
-				var votesToInsert = [];
-				for (var i = 0; i < bonusVotes; i++) {
-					votesToInsert.push({
-						submission_id: cpId,
-						voter_type: 'registered',
-						user_id: String(user.id),
-						device_id: String(user.id),
-						ip_address: ip || ''
-					});
-				}
-
-				var { error } = await client.from('votes').insert(votesToInsert);
-				if (error) throw error;
-
-				await trackActivity('cp_item', String(cpId), 'cp', {
-					item_type: type,
-					votes_added: bonusVotes
-				});
-
-				showToast('🎉 使用 ' + type + ' 成功！+' + bonusVotes + ' 票');
-				loadRanking();
-				updateItemDisplay();
-
-			} catch (err) {
-				console.error('使用道具失败:', err);
-				showToast('操作失败，请重试');
-			}
-		}
-
-        
-		// ============================================================
-		// 分享得道具（升级版：追踪实际分享行为 + 完整链接）
-		// ============================================================
-		document.getElementById('shareBtn').addEventListener('click', async function() {
-			var user = getCurrentUser();
-			if (!user) {
-				showToast('请先登录才能领取奖励 🚀');
-				window.location.href = 'login.html';
-				return;
-			}
-
-			var activity = await getTodayActivity(user.id);
-			if (activity && activity.shared_today) {
-				showToast('今天已经领取过分享奖励啦 🎁 明天再来吧');
-				return;
-			}
-
-			// ✅ 构建分享内容（确保包含完整链接）
-			var siteUrl = window.location.origin + window.location.pathname;
-			var shareData = {
-				title: '🔥 CP 热力榜',
-				text: '我正在 CP 热力榜为喜欢的 CP 打 call！快来一起投票吧！\n\n' + siteUrl,
-				url: siteUrl
-			};
-
-			try {
-				if (navigator.share) {
-					await navigator.share(shareData);
-					await grantShareReward(user.id);
-					showToast('🎉 分享成功！获得 20个人气灯 + 20个广告牌 + 10个火箭！');
-					updateItemDisplay();
-					loadRanking();
-					await trackActivity('share_success', null, null, { 
-						source: 'web_share_api',
-						platform: navigator.userAgent
-					});
-				} else {
-					await navigator.clipboard.writeText(siteUrl + '\n\n' + shareData.text);
-					if (confirm('📋 链接已复制！\n\n分享到你的社交圈后，点击"确定"领取奖励 🎁')) {
-						await grantShareReward(user.id);
-						showToast('🎉 奖励已发放！获得 20个人气灯 + 20个广告牌 + 10个火箭！');
-						updateItemDisplay();
-						loadRanking();
-						await trackActivity('share_success', null, null, { 
-							source: 'clipboard_manual',
-							platform: navigator.userAgent
-						});
-					} else {
-						showToast('分享后记得回来领取奖励哦 📤');
-					}
-				}
-			} catch (err) {
-				console.warn('分享失败:', err);
-				showToast('分享取消，没有领取奖励');
-			}
-		});
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                    await grantShareReward(user.id);
+                    showToast('🎉 分享成功！获得 20个人气灯 + 20个广告牌 + 10个火箭！');
+                    updateItemDisplay();
+                    loadRanking();
+                    await trackActivity('share_success', null, null, {
+                        source: 'web_share_api',
+                        platform: navigator.userAgent
+                    });
+                } else {
+                    await navigator.clipboard.writeText(siteUrl + '\n\n' + shareData.text);
+                    if (confirm('📋 链接已复制！\n\n分享到你的社交圈后，点击"确定"领取奖励 🎁')) {
+                        await grantShareReward(user.id);
+                        showToast('🎉 奖励已发放！获得 20个人气灯 + 20个广告牌 + 10个火箭！');
+                        updateItemDisplay();
+                        loadRanking();
+                        await trackActivity('share_success', null, null, {
+                            source: 'clipboard_manual',
+                            platform: navigator.userAgent
+                        });
+                    } else {
+                        showToast('分享后记得回来领取奖励哦 📤');
+                    }
+                }
+            } catch (err) {
+                console.warn('分享失败:', err);
+                showToast('分享取消，没有领取奖励');
+            }
+        });
 
         // ============================================================
         // 弹窗控制
@@ -576,7 +611,7 @@
         });
 
         // ============================================================
-        // 提交 CP（含重复提交提醒）
+        // 提交 CP
         // ============================================================
         document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
             var male = document.getElementById('maleInput').value.trim();
@@ -644,119 +679,108 @@
         });
 
         // ============================================================
+        // 内容推荐位轮播
+        // ============================================================
+        var bannerData = [
+            { icon: '🌟', text: '今日推荐：张凌赫 ✕ 田曦薇 · 《逐玉》', tag: '🔥 热度第一', link: 'mycp.html?id=1' },
+            { icon: '🎉', text: '分享得 20 个人气灯 + 20 个广告牌 + 10 个火箭！', tag: '🎁 立即参与', link: '#' },
+            { icon: '💬', text: '没有你喜欢的 CP？', tag: '✏️ 去提名', link: '#' },
+            { icon: '❤️', text: '已有用户为喜欢的 CP 投票助力', tag: '📊 实时榜单', link: 'index.html' },
+            { icon: '🔥', text: '宋威龙 ✕ 赵今麦 · 《骄阳似我》热度飙升', tag: '📈 上升最快', link: 'mycp.html?id=2' },
+            { icon: '⭐', text: '李昀锐 ✕ 关晓彤 · 《耀眼》黑马逆袭', tag: '💥 暑期爆款', link: 'mycp.html?id=3' },
+            { icon: '🚀', text: '使用火箭道具，CP 排名瞬间飙升！', tag: '💪 强力加持', link: '#' }
+        ];
+
+        var bannerIndex = 0;
+        var bannerInterval = null;
+
+        function initBanner() {
+            var progress = document.getElementById('bannerProgress');
+            if (progress) {
+                progress.style.transition = 'none';
+                progress.style.width = '100%';
+                void progress.offsetWidth;
+                progress.style.transition = 'width 5s linear';
+                progress.style.width = '0%';
+            }
+            showBanner(0);
+        }
+
+        function showBanner(index) {
+            var data = bannerData[index];
+            if (!data) return;
+
+            var iconEl = document.getElementById('bannerIcon');
+            var textEl = document.getElementById('bannerText');
+            var tagEl = document.getElementById('bannerTag');
+            var container = document.getElementById('adContainer');
+
+            if (iconEl) iconEl.textContent = data.icon;
+            if (textEl) textEl.textContent = data.text;
+            if (tagEl) tagEl.textContent = data.tag;
+            if (container) {
+                container.dataset.link = data.link || '#';
+            }
+        }
+
+        function nextBanner() {
+            bannerIndex = (bannerIndex + 1) % bannerData.length;
+            showBanner(bannerIndex);
+
+            var progress = document.getElementById('bannerProgress');
+            if (progress) {
+                progress.style.transition = 'none';
+                progress.style.width = '100%';
+                void progress.offsetWidth;
+                progress.style.transition = 'width 5s linear';
+                progress.style.width = '0%';
+            }
+        }
+
+        function handleBannerClick() {
+            var container = document.getElementById('adContainer');
+            var link = container ? container.dataset.link : '#';
+            if (link && link !== '#') {
+                window.location.href = link;
+            } else {
+                showToast('🎁 功能开发中，敬请期待！');
+            }
+        }
+
+        if (document.getElementById('adContainer')) {
+            initBanner();
+            bannerInterval = setInterval(nextBanner, 5000);
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (bannerInterval) {
+                    clearInterval(bannerInterval);
+                    bannerInterval = null;
+                }
+            } else {
+                if (!bannerInterval) {
+                    bannerInterval = setInterval(nextBanner, 5000);
+                    var progress = document.getElementById('bannerProgress');
+                    if (progress) {
+                        progress.style.transition = 'none';
+                        progress.style.width = '100%';
+                        void progress.offsetWidth;
+                        progress.style.transition = 'width 5s linear';
+                        progress.style.width = '0%';
+                    }
+                }
+            }
+        });
+
+        // ============================================================
         // 初始化
         // ============================================================
         updateUserUI();
         loadRanking();
         updateItemDisplay();
         updateSiteStats();
-		
-		// ============================================================
-		// 内容推荐位（5秒自动轮播）
-		// ============================================================
-		var bannerData = [
-			{ icon: '🌟', text: '今日推荐：张凌赫 ✕ 田曦薇 · 《逐玉》', tag: '🔥 热度第一', link: 'mycp.html?id=1' },
-			{ icon: '🎉', text: '分享 CP 得 20 个人气灯 + 20 个广告牌 + 10 个火箭！', tag: '🎁 立即参与', link: '#' },
-			{ icon: '💬', text: '没有你喜欢的 CP？', tag: '✏️ 去提名', link: '#' },
-			{ icon: '❤️', text: '已有用户为喜欢的 CP 投票助力', tag: '📊 实时榜单', link: 'index.html' },
-			{ icon: '🔥', text: '宋威龙 ✕ 赵今麦 · 《骄阳似我》热度飙升', tag: '📈 上升最快', link: 'mycp.html?id=2' },
-			{ icon: '⭐', text: '李昀锐 ✕ 关晓彤 · 《耀眼》黑马逆袭', tag: '💥 暑期爆款', link: 'mycp.html?id=3' },
-			{ icon: '🚀', text: '使用火箭道具，CP 排名瞬间飙升！', tag: '💪 强力加持', link: '#' }
-		];
-
-		var bannerIndex = 0;
-		var bannerInterval = null;
-		var bannerProgress = null;
-
-		function initBanner() {
-			var progress = document.getElementById('bannerProgress');
-			if (progress) {
-				progress.style.transition = 'none';
-				progress.style.width = '100%';
-				// 触发重排后启动动画
-				void progress.offsetWidth;
-				progress.style.transition = 'width 5s linear';
-				progress.style.width = '0%';
-			}
-			showBanner(0);
-		}
-
-		function showBanner(index) {
-			var data = bannerData[index];
-			if (!data) return;
-
-			var iconEl = document.getElementById('bannerIcon');
-			var textEl = document.getElementById('bannerText');
-			var tagEl = document.getElementById('bannerTag');
-			var container = document.getElementById('adContainer');
-
-			if (iconEl) iconEl.textContent = data.icon;
-			if (textEl) textEl.textContent = data.text;
-			if (tagEl) tagEl.textContent = data.tag;
-
-			// 更新点击链接
-			if (container) {
-				container.dataset.link = data.link || '#';
-			}
-		}
-
-		function nextBanner() {
-			bannerIndex = (bannerIndex + 1) % bannerData.length;
-			showBanner(bannerIndex);
-
-			// 重置进度条
-			var progress = document.getElementById('bannerProgress');
-			if (progress) {
-				progress.style.transition = 'none';
-				progress.style.width = '100%';
-				void progress.offsetWidth;
-				progress.style.transition = 'width 5s linear';
-				progress.style.width = '0%';
-			}
-		}
-
-		// 点击横幅跳转
-		function handleBannerClick() {
-			var container = document.getElementById('adContainer');
-			var link = container ? container.dataset.link : '#';
-			if (link && link !== '#') {
-				window.location.href = link;
-			} else {
-				showToast('🎁 功能开发中，敬请期待！');
-			}
-		}
-
-		// ✅ 在页面加载完成后启动轮播
-		// 启动轮播
-		if (document.getElementById('adContainer')) {
-			initBanner();
-			bannerInterval = setInterval(nextBanner, 5000);
-		}
-
-		// ✅ 页面可见性变化时暂停/恢复轮播（用户切换标签页时节省资源）
-		document.addEventListener('visibilitychange', function() {
-			if (document.hidden) {
-				if (bannerInterval) {
-					clearInterval(bannerInterval);
-					bannerInterval = null;
-				}
-			} else {
-				if (!bannerInterval) {
-					bannerInterval = setInterval(nextBanner, 5000);
-					// 重置进度条
-					var progress = document.getElementById('bannerProgress');
-					if (progress) {
-						progress.style.transition = 'none';
-						progress.style.width = '100%';
-						void progress.offsetWidth;
-						progress.style.transition = 'width 5s linear';
-						progress.style.width = '0%';
-					}
-				}
-			}
-		});
-		
-        console.log('✅ CP 热力榜已启动');
+        console.log('✅ 捣蛋选角已启动 🥚');
     </script>
 </body>
 </html>
