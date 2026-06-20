@@ -274,7 +274,6 @@
         // ============================================================
         async function handleInteraction(cpId, type) {
             var user = getCurrentUser();
-            var identifier = user ? user.id : myDeviceId;
 
             if (!user) {
                 showToast('请先登录才能互动 🚀');
@@ -311,7 +310,7 @@
                 var field = type === 'flower' ? 'flower_count' : 'egg_count';
                 var { data: cpData } = await client
                     .from('cp_submissions')
-                    .select(field)
+                    .select(field, 'male_actor', 'female_actor')
                     .eq('id', cpId)
                     .single();
 
@@ -328,10 +327,160 @@
                 showToast(type === 'flower' ? '🌹 支持成功！' : '🥚 丢鸡蛋成功！');
                 loadRanking();
 
+                // ✅ 丢鸡蛋后弹出简评窗口
+                if (type === 'egg' && cpData) {
+                    setTimeout(function() {
+                        openEggCommentModal(cpId, cpData.male_actor, cpData.female_actor);
+                    }, 600);
+                }
+
             } catch (err) {
                 console.error('互动失败:', err);
                 showToast('操作失败，请重试');
             }
+        }
+
+        // ============================================================
+        // ✅ 丢鸡蛋后弹出简评窗口
+        // ============================================================
+        function openEggCommentModal(cpId, male, female) {
+            // 移除已存在的弹窗
+            var existingModal = document.getElementById('eggCommentModal');
+            if (existingModal) {
+                document.body.removeChild(existingModal);
+            }
+
+            var overlay = document.createElement('div');
+            overlay.id = 'eggCommentModal';
+            overlay.style.cssText = `
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    z-index: 999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                `;
+
+            var modal = document.createElement('div');
+            modal.style.cssText = `
+                    background: #fff;
+                    border-radius: 20px;
+                    max-width: 480px;
+                    width: 100%;
+                    padding: 24px 20px 20px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    animation: slideUp 0.3s ease;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+                `;
+
+            // 预设范例
+            var examples = [
+                '这对CP完全没有火花，演技不在一个频道上 🥚',
+                '两人年龄差太大了，看起来像父女，完全没有CP感',
+                '剧情强行凑CP，看得我好尴尬，实在嗑不动',
+                '演员的表演风格完全不搭，一个太浮夸一个太内敛',
+                '这对CP的设定太老套了，换个组合会更好',
+                '两人同框毫无化学反应，感觉在各自演各自的',
+                '这个组合太违和了，完全不符合角色设定'
+            ];
+            var randomExample = examples[Math.floor(Math.random() * examples.length)];
+
+            modal.innerHTML = `
+                    <div style="text-align:center; margin-bottom:12px;">
+                        <span style="font-size:36px;">🥚</span>
+                        <h3 style="margin:8px 0 4px 0; font-size:20px;">你为什么要丢鸡蛋？</h3>
+                        <p style="color:#9ca3af; font-size:14px; margin:0;">
+                            对 <strong>${escapeHtml(male)} ✕ ${escapeHtml(female)}</strong> 有什么看法？
+                        </p>
+                        <p style="color:#9ca3af; font-size:12px; margin-top:4px;">（选填 · 你的观点可能会被其他人看到）</p>
+                    </div>
+                    <div style="margin-bottom:12px; background:#fef3c7; border-radius:8px; padding:8px 12px; font-size:13px; color:#92400e;">
+                        💡 参考：<span style="color:#6b7280;">“${escapeHtml(randomExample)}”</span>
+                    </div>
+                    <div style="margin-bottom:16px;">
+                        <textarea id="eggReasonInput" placeholder="说说你的理由..." style="width:100%; min-height:80px; padding:12px; border:1px solid #e5e7eb; border-radius:12px; font-size:14px; outline:none; resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button id="skipEggBtn" style="flex:1; padding:12px; background:#f3f4f6; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#6b7280;">跳过</button>
+                        <button id="submitEggBtn" style="flex:2; padding:12px; background:#d97706; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#fff; font-weight:600;">🥚 提交我的理由</button>
+                    </div>
+                `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // 添加动画样式
+            if (!document.getElementById('eggModalStyle')) {
+                var style = document.createElement('style');
+                style.id = 'eggModalStyle';
+                style.textContent = `
+                        @keyframes slideUp {
+                            from { transform: translateY(30px); opacity: 0; }
+                            to { transform: translateY(0); opacity: 1; }
+                        }
+                    `;
+                document.head.appendChild(style);
+            }
+
+            // 事件绑定
+            var input = document.getElementById('eggReasonInput');
+
+            document.getElementById('skipEggBtn').addEventListener('click', function() {
+                if (overlay.parentNode) {
+                    document.body.removeChild(overlay);
+                }
+                showToast('已跳过，你的鸡蛋已记录 🥚');
+            });
+
+            document.getElementById('submitEggBtn').addEventListener('click', async function() {
+                var reason = input.value.trim();
+                if (!reason) {
+                    showToast('写点什么吧，或者点击跳过 🥚');
+                    return;
+                }
+
+                try {
+                    var client = getClient();
+                    var user = getCurrentUser();
+                    var { error } = await client.from('cp_reasons').insert({
+                        submission_id: cpId,
+                        user_id: user ? user.id : null,
+                        device_id: user ? user.id : myDeviceId,
+                        reason: reason,
+                        reason_type: 'egg'
+                    });
+
+                    if (error) throw error;
+
+                    if (overlay.parentNode) {
+                        document.body.removeChild(overlay);
+                    }
+                    showToast('🥚 已收到你的观点！');
+                    await trackActivity('cp_egg_reason', String(cpId), 'cp', {
+                        reason_length: reason.length
+                    });
+
+                } catch (err) {
+                    console.error('保存理由失败:', err);
+                    showToast('保存失败，请重试');
+                }
+            });
+
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    if (overlay.parentNode) {
+                        document.body.removeChild(overlay);
+                    }
+                    showToast('已跳过，你的鸡蛋已记录 🥚');
+                }
+            });
+
+            setTimeout(function() {
+                if (input) input.focus();
+            }, 300);
         }
 
         // ============================================================
@@ -669,8 +818,7 @@
                         loadRanking();
                         await trackActivity('share_success', null, null, {
                             source: 'clipboard_manual',
-                            platform: navigator.userAgent
-                        });
+                            platform: navigator.userAgent                        });
                     } else {
                         showToast('分享后记得回来领取奖励哦 📤');
                     }
@@ -699,7 +847,81 @@
         });
 
         // ============================================================
-        // ✅ 故事分享弹窗
+        // 提交 CP
+        // ============================================================
+        document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
+            var male = document.getElementById('maleInput').value.trim();
+            var female = document.getElementById('femaleInput').value.trim();
+            var genre = document.getElementById('genreInput').value;
+
+            if (!male || !female) {
+                showToast('请填写男演员和女演员名字');
+                return;
+            }
+
+            var user = getCurrentUser();
+            var deviceId = user ? user.id : myDeviceId;
+
+            try {
+                var client = getClient();
+
+                var { data: existing } = await client
+                    .from('cp_submissions')
+                    .select('id, device_id')
+                    .eq('male_actor', male)
+                    .eq('female_actor', female)
+                    .eq('genre', genre)
+                    .maybeSingle();
+
+                if (existing) {
+                    var isMine = (existing.device_id === deviceId);
+                    if (isMine) {
+                        showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');
+                    } else {
+                        showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
+                    }
+                    return;
+                }
+
+                var ip = await getUserIP();
+                var { data: newCP, error } = await client.from('cp_submissions').insert({
+                    male_actor: male,
+                    female_actor: female,
+                    genre: genre,
+                    ip: ip || '',
+                    device_id: deviceId,
+                    user_id: user ? user.id : null,
+                    status: 'approved',
+                    flower_count: 0,
+                    egg_count: 0
+                }).select().single();
+
+                if (error) throw error;
+
+                await trackActivity('cp_submit', null, null, {
+                    male_actor: male,
+                    female_actor: female,
+                    genre: genre
+                });
+
+                showToast('提交成功！已上线 🎉');
+                document.getElementById('maleInput').value = '';
+                document.getElementById('femaleInput').value = '';
+                closeModal();
+                loadRanking();
+
+                if (newCP && newCP.id) {
+                    openReasonModal(newCP.id, male, female);
+                }
+
+            } catch (err) {
+                console.error('提交失败:', err);
+                showToast('提交失败，请重试');
+            }
+        });
+
+        // ============================================================
+        // ✅ 故事分享弹窗（提交CP后）
         // ============================================================
         function openReasonModal(cpId, male, female) {
             var overlay = document.createElement('div');
@@ -784,7 +1006,8 @@
                         submission_id: cpId,
                         user_id: user ? user.id : null,
                         device_id: user ? user.id : myDeviceId,
-                        reason: reason
+                        reason: reason,
+                        reason_type: 'support'
                     });
 
                     if (error) throw error;
@@ -812,80 +1035,6 @@
                 reasonInput.focus();
             }, 300);
         }
-
-        // ============================================================
-        // 提交 CP
-        // ============================================================
-        document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
-            var male = document.getElementById('maleInput').value.trim();
-            var female = document.getElementById('femaleInput').value.trim();
-            var genre = document.getElementById('genreInput').value;
-
-            if (!male || !female) {
-                showToast('请填写男演员和女演员名字');
-                return;
-            }
-
-            var user = getCurrentUser();
-            var deviceId = user ? user.id : myDeviceId;
-
-            try {
-                var client = getClient();
-
-                var { data: existing } = await client
-                    .from('cp_submissions')
-                    .select('id, device_id')
-                    .eq('male_actor', male)
-                    .eq('female_actor', female)
-                    .eq('genre', genre)
-                    .maybeSingle();
-
-                if (existing) {
-                    var isMine = (existing.device_id === deviceId);
-                    if (isMine) {
-                        showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');
-                    } else {
-                        showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
-                    }
-                    return;
-                }
-
-                var ip = await getUserIP();
-                var { data: newCP, error } = await client.from('cp_submissions').insert({
-                    male_actor: male,
-                    female_actor: female,
-                    genre: genre,
-                    ip: ip || '',
-                    device_id: deviceId,
-                    user_id: user ? user.id : null,
-                    status: 'approved',
-                    flower_count: 0,
-                    egg_count: 0
-                }).select().single();
-
-                if (error) throw error;
-
-                await trackActivity('cp_submit', null, null, {
-                    male_actor: male,
-                    female_actor: female,
-                    genre: genre
-                });
-
-                showToast('提交成功！已上线 🎉');
-                document.getElementById('maleInput').value = '';
-                document.getElementById('femaleInput').value = '';
-                closeModal();
-                loadRanking();
-
-                if (newCP && newCP.id) {
-                    openReasonModal(newCP.id, male, female);
-                }
-
-            } catch (err) {
-                console.error('提交失败:', err);
-                showToast('提交失败，请重试');
-            }
-        });
 
         // ============================================================
         // 内容推荐位轮播
@@ -946,7 +1095,6 @@
             }
         }
 
-        // ✅ 修复：handleBannerClick 函数
         function handleBannerClick() {
             var container = document.getElementById('adContainer');
             var link = container ? container.dataset.link : '#';
@@ -957,7 +1105,6 @@
             }
         }
 
-        // 在广告容器上绑定点击事件（移除内联 onclick）
         document.addEventListener('DOMContentLoaded', function() {
             var container = document.getElementById('adContainer');
             if (container) {
