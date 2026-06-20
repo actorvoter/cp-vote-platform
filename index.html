@@ -25,8 +25,20 @@
     </div>
 
     <!-- ===== 品牌口号 ===== -->
-    <div style="text-align:center; font-size:14px; color:#f59e0b; margin-bottom:12px; font-weight:500; letter-spacing:1px;">
+    <div style="text-align:center; font-size:14px; color:#f59e0b; margin-bottom:8px; font-weight:500; letter-spacing:1px;">
         🎯 选角不公？捣蛋有理！
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ✅ 滚动广告栏 - 移到头部（品牌口号下方）                      -->
+    <!-- ============================================================ -->
+    <div id="adContainer" style="min-height:60px; margin:0 0 12px 0; border-radius:12px; background:linear-gradient(135deg, #f8f6ff, #fef3c7); display:flex; align-items:center; justify-content:center; text-align:center; padding:6px 16px; border:1px solid #ede9fe; position:relative; overflow:hidden; cursor:pointer;" onclick="handleBannerClick()">
+        <div id="bannerContent" style="display:flex; align-items:center; gap:12px; transition:opacity 0.5s ease;">
+            <span id="bannerIcon" style="font-size:20px;">🌟</span>
+            <span id="bannerText" style="font-size:13px; color:#4b5563; font-weight:500;"></span>
+            <span id="bannerTag" style="font-size:11px; color:#6c5ce7; background:#fff; padding:2px 12px; border-radius:20px; font-weight:500; white-space:nowrap;"></span>
+        </div>
+        <div style="position:absolute; bottom:0; left:0; height:3px; background:#f59e0b; width:100%;" id="bannerProgress"></div>
     </div>
 
     <!-- ===== 每日任务横幅 ===== -->
@@ -54,16 +66,6 @@
     <!-- ===== 榜单列表 ===== -->
     <div id="rankingList">
         <p style="text-align:center; color:#9ca3af; padding:40px 0;">加载中...</p>
-    </div>
-
-    <!-- ===== 内容推荐位 ===== -->
-    <div id="adContainer" style="min-height:70px; margin:12px 0 16px 0; border-radius:12px; background:linear-gradient(135deg, #f8f6ff, #fef3c7); display:flex; align-items:center; justify-content:center; text-align:center; padding:8px 16px; border:1px solid #ede9fe; position:relative; overflow:hidden; cursor:pointer;" onclick="handleBannerClick()">
-        <div id="bannerContent" style="display:flex; align-items:center; gap:12px; transition:opacity 0.5s ease;">
-            <span id="bannerIcon" style="font-size:24px;">🌟</span>
-            <span id="bannerText" style="font-size:14px; color:#4b5563; font-weight:500;"></span>
-            <span id="bannerTag" style="font-size:12px; color:#6c5ce7; background:#fff; padding:2px 14px; border-radius:20px; font-weight:500; white-space:nowrap;"></span>
-        </div>
-        <div style="position:absolute; bottom:0; left:0; height:3px; background:#f59e0b; width:100%;" id="bannerProgress"></div>
     </div>
 
     <!-- ===== 访问统计 ===== -->
@@ -255,7 +257,6 @@
 
         function switchTab(tab) {
             currentTab = tab;
-            // 更新按钮样式
             document.querySelectorAll('.tab-btn').forEach(function(btn) {
                 btn.classList.remove('active');
                 btn.style.background = '#f9fafb';
@@ -271,7 +272,75 @@
         }
 
         // ============================================================
-        // 渲染 CP 列表
+        // 鲜花/鸡蛋 互动
+        // ============================================================
+        async function handleInteraction(cpId, type) {
+            var user = getCurrentUser();
+            var identifier = user ? user.id : myDeviceId;
+
+            if (!user) {
+                showToast('请先登录才能互动 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                // 检查今天是否已经互动过
+                var { data: existing, error: checkError } = await client
+                    .from('user_interactions')
+                    .select('id')
+                    .eq('user_id', String(user.id))
+                    .eq('submission_id', cpId)
+                    .eq('interaction_type', type)
+                    .maybeSingle();
+
+                if (existing) {
+                    showToast(type === 'flower' ? '你已经支持过这对 CP 啦 🌹' : '你已经丢过鸡蛋啦 🥚');
+                    return;
+                }
+
+                // 记录互动
+                var { error: insertError } = await client
+                    .from('user_interactions')
+                    .insert({
+                        user_id: String(user.id),
+                        submission_id: cpId,
+                        interaction_type: type
+                    });
+
+                if (insertError) throw insertError;
+
+                // 更新 cp_submissions 的计数
+                var field = type === 'flower' ? 'flower_count' : 'egg_count';
+                var { data: cpData } = await client
+                    .from('cp_submissions')
+                    .select(field)
+                    .eq('id', cpId)
+                    .single();
+
+                var newCount = (cpData ? cpData[field] : 0) + 1;
+                await client
+                    .from('cp_submissions')
+                    .update({ [field]: newCount })
+                    .eq('id', cpId);
+
+                await trackActivity(type === 'flower' ? 'cp_flower' : 'cp_egg', String(cpId), 'cp', {
+                    interaction_type: type
+                });
+
+                showToast(type === 'flower' ? '🌹 支持成功！' : '🥚 丢鸡蛋成功！');
+                loadRanking();
+
+            } catch (err) {
+                console.error('互动失败:', err);
+                showToast('操作失败，请重试');
+            }
+        }
+
+        // ============================================================
+        // 渲染 CP 列表（含鲜花/鸡蛋按钮）
         // ============================================================
         function renderCPList(container, list, isDefault) {
             if (!list || list.length === 0) {
@@ -301,6 +370,10 @@
                     '<span style="font-size:10px;background:#fef3c7;color:#d97706;padding:0 8px;border-radius:10px;margin-left:4px;">⭐ 推荐</span>' :
                     '';
 
+                // ✅ 鲜花/鸡蛋 显示
+                var flowerCount = item.flower_count || 0;
+                var eggCount = item.egg_count || 0;
+
                 var actionsHtml = '';
                 if (!isDefault && item.id) {
                     actionsHtml = `
@@ -309,6 +382,8 @@
                                 <button class="item-btn" data-id="${item.id}" data-type="light">🪄 +3</button>
                                 <button class="item-btn" data-id="${item.id}" data-type="billboard">📢 +5</button>
                                 <button class="item-btn" data-id="${item.id}" data-type="rocket">🚀 +10</button>
+                                <button class="flower-btn" data-id="${item.id}" style="background:#fce4ec;color:#e74c3c;border:none;padding:3px 12px;border-radius:16px;font-size:12px;cursor:pointer;">🌹 ${flowerCount}</button>
+                                <button class="egg-btn" data-id="${item.id}" style="background:#fef3c7;color:#d97706;border:none;padding:3px 12px;border-radius:16px;font-size:12px;cursor:pointer;">🥚 ${eggCount}</button>
                             </div>
                         `;
                 } else if (isDefault) {
@@ -333,6 +408,7 @@
             });
             container.innerHTML = html;
 
+            // 卡片点击
             container.querySelectorAll('.card:not([data-default="true"])').forEach(function(card) {
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('button')) return;
@@ -343,6 +419,7 @@
                 });
             });
 
+            // 投票按钮
             container.querySelectorAll('.card:not([data-default="true"]) .vote-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -353,6 +430,7 @@
                 });
             });
 
+            // 道具按钮
             container.querySelectorAll('.card:not([data-default="true"]) .item-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -360,6 +438,28 @@
                     var type = this.getAttribute('data-type');
                     if (!isNaN(cpId)) {
                         handleUseItem(cpId, type);
+                    }
+                });
+            });
+
+            // ✅ 鲜花按钮
+            container.querySelectorAll('.card:not([data-default="true"]) .flower-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var id = parseInt(this.getAttribute('data-id'));
+                    if (!isNaN(id)) {
+                        handleInteraction(id, 'flower');
+                    }
+                });
+            });
+
+            // ✅ 鸡蛋按钮
+            container.querySelectorAll('.card:not([data-default="true"]) .egg-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var id = parseInt(this.getAttribute('data-id'));
+                    if (!isNaN(id)) {
+                        handleInteraction(id, 'egg');
                     }
                 });
             });
@@ -374,7 +474,7 @@
                 var client = getClient();
                 var { data, error } = await client
                     .from('cp_submissions')
-                    .select('id, male_actor, female_actor, genre, status, votes ( id )')
+                    .select('id, male_actor, female_actor, genre, status, flower_count, egg_count, votes ( id )')
                     .eq('status', 'approved')
                     .order('id', { ascending: false });
 
@@ -400,18 +500,17 @@
                         male_actor: item.male_actor,
                         female_actor: item.female_actor,
                         genre: item.genre,
-                        vote_count: item.votes ? item.votes.length : 0
+                        vote_count: item.votes ? item.votes.length : 0,
+                        flower_count: item.flower_count || 0,
+                        egg_count: item.egg_count || 0
                     };
                 });
 
-                // 根据当前 Tab 排序
                 if (currentTab === 'hot') {
                     list.sort(function(a, b) { return b.vote_count - a.vote_count; });
                 } else if (currentTab === 'controversy') {
-                    // 争议榜：按反对票排序（目前先用票数模拟，等鲜花/鸡蛋功能上线后替换）
-                    list.sort(function(a, b) { return (a.vote_count % 7) - (b.vote_count % 7); });
+                    list.sort(function(a, b) { return (b.egg_count || 0) - (a.egg_count || 0); });
                 } else if (currentTab === 'rising') {
-                    // 飙升榜：按 ID 倒序（最新提交的 CP）
                     list.sort(function(a, b) { return b.id - a.id; });
                 }
 
@@ -655,7 +754,9 @@
                     ip: ip || '',
                     device_id: deviceId,
                     user_id: user ? user.id : null,
-                    status: 'approved'
+                    status: 'approved',
+                    flower_count: 0,
+                    egg_count: 0
                 });
 
                 if (error) throw error;
