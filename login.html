@@ -54,20 +54,24 @@
         </div>
 
         <!-- 密码登录 -->
-        <div id="passwordForm" class="password-input" style="display:none;">
-            <div class="form-group">
-                <label>邮箱</label>
-                <input type="email" id="passwordEmailInput" placeholder="请输入邮箱" />
-            </div>
-            <div class="form-group">
-                <label>密码</label>
-                <input type="password" id="passwordInput" placeholder="请输入密码" />
-            </div>
-            <button class="btn-primary" id="passwordLoginBtn">密码登录</button>
-            <p style="text-align:center;margin-top:12px;font-size:13px;color:#9ca3af;">
-                忘记密码？<a href="#" onclick="switchToOtp()" style="color:#6c5ce7;">使用验证码登录</a>
-            </p>
-        </div>
+		<div id="passwordForm" class="password-input" style="display:none;">
+			<div class="form-group">
+				<label>邮箱</label>
+				<input type="email" id="passwordEmailInput" placeholder="请输入邮箱" />
+			</div>
+			<div class="form-group">
+				<label>密码</label>
+				<input type="password" id="passwordInput" placeholder="请输入密码" />
+			</div>
+			<!-- ✅ 忘记密码链接放在这里 -->
+			<p style="text-align:right;margin-top:4px;margin-bottom:12px;font-size:13px;">
+				<a href="reset-password.html" style="color:#6c5ce7;text-decoration:none;">🔑 忘记密码？</a>
+			</p>
+			<button class="btn-primary" id="passwordLoginBtn">密码登录</button>
+			<p style="text-align:center;margin-top:12px;font-size:13px;color:#9ca3af;">
+				还没有账号？<a href="#" onclick="switchToOtp()" style="color:#6c5ce7;">使用验证码登录</a>
+			</p>
+		</div>
 
         <p class="back-link"><a href="index.html">← 返回首页</a></p>
     </div>
@@ -185,8 +189,7 @@
             if (success) {
                 window.location.href = 'index.html';
             }
-        });
-
+			
         // ============================================================
         // 回车键快捷登录
         // ============================================================
