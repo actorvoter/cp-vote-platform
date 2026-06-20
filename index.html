@@ -709,171 +709,85 @@
             if (e.target === this) closeModal();
         });
 
-        // ============================================================
-        // 提交 CP
-        // ============================================================
-        document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
-            var male = document.getElementById('maleInput').value.trim();
-            var female = document.getElementById('femaleInput').value.trim();
-            var genre = document.getElementById('genreInput').value;
+        
+		// ============================================================
+		// 提交 CP（含故事分享弹窗）
+		// ============================================================
+		document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
+			var male = document.getElementById('maleInput').value.trim();
+			var female = document.getElementById('femaleInput').value.trim();
+			var genre = document.getElementById('genreInput').value;
 
-            if (!male || !female) {
-                showToast('请填写男演员和女演员名字');
-                return;
-            }
+			if (!male || !female) {
+				showToast('请填写男演员和女演员名字');
+				return;
+			}
 
-            var user = getCurrentUser();
-            var deviceId = user ? user.id : myDeviceId;
+			var user = getCurrentUser();
+			var deviceId = user ? user.id : myDeviceId;
 
-            try {
-                var client = getClient();
+			try {
+				var client = getClient();
 
-                var { data: existing } = await client
-                    .from('cp_submissions')
-                    .select('id, device_id')
-                    .eq('male_actor', male)
-                    .eq('female_actor', female)
-                    .eq('genre', genre)
-                    .maybeSingle();
+				var { data: existing } = await client
+					.from('cp_submissions')
+					.select('id, device_id')
+					.eq('male_actor', male)
+					.eq('female_actor', female)
+					.eq('genre', genre)
+					.maybeSingle();
 
-                if (existing) {
-                    var isMine = (existing.device_id === deviceId);
-                    if (isMine) {
-                        showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');
-                    } else {
-                        showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
-                    }
-                    return;
-                }
+				if (existing) {
+					var isMine = (existing.device_id === deviceId);
+					if (isMine) {
+						showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');
+					} else {
+						showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
+					}
+					return;
+				}
 
-                var ip = await getUserIP();
-                var { error } = await client.from('cp_submissions').insert({
-                    male_actor: male,
-                    female_actor: female,
-                    genre: genre,
-                    ip: ip || '',
-                    device_id: deviceId,
-                    user_id: user ? user.id : null,
-                    status: 'approved',
-                    flower_count: 0,
-                    egg_count: 0
-                });
+				var ip = await getUserIP();
+				// ✅ 修改：使用 .select().single() 获取新插入的 CP 数据
+				var { data: newCP, error } = await client.from('cp_submissions').insert({
+					male_actor: male,
+					female_actor: female,
+					genre: genre,
+					ip: ip || '',
+					device_id: deviceId,
+					user_id: user ? user.id : null,
+					status: 'approved',
+					flower_count: 0,
+					egg_count: 0
+				}).select().single();
 
-                if (error) throw error;
+				if (error) throw error;
 
-                await trackActivity('cp_submit', null, null, {
-                    male_actor: male,
-                    female_actor: female,
-                    genre: genre
-                });
+				await trackActivity('cp_submit', null, null, {
+					male_actor: male,
+					female_actor: female,
+					genre: genre
+				});
 
-                showToast('提交成功！已上线 🎉');
-                document.getElementById('maleInput').value = '';
-                document.getElementById('femaleInput').value = '';
-                closeModal();
-                loadRanking();
+				showToast('提交成功！已上线 🎉');
+				document.getElementById('maleInput').value = '';
+				document.getElementById('femaleInput').value = '';
+				closeModal();
+				loadRanking();
 
-            } catch (err) {
-                console.error('提交失败:', err);
-                showToast('提交失败，请重试');
-            }
-        });
+				// ============================================================
+				// ✅ 插入点：在这里调用故事分享弹窗
+				// ============================================================
+				if (newCP && newCP.id) {
+					openReasonModal(newCP.id, male, female);
+				}
 
-        // ============================================================
-        // 内容推荐位轮播
-        // ============================================================
-        var bannerData = [
-            { icon: '🌟', text: '今日推荐：张凌赫 ✕ 田曦薇 · 《逐玉》', tag: '🔥 热度第一', link: 'mycp.html?id=1' },
-            { icon: '🎉', text: '分享得 20 个人气灯 + 20 个广告牌 + 10 个火箭！', tag: '🎁 立即参与', link: '#' },
-            { icon: '💬', text: '没有你喜欢的 CP？', tag: '✏️ 去提名', link: '#' },
-            { icon: '❤️', text: '已有用户为喜欢的 CP 投票助力', tag: '📊 实时榜单', link: 'index.html' },
-            { icon: '🔥', text: '宋威龙 ✕ 赵今麦 · 《骄阳似我》热度飙升', tag: '📈 上升最快', link: 'mycp.html?id=2' },
-            { icon: '⭐', text: '李昀锐 ✕ 关晓彤 · 《耀眼》黑马逆袭', tag: '💥 暑期爆款', link: 'mycp.html?id=3' },
-            { icon: '🚀', text: '使用火箭道具，CP 排名瞬间飙升！', tag: '💪 强力加持', link: '#' }
-        ];
-
-        var bannerIndex = 0;
-        var bannerInterval = null;
-
-        function initBanner() {
-            var progress = document.getElementById('bannerProgress');
-            if (progress) {
-                progress.style.transition = 'none';
-                progress.style.width = '100%';
-                void progress.offsetWidth;
-                progress.style.transition = 'width 5s linear';
-                progress.style.width = '0%';
-            }
-            showBanner(0);
-        }
-
-        function showBanner(index) {
-            var data = bannerData[index];
-            if (!data) return;
-
-            var iconEl = document.getElementById('bannerIcon');
-            var textEl = document.getElementById('bannerText');
-            var tagEl = document.getElementById('bannerTag');
-            var container = document.getElementById('adContainer');
-
-            if (iconEl) iconEl.textContent = data.icon;
-            if (textEl) textEl.textContent = data.text;
-            if (tagEl) tagEl.textContent = data.tag;
-            if (container) {
-                container.dataset.link = data.link || '#';
-            }
-        }
-
-        function nextBanner() {
-            bannerIndex = (bannerIndex + 1) % bannerData.length;
-            showBanner(bannerIndex);
-
-            var progress = document.getElementById('bannerProgress');
-            if (progress) {
-                progress.style.transition = 'none';
-                progress.style.width = '100%';
-                void progress.offsetWidth;
-                progress.style.transition = 'width 5s linear';
-                progress.style.width = '0%';
-            }
-        }
-
-        function handleBannerClick() {
-            var container = document.getElementById('adContainer');
-            var link = container ? container.dataset.link : '#';
-            if (link && link !== '#') {
-                window.location.href = link;
-            } else {
-                showToast('🎁 功能开发中，敬请期待！');
-            }
-        }
-
-        if (document.getElementById('adContainer')) {
-            initBanner();
-            bannerInterval = setInterval(nextBanner, 5000);
-        }
-
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                if (bannerInterval) {
-                    clearInterval(bannerInterval);
-                    bannerInterval = null;
-                }
-            } else {
-                if (!bannerInterval) {
-                    bannerInterval = setInterval(nextBanner, 5000);
-                    var progress = document.getElementById('bannerProgress');
-                    if (progress) {
-                        progress.style.transition = 'none';
-                        progress.style.width = '100%';
-                        void progress.offsetWidth;
-                        progress.style.transition = 'width 5s linear';
-                        progress.style.width = '0%';
-                    }
-                }
-            }
-        });
-
+			} catch (err) {
+				console.error('提交失败:', err);
+				showToast('提交失败，请重试');
+			}
+		});      
+	   
         // ============================================================
         // 初始化
         // ============================================================

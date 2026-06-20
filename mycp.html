@@ -35,6 +35,45 @@
         .cp-summary .cp-meta .status-tag {
             color: #9ca3af;
         }
+        /* 粉丝心声 */
+        .reason-item {
+            background: #f8f6ff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #4b5563;
+            position: relative;
+        }
+        .reason-item .reason-author {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 13px;
+        }
+        .reason-item .reason-text {
+            margin-top: 2px;
+        }
+        .reason-item .reason-like {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        .reason-section {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #ede9fe;
+        }
+        .reason-section .reason-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c5ce7;
+            margin-bottom: 8px;
+        }
+        .reason-empty {
+            font-size: 13px;
+            color: #9ca3af;
+            padding: 8px 0;
+        }
+        /* 评论样式 */
         .comment-item {
             padding: 12px 0;
             border-bottom: 1px solid #f3f4f6;
@@ -245,6 +284,9 @@
     <script src="js/supabase.js">
     </script>
     <script>
+        // ============================================================
+        // 工具函数
+        // ============================================================
         function showToast(msg) {
             var t = document.getElementById('toast');
             if (!t) { alert(msg); return; }
@@ -331,6 +373,9 @@
             }
         }
 
+        // ============================================================
+        // 主逻辑
+        // ============================================================
         var myDeviceId = getDeviceId();
         var cpId = getCpIdFromUrl();
         var currentUser = getUserInfo();
@@ -351,9 +396,10 @@
             try {
                 var client = getClient();
 
+                // 查询 CP 信息
                 var { data: cpData, error: cpError } = await client
                     .from('cp_submissions')
-                    .select('id, male_actor, female_actor, genre, status, votes ( id )')
+                    .select('id, male_actor, female_actor, genre, status, flower_count, egg_count, votes ( id )')
                     .eq('id', cpId)
                     .maybeSingle();
 
@@ -365,7 +411,10 @@
                 }
 
                 var voteCount = cpData.votes ? cpData.votes.length : 0;
+                var flowerCount = cpData.flower_count || 0;
+                var eggCount = cpData.egg_count || 0;
 
+                // 查询评论
                 var { data: comments, error: commentError } = await client
                     .from('comments')
                     .select('id, user_id, nickname, content, created_at, device_id, parent_id')
@@ -377,11 +426,28 @@
                     comments = [];
                 }
 
+                // ============================================================
+                // ✅ 查询粉丝心声（cp_reasons 表）
+                // ============================================================
+                var { data: reasons, error: reasonsError } = await client
+                    .from('cp_reasons')
+                    .select('id, user_id, nickname, reason, like_count, created_at, device_id')
+                    .eq('submission_id', cpId)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (reasonsError) {
+                    console.warn('加载粉丝心声失败:', reasonsError);
+                    reasons = [];
+                }
+
+                // 渲染页面
                 var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
                 document.getElementById('detailTitle').textContent = '💬 ' + title;
 
                 updateUserBadge();
 
+                // 构建评论树
                 var topComments = [];
                 var replyMap = {};
                 comments.forEach(function(c) {
@@ -402,14 +468,48 @@
                     });
                 }
 
+                // ============================================================
+                // ✅ 构建粉丝心声 HTML
+                // ============================================================
+                var reasonHtml = '';
+                if (reasons && reasons.length > 0) {
+                    reasonHtml = `
+                            <div class="reason-section">
+                                <div class="reason-title">💬 粉丝心声</div>
+                                ${reasons.map(function(r) {
+                                    var displayName = r.nickname || (r.user_id ? '用户' : '匿名');
+                                    var timeStr = formatTime(r.created_at);
+                                    return `
+                                        <div class="reason-item">
+                                            <div class="reason-author">${escapeHtml(displayName)} <span style="font-weight:400;color:#9ca3af;font-size:11px;">· ${timeStr}</span></div>
+                                            <div class="reason-text">“${escapeHtml(r.reason)}”</div>
+                                            ${r.like_count > 0 ? `<div class="reason-like">❤️ ${r.like_count}</div>` : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `;
+                } else {
+                    reasonHtml = `
+                            <div class="reason-section">
+                                <div class="reason-title">💬 粉丝心声</div>
+                                <div class="reason-empty">还没有粉丝分享理由，快来成为第一个吧 🌟</div>
+                            </div>
+                        `;
+                }
+
+                // 组装页面
                 body.innerHTML = `
                         <div class="cp-summary">
                             <div class="cp-title">${escapeHtml(cpData.male_actor)} ✕ ${escapeHtml(cpData.female_actor)}</div>
                             <div class="cp-meta">
                                 <span class="genre-tag">${escapeHtml(cpData.genre)}</span>
                                 <span>❤️ ${voteCount} 票</span>
+                                <span>🌹 ${flowerCount}</span>
+                                <span>🥚 ${eggCount}</span>
                                 <span class="status-tag">${cpData.status === 'approved' ? '✅ 已上线' : '⏳ 审核中'}</span>
                             </div>
+                            ${reasonHtml}
                         </div>
                         <div id="commentList">${commentHtml}</div>
                     `;
@@ -451,6 +551,9 @@
             }
         }
 
+        // ============================================================
+        // 渲染评论
+        // ============================================================
         function renderComment(comment, replyMap) {
             var isGuest = !comment.user_id || comment.user_id.startsWith('guest_');
             var displayName = comment.nickname || (isGuest ? '游客' : '用户');
@@ -530,6 +633,9 @@
             }
         }
 
+        // ============================================================
+        // 发送评论 / 回复
+        // ============================================================
         async function handleSendComment(cpId, parentId, prefillContent) {
             var contentInput = document.getElementById('commentContent');
             var content = prefillContent || contentInput.value.trim();
