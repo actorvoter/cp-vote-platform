@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数据看板 · 捣蛋选角</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 20px 80px 20px;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 2px solid #ede9fe;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .dashboard-header h1 {
+            font-size: 24px;
+        }
+        .dashboard-header .badge {
+            background: #fef3c7;
+            color: #d97706;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stats-grid .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #ede9fe;
+            text-align: center;
+        }
+        .stats-grid .stat-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #6c5ce7;
+        }
+        .stats-grid .stat-card .label {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 24px 0 16px 0;
+            color: #1a1a2e;
+        }
+        .cp-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr auto;
+            gap: 12px;
+            background: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #ede9fe;
+            margin-bottom: 6px;
+            align-items: center;
+            font-size: 14px;
+        }
+        .cp-row.header {
+            background: #f8f6ff;
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .cp-row .rank-num {
+            font-weight: 700;
+            color: #6c5ce7;
+        }
+        .cp-row .cp-name {
+            font-weight: 500;
+        }
+        .cp-row .genre-tag {
+            background: #ede9fe;
+            color: #6c5ce7;
+            padding: 0 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .cp-row .vote-count {
+            font-weight: 600;
+        }
+        .cp-row .flower-badge {
+            color: #e74c3c;
+        }
+        .cp-row .egg-badge {
+            color: #d97706;
+        }
+        .footer-note {
+            margin-top: 32px;
+            padding: 16px;
+            background: #f8f6ff;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #6b7280;
+            text-align: center;
+            border: 1px solid #ede9fe;
+        }
+        @media (max-width: 600px) {
+            .cp-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                font-size: 13px;
+            }
+            .cp-row .hide-mobile {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- 头部 -->
+        <div class="dashboard-header">
+            <div>
+                <h1>📊 捣蛋选角 · 数据看板</h1>
+                <div style="font-size:14px;color:#9ca3af;">实时 CP 热度数据 · 供制作方参考</div>
+            </div>
+            <div class="badge">📅 数据实时更新</div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="number" id="totalCPs">-</div>
+                <div class="label">总 CP 组合</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalVotes">-</div>
+                <div class="label">总投票数</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalFlowers">-</div>
+                <div class="label">🌹 总支持</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalEggs">-</div>
+                <div class="label">🥚 总反对</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalReasons">-</div>
+                <div class="label">💬 粉丝心声</div>
+            </div>
+        </div>
+
+        <!-- CP 热度榜 -->
+        <div class="section-title">🔥 CP 热度排行</div>
+        <div id="cpRankingList">
+            <div style="text-align:center;color:#9ca3af;padding:40px 0;">加载中...</div>
+        </div>
+
+        <!-- 底部说明 -->
+        <div class="footer-note">
+            📌 本数据由真实用户投票产生，仅代表观众审美偏好。<br />
+            如需获取详细数据报告或合作洽谈，请联系我们。
+        </div>
+    </div>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        // ============================================================
+        // 加载数据看板
+        // ============================================================
+        async function loadDashboard() {
+            try {
+                var client = getClient();
+
+                // 获取所有已通过的 CP 数据
+                var { data: cps, error } = await client
+                    .from('cp_submissions')
+                    .select('id, male_actor, female_actor, genre, status, flower_count, egg_count, votes ( id ), cp_reasons ( id )')
+                    .eq('status', 'approved')
+                    .order('id', { ascending: false });
+
+                if (error) throw error;
+
+                if (!cps || cps.length === 0) {
+                    document.getElementById('cpRankingList').innerHTML =
+                        '<div style="text-align:center;color:#9ca3af;padding:40px 0;">暂无数据，等待用户提名...</div>';
+                    return;
+                }
+
+                // 统计总数据
+                var totalCPs = cps.length;
+                var totalVotes = 0;
+                var totalFlowers = 0;
+                var totalEggs = 0;
+                var totalReasons = 0;
+
+                var list = cps.map(function(item) {
+                    var voteCount = item.votes ? item.votes.length : 0;
+                    var reasonCount = item.cp_reasons ? item.cp_reasons.length : 0;
+                    var flowerCount = item.flower_count || 0;
+                    var eggCount = item.egg_count || 0;
+
+                    totalVotes += voteCount;
+                    totalFlowers += flowerCount;
+                    totalEggs += eggCount;
+                    totalReasons += reasonCount;
+
+                    return {
+                        id: item.id,
+                        male: item.male_actor,
+                        female: item.female_actor,
+                        genre: item.genre,
+                        votes: voteCount,
+                        flowers: flowerCount,
+                        eggs: eggCount,
+                        reasons: reasonCount,
+                        score: voteCount + flowerCount + eggCount
+                    };
+                });
+
+                // 按热度排序
+                list.sort(function(a, b) { return b.score - a.score; });
+
+                // 更新统计卡片
+                document.getElementById('totalCPs').textContent = totalCPs;
+                document.getElementById('totalVotes').textContent = totalVotes;
+                document.getElementById('totalFlowers').textContent = totalFlowers;
+                document.getElementById('totalEggs').textContent = totalEggs;
+                document.getElementById('totalReasons').textContent = totalReasons;
+
+                // 渲染 CP 列表
+                var html = '<div class="cp-row header"><span>排名</span><span>CP 组合</span><span class="hide-mobile">题材</span><span>❤️ 票</span><span>🌹 🥚</span></div>';
+                list.forEach(function(item, index) {
+                    html += `
+                            <div class="cp-row">
+                                <span class="rank-num">#${index + 1}</span>
+                                <span class="cp-name">${escapeHtml(item.male)} ✕ ${escapeHtml(item.female)}</span>
+                                <span class="genre-tag hide-mobile">${escapeHtml(item.genre)}</span>
+                                <span class="vote-count">${item.votes}</span>
+                                <span><span class="flower-badge">🌹${item.flowers}</span> <span class="egg-badge">🥚${item.eggs}</span></span>
+                            </div>
+                        `;
+                });
+
+                document.getElementById('cpRankingList').innerHTML = html;
+
+            } catch (err) {
+                console.error('加载看板失败:', err);
+                document.getElementById('cpRankingList').innerHTML =
+                    '<div style="text-align:center;color:#ef4444;padding:40px 0;">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        loadDashboard();
+        console.log('✅ 数据看板已加载');
+    </script>
+</body>
+</html>
