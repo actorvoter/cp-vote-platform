@@ -134,7 +134,30 @@
                         <option value="其他">其他</option>
                     </select>
                 </div>
-                <button class="btn-primary" id="confirmSubmitBtn" style="width:100%;padding:14px;font-size:16px;">提交捣蛋</button>
+                <!-- ===== ✅ 新增：期待钩子 ===== -->
+                <div class="form-group" style="margin-top:12px; padding-top:12px; border-top:1px solid #ede9fe;">
+                    <label style="font-weight:600; font-size:14px; display:block; margin-bottom:4px;">
+                        📢 如果这对CP真的被拍成剧，你会做什么？
+                    </label>
+                    <p style="font-size:12px; color:#9ca3af; margin-bottom:8px;">（选填 · 制作方很想知道）</p>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="hopeWatch" value="watch" /> 第一时间观看（追剧支持）
+                        </label>
+                        <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="hopeShare" value="share" /> 在社交媒体上分享推荐
+                        </label>
+                        <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="hopeSupport" value="support" /> 参与众筹或预售
+                        </label>
+                        <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="hopeBuy" value="buy" /> 购买周边产品
+                        </label>
+                    </div>
+                    <input type="text" id="hopeOther" placeholder="其他想法（选填）" style="width:100%; margin-top:8px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; outline:none;" />
+                </div>
+                <!-- ===== 期待钩子结束 ===== -->
+                <button class="btn-primary" id="confirmSubmitBtn" style="width:100%;padding:14px;font-size:16px;margin-top:12px;">提交捣蛋</button>
             </div>
         </div>
     </div>
@@ -345,7 +368,6 @@
                 showToast(type === 'flower' ? '🌹 支持成功！' : '🥚 丢鸡蛋成功！');
                 loadRanking();
 
-                // ✅ 丢鸡蛋后弹出简评窗口
                 if (type === 'egg' && cpData) {
                     setTimeout(function() {
                         openEggCommentModal(cpId, cpData.male_actor, cpData.female_actor);
@@ -359,10 +381,9 @@
         }
 
         // ============================================================
-        // ✅ 丢鸡蛋后弹出简评窗口
+        // 丢鸡蛋后弹出简评窗口
         // ============================================================
         function openEggCommentModal(cpId, male, female) {
-            // 移除已存在的弹窗
             var existingModal = document.getElementById('eggCommentModal');
             if (existingModal) {
                 document.body.removeChild(existingModal);
@@ -394,7 +415,6 @@
                     box-shadow: 0 10px 40px rgba(0,0,0,0.15);
                 `;
 
-            // 预设范例
             var examples = [
                 '这对CP完全没有火花，演技不在一个频道上 🥚',
                 '两人年龄差太大了，看起来像父女，完全没有CP感',
@@ -430,7 +450,6 @@
             overlay.appendChild(modal);
             document.body.appendChild(overlay);
 
-            // 添加动画样式
             if (!document.getElementById('eggModalStyle')) {
                 var style = document.createElement('style');
                 style.id = 'eggModalStyle';
@@ -443,7 +462,6 @@
                 document.head.appendChild(style);
             }
 
-            // 事件绑定
             var input = document.getElementById('eggReasonInput');
 
             document.getElementById('skipEggBtn').addEventListener('click', function() {
@@ -836,7 +854,8 @@
                         loadRanking();
                         await trackActivity('share_success', null, null, {
                             source: 'clipboard_manual',
-                            platform: navigator.userAgent                        });
+                            platform: navigator.userAgent
+                        });
                     } else {
                         showToast('分享后记得回来领取奖励哦 📤');
                     }
@@ -865,83 +884,9 @@
         });
 
         // ============================================================
-        // 提交 CP
-        // ============================================================
-        document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
-            var male = document.getElementById('maleInput').value.trim();
-            var female = document.getElementById('femaleInput').value.trim();
-            var genre = document.getElementById('genreInput').value;
-
-            if (!male || !female) {
-                showToast('请填写男演员和女演员名字');
-                return;
-            }
-
-            var user = getCurrentUser();
-            var deviceId = user ? user.id : myDeviceId;
-
-            try {
-                var client = getClient();
-
-                var { data: existing } = await client
-                    .from('cp_submissions')
-                    .select('id, device_id')
-                    .eq('male_actor', male)
-                    .eq('female_actor', female)
-                    .eq('genre', genre)
-                    .maybeSingle();
-
-                if (existing) {
-                    var isMine = (existing.device_id === deviceId);
-                    if (isMine) {
-                        showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');
-                    } else {
-                        showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
-                    }
-                    return;
-                }
-
-                var ip = await getUserIP();
-                var { data: newCP, error } = await client.from('cp_submissions').insert({
-                    male_actor: male,
-                    female_actor: female,
-                    genre: genre,
-                    ip: ip || '',
-                    device_id: deviceId,
-                    user_id: user ? user.id : null,
-                    status: 'approved',
-                    flower_count: 0,
-                    egg_count: 0
-                }).select().single();
-
-                if (error) throw error;
-
-                await trackActivity('cp_submit', null, null, {
-                    male_actor: male,
-                    female_actor: female,
-                    genre: genre
-                });
-
-                showToast('提交成功！已上线 🎉');
-                document.getElementById('maleInput').value = '';
-                document.getElementById('femaleInput').value = '';
-                closeModal();
-                loadRanking();
-
-                if (newCP && newCP.id) {
-                    openReasonModal(newCP.id, male, female);
-                }
-
-            } catch (err) {
-                console.error('提交失败:', err);
-                showToast('提交失败，请重试');
-            }
-        });
-
-        // ============================================================
         // ✅ 故事分享弹窗（提交CP后）
         // ============================================================
-        function openReasonModal(cpId, male, female) {
+        function openReasonModal(cpId, male, female, hopeData) {
             var overlay = document.createElement('div');
             overlay.id = 'reasonModal';
             overlay.style.cssText = `
@@ -1025,7 +970,8 @@
                         user_id: user ? user.id : null,
                         device_id: user ? user.id : myDeviceId,
                         reason: reason,
-                        reason_type: 'support'
+                        reason_type: 'support',
+                        hope_data: hopeData || null
                     });
 
                     if (error) throw error;
@@ -1033,7 +979,8 @@
                     document.body.removeChild(overlay);
                     showToast('🎉 谢谢分享！你的理由已保存');
                     await trackActivity('cp_reason_share', String(cpId), 'cp', {
-                        reason_length: reason.length
+                        reason_length: reason.length,
+                        hope_data: hopeData
                     });
 
                 } catch (err) {
@@ -1053,6 +1000,97 @@
                 reasonInput.focus();
             }, 300);
         }
+
+        // ============================================================
+        // ✅ 提交 CP（包含期待钩子数据）
+        // ============================================================
+        document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
+            var male = document.getElementById('maleInput').value.trim();
+            var female = document.getElementById('femaleInput').value.trim();
+            var genre = document.getElementById('genreInput').value;
+
+            if (!male || !female) {
+                showToast('请填写男演员和女演员名字');
+                return;
+            }
+
+            var user = getCurrentUser();
+            var deviceId = user ? user.id : myDeviceId;
+
+            // ✅ 收集期待钩子数据
+            var hopeData = [];
+            if (document.getElementById('hopeWatch').checked) hopeData.push('watch');
+            if (document.getElementById('hopeShare').checked) hopeData.push('share');
+            if (document.getElementById('hopeSupport').checked) hopeData.push('support');
+            if (document.getElementById('hopeBuy').checked) hopeData.push('buy');
+            var hopeOther = document.getElementById('hopeOther').value.trim();
+            if (hopeOther) hopeData.push('other:' + hopeOther);
+
+            try {
+                var client = getClient();
+
+                var { data: existing } = await client
+                    .from('cp_submissions')
+                    .select('id, device_id')
+                    .eq('male_actor', male)
+                    .eq('female_actor', female)
+                    .eq('genre', genre)
+                    .maybeSingle();
+
+                if (existing) {
+                    var isMine = (existing.device_id === deviceId);
+                    if (isMine) {
+                        showToast('你已经提过这对 CP 啦，快去投票吧 🗳️');
+                    } else {
+                        showToast('这对 CP 已经有人提名了！快去投票吧 🗳️');
+                    }
+                    return;
+                }
+
+                var ip = await getUserIP();
+                var { data: newCP, error } = await client.from('cp_submissions').insert({
+                    male_actor: male,
+                    female_actor: female,
+                    genre: genre,
+                    ip: ip || '',
+                    device_id: deviceId,
+                    user_id: user ? user.id : null,
+                    status: 'approved',
+                    flower_count: 0,
+                    egg_count: 0,
+                    hope_data: hopeData.length > 0 ? hopeData : null
+                }).select().single();
+
+                if (error) throw error;
+
+                await trackActivity('cp_submit', null, null, {
+                    male_actor: male,
+                    female_actor: female,
+                    genre: genre,
+                    hope_data: hopeData
+                });
+
+                showToast('提交成功！已上线 🎉');
+                document.getElementById('maleInput').value = '';
+                document.getElementById('femaleInput').value = '';
+                // ✅ 清空期待钩子
+                document.getElementById('hopeWatch').checked = false;
+                document.getElementById('hopeShare').checked = false;
+                document.getElementById('hopeSupport').checked = false;
+                document.getElementById('hopeBuy').checked = false;
+                document.getElementById('hopeOther').value = '';
+                closeModal();
+                loadRanking();
+
+                if (newCP && newCP.id) {
+                    openReasonModal(newCP.id, male, female, hopeData);
+                }
+
+            } catch (err) {
+                console.error('提交失败:', err);
+                showToast('提交失败，请重试');
+            }
+        });
 
         // ============================================================
         // 内容推荐位轮播
