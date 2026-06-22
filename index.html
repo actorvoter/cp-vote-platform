@@ -135,26 +135,19 @@
                     </select>
                 </div>
                 <!-- ===== ✅ 期待钩子（优化版） ===== -->
-				<div class="form-group" style="margin-top:12px; padding-top:12px; border-top:1px solid #ede9fe;">
-					<label style="font-weight:600; font-size:14px; display:block; margin-bottom:4px;">
-						📢 如果这对CP真的被拍成剧，你会做什么？
+				<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;">
+					<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+						<input type="checkbox" id="hopeWatch" value="watch" /> 第一时间观看
 					</label>
-					<p style="font-size:12px; color:#9ca3af; margin-bottom:8px;">（选填 · 让更多人看到你的期待）</p>
-					<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px;">
-						<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer; white-space:nowrap;">
-							<input type="checkbox" id="hopeWatch" value="watch" /> 我要第一时间观看
-						</label>
-						<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer; white-space:nowrap;">
-							<input type="checkbox" id="hopeShare" value="share" /> 我会分享推荐
-						</label>
-						<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer; white-space:nowrap;">
-							<input type="checkbox" id="hopeSupport" value="support" /> 付费提早解锁剧情
-						</label>
-						<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer; white-space:nowrap;">
-							<input type="checkbox" id="hopeBuy" value="buy" /> 我会购买周边
-						</label>
-					</div>
-					<input type="text" id="hopeOther" placeholder="其他想法（选填）" style="width:100%; margin-top:8px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; outline:none;" />
+					<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+						<input type="checkbox" id="hopeShare" value="share" /> 分享推荐
+					</label>
+					<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+						<input type="checkbox" id="hopeSupport" value="support" /> 提早解锁剧情
+					</label>
+					<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+						<input type="checkbox" id="hopeBuy" value="buy" /> 购买周边
+					</label>
 				</div>
 				<!-- ===== 期待钩子结束 ===== -->
                 <button class="btn-primary" id="confirmSubmitBtn" style="width:100%;padding:14px;font-size:16px;margin-top:12px;">提交捣蛋</button>
