@@ -35,7 +35,8 @@
         .cp-summary .cp-meta .status-tag {
             color: #9ca3af;
         }
-        /* 粉丝心声 */
+
+        /* ===== 粉丝心声 ===== */
         .reason-item {
             background: #f8f6ff;
             border-radius: 8px;
@@ -73,7 +74,8 @@
             color: #9ca3af;
             padding: 8px 0;
         }
-        /* 评论样式 */
+
+        /* ===== 评论样式 ===== */
         .comment-item {
             padding: 12px 0;
             border-bottom: 1px solid #f3f4f6;
@@ -236,29 +238,127 @@
             color: #9ca3af;
             padding: 40px 0;
         }
-        .avatar-color-0 {
-            background: #6c5ce7;
+        .avatar-color-0 { background: #6c5ce7; }
+        .avatar-color-1 { background: #e74c3c; }
+        .avatar-color-2 { background: #2ecc71; }
+        .avatar-color-3 { background: #f39c12; }
+        .avatar-color-4 { background: #3498db; }
+        .avatar-color-5 { background: #1abc9c; }
+        .avatar-color-6 { background: #e67e22; }
+        .avatar-color-7 { background: #9b59b6; }
+
+        /* ===== 新增：风格标签、雷区、吐槽区 ===== */
+        .feature-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #ede9fe;
         }
-        .avatar-color-1 {
-            background: #e74c3c;
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
         }
-        .avatar-color-2 {
-            background: #2ecc71;
+        .feature-header .feature-icon {
+            font-size: 18px;
         }
-        .avatar-color-3 {
-            background: #f39c12;
+        .feature-header .feature-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: #1a1a2e;
         }
-        .avatar-color-4 {
-            background: #3498db;
+        .feature-header .feature-hint {
+            font-size: 12px;
+            color: #9ca3af;
         }
-        .avatar-color-5 {
-            background: #1abc9c;
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
-        .avatar-color-6 {
-            background: #e67e22;
+        .style-tag, .avoid-tag {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #4b5563;
         }
-        .avatar-color-7 {
-            background: #9b59b6;
+        .style-tag:hover, .avoid-tag:hover {
+            border-color: #6c5ce7;
+            background: #f8f6ff;
+        }
+        .style-tag.active, .avoid-tag.active {
+            border-color: #6c5ce7;
+            background: #ede9fe;
+            color: #6c5ce7;
+        }
+        .complaint-item {
+            background: #f8f6ff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+        }
+        .complaint-item .complaint-content {
+            font-size: 14px;
+            color: #374151;
+        }
+        .complaint-item .complaint-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 6px;
+        }
+        .complaint-item .complaint-actions button {
+            background: none;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            color: #9ca3af;
+            padding: 2px 0;
+            transition: color 0.2s;
+        }
+        .complaint-item .complaint-actions button:hover {
+            color: #6c5ce7;
+        }
+        .complaint-item .complaint-actions .flower-btn.active {
+            color: #e74c3c;
+        }
+        .complaint-item .complaint-actions .egg-btn.active {
+            color: #d97706;
+        }
+        .complaint-input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .complaint-input-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+        }
+        .complaint-input-row input:focus {
+            border-color: #6c5ce7;
+        }
+        .complaint-input-row button {
+            background: #d97706;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .complaint-input-row button:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -427,19 +527,19 @@
                 }
 
                 // ============================================================
-                // ✅ 查询粉丝心声（cp_reasons 表）
+                // 查询粉丝心声（cp_reasons 表）
                 // ============================================================
                 var { data: reasons, error: reasonsError } = await client
-					.from('cp_reasons')
-					.select('id, user_id, reason, like_count, created_at, device_id')
-					.eq('submission_id', cpId)
-					.order('created_at', { ascending: false })
-					.limit(10);
+                    .from('cp_reasons')
+                    .select('id, user_id, reason, like_count, created_at, device_id')
+                    .eq('submission_id', cpId)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
 
-				if (reasonsError) {
-					console.warn('加载粉丝心声失败:', reasonsError);
-					reasons = [];
-				}
+                if (reasonsError) {
+                    console.warn('加载粉丝心声失败:', reasonsError);
+                    reasons = [];
+                }
 
                 // 渲染页面
                 var title = cpData.male_actor + ' ✕ ' + cpData.female_actor;
@@ -469,7 +569,7 @@
                 }
 
                 // ============================================================
-                // ✅ 构建粉丝心声 HTML
+                // 构建粉丝心声 HTML
                 // ============================================================
                 var reasonHtml = '';
                 if (reasons && reasons.length > 0) {
@@ -477,17 +577,16 @@
                             <div class="reason-section">
                                 <div class="reason-title">💬 粉丝心声</div>
                                 ${reasons.map(function(r) {
-									// ✅ 直接显示"用户"，不再从 r.nickname 读取
-									var displayName = '用户';
-									var timeStr = formatTime(r.created_at);
-									return `
-										<div class="reason-item">
-											<div class="reason-author">${escapeHtml(displayName)} <span style="font-weight:400;color:#9ca3af;font-size:11px;">· ${timeStr}</span></div>
-											<div class="reason-text">“${escapeHtml(r.reason)}”</div>
-											${r.like_count > 0 ? `<div class="reason-like">❤️ ${r.like_count}</div>` : ''}
-										</div>
-									`;
-								}).join('')}
+                                    var displayName = '用户';
+                                    var timeStr = formatTime(r.created_at);
+                                    return `
+                                        <div class="reason-item">
+                                            <div class="reason-author">${escapeHtml(displayName)} <span style="font-weight:400;color:#9ca3af;font-size:11px;">· ${timeStr}</span></div>
+                                            <div class="reason-text">“${escapeHtml(r.reason)}”</div>
+                                            ${r.like_count > 0 ? `<div class="reason-like">❤️ ${r.like_count}</div>` : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         `;
                 } else {
@@ -499,7 +598,9 @@
                         `;
                 }
 
-                // 组装页面
+                // ============================================================
+                // 组装页面（包含新增的三个模块）
+                // ============================================================
                 body.innerHTML = `
                         <div class="cp-summary">
                             <div class="cp-title">${escapeHtml(cpData.male_actor)} ✕ ${escapeHtml(cpData.female_actor)}</div>
@@ -512,11 +613,76 @@
                             </div>
                             ${reasonHtml}
                         </div>
+
+                        <!-- ============================================================
+                             新增模块1：角色属性（风格标签）
+                             ============================================================ -->
+                        <div class="feature-section" id="styleSection">
+                            <div class="feature-header">
+                                <span class="feature-icon">🎨</span>
+                                <span class="feature-title">你觉得这对CP适合什么风格？</span>
+                                <span class="feature-hint">（点击选择，可多选）</span>
+                            </div>
+                            <div class="tag-group" id="styleTags">
+                                <button class="style-tag" data-tag="古风">🏮 古风</button>
+                                <button class="style-tag" data-tag="现代">🏙️ 现代</button>
+                                <button class="style-tag" data-tag="悬疑">🔍 悬疑</button>
+                                <button class="style-tag" data-tag="甜宠">🍬 甜宠</button>
+                                <button class="style-tag" data-tag="暗黑">🌑 暗黑</button>
+                                <button class="style-tag" data-tag="喜剧">😂 喜剧</button>
+                            </div>
+                            <div id="styleResult" style="font-size:13px;color:#6b7280;margin-top:8px;">加载中...</div>
+                        </div>
+
+                        <!-- ============================================================
+                             新增模块2：最讨厌雷区
+                             ============================================================ -->
+                        <div class="feature-section" id="avoidSection">
+                            <div class="feature-header">
+                                <span class="feature-icon">🚫</span>
+                                <span class="feature-title">以下哪些桥段会让你想弃剧？</span>
+                                <span class="feature-hint">（点击选择，可多选）</span>
+                            </div>
+                            <div class="tag-group" id="avoidTags">
+                                <button class="avoid-tag" data-tag="系统叮">🔔 系统叮</button>
+                                <button class="avoid-tag" data-tag="医学奇迹">💉 医学奇迹</button>
+                                <button class="avoid-tag" data-tag="强行洗白">🤝 强行洗白</button>
+                                <button class="avoid-tag" data-tag="无脑霸总">👔 无脑霸总</button>
+                                <button class="avoid-tag" data-tag="失忆梗">🧠 失忆梗</button>
+                                <button class="avoid-tag" data-tag="降智反派">🧠 降智反派</button>
+                            </div>
+                            <div id="avoidResult" style="font-size:13px;color:#6b7280;margin-top:8px;">加载中...</div>
+                        </div>
+
+                        <!-- ============================================================
+                             新增模块3：臭鸡蛋吐槽区
+                             ============================================================ -->
+                        <div class="feature-section" id="complaintSection">
+                            <div class="feature-header">
+                                <span class="feature-icon">💢</span>
+                                <span class="feature-title">臭鸡蛋吐槽区</span>
+                                <span class="feature-hint">说出你最想吐槽的点</span>
+                            </div>
+                            <div class="complaint-input-row">
+                                <input type="text" id="complaintInput" placeholder="例如：他妈的用针还不消毒..." />
+                                <button id="submitComplaintBtn">🥚 发射</button>
+                            </div>
+                            <div id="complaintList">
+                                <div style="text-align:center;color:#9ca3af;padding:20px 0;font-size:14px;">加载中...</div>
+                            </div>
+                        </div>
+
+                        <!-- ============================================================
+                             原有：评论区
+                             ============================================================ -->
                         <div id="commentList">${commentHtml}</div>
                     `;
 
                 commentArea.style.display = 'flex';
 
+                // ============================================================
+                // 绑定原有事件
+                // ============================================================
                 document.getElementById('sendCommentBtn').onclick = function() { handleSendComment(cpId, null); };
                 document.getElementById('commentContent').onkeydown = function(e) {
                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -543,6 +709,24 @@
                             }
                         }
                     });
+                });
+
+                // ============================================================
+                // 加载新增模块的数据
+                // ============================================================
+                loadStylesAndAvoids(cpId);
+                loadComplaints(cpId);
+
+                // ============================================================
+                // 绑定新增模块的事件
+                // ============================================================
+                document.getElementById('submitComplaintBtn').onclick = function() {
+                    handleSubmitComplaint(cpId);
+                };
+                document.getElementById('complaintInput').addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        handleSubmitComplaint(cpId);
+                    }
                 });
 
             } catch (err) {
@@ -689,6 +873,375 @@
             } catch (err) {
                 console.error('发送失败:', err);
                 showToast('发送失败，请重试');
+            }
+        }
+
+        // ============================================================
+        // 新增：风格标签和雷区函数
+        // ============================================================
+        async function loadStylesAndAvoids(cpId) {
+            try {
+                var client = getClient();
+                var user = getCurrentUser();
+                var deviceId = user ? user.id : myDeviceId;
+
+                // 获取当前用户的风格选择
+                var { data: styles, error: sError } = await client
+                    .from('cp_styles')
+                    .select('style_tag')
+                    .eq('cp_id', cpId)
+                    .eq('device_id', deviceId);
+
+                if (!sError && styles) {
+                    var selectedStyles = styles.map(function(s) { return s.style_tag; });
+                    document.querySelectorAll('.style-tag').forEach(function(btn) {
+                        if (selectedStyles.includes(btn.getAttribute('data-tag'))) {
+                            btn.classList.add('active');
+                        }
+                        btn.onclick = function() {
+                            toggleStyle(cpId, this);
+                        };
+                    });
+                } else {
+                    document.querySelectorAll('.style-tag').forEach(function(btn) {
+                        btn.onclick = function() {
+                            toggleStyle(cpId, this);
+                        };
+                    });
+                }
+
+                // 获取当前用户的雷区选择
+                var { data: avoids, error: aError } = await client
+                    .from('cp_avoids')
+                    .select('avoid_tag')
+                    .eq('cp_id', cpId)
+                    .eq('device_id', deviceId);
+
+                if (!aError && avoids) {
+                    var selectedAvoids = avoids.map(function(a) { return a.avoid_tag; });
+                    document.querySelectorAll('.avoid-tag').forEach(function(btn) {
+                        if (selectedAvoids.includes(btn.getAttribute('data-tag'))) {
+                            btn.classList.add('active');
+                        }
+                        btn.onclick = function() {
+                            toggleAvoid(cpId, this);
+                        };
+                    });
+                } else {
+                    document.querySelectorAll('.avoid-tag').forEach(function(btn) {
+                        btn.onclick = function() {
+                            toggleAvoid(cpId, this);
+                        };
+                    });
+                }
+
+                updateStyleDisplay(cpId);
+                updateAvoidDisplay(cpId);
+
+            } catch (err) {
+                console.warn('加载风格/雷区失败:', err);
+            }
+        }
+
+        async function toggleStyle(cpId, btn) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var tag = btn.getAttribute('data-tag');
+            var client = getClient();
+            var deviceId = user.id;
+
+            if (btn.classList.contains('active')) {
+                btn.classList.remove('active');
+                await client
+                    .from('cp_styles')
+                    .delete()
+                    .eq('cp_id', cpId)
+                    .eq('device_id', deviceId)
+                    .eq('style_tag', tag);
+                showToast('已取消 "' + tag + '" 风格');
+            } else {
+                btn.classList.add('active');
+                await client
+                    .from('cp_styles')
+                    .insert({
+                        cp_id: cpId,
+                        user_id: user.id,
+                        device_id: deviceId,
+                        style_tag: tag
+                    });
+                showToast('已添加 "' + tag + '" 风格 🎨');
+            }
+
+            updateStyleDisplay(cpId);
+        }
+
+        async function toggleAvoid(cpId, btn) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var tag = btn.getAttribute('data-tag');
+            var client = getClient();
+            var deviceId = user.id;
+
+            if (btn.classList.contains('active')) {
+                btn.classList.remove('active');
+                await client
+                    .from('cp_avoids')
+                    .delete()
+                    .eq('cp_id', cpId)
+                    .eq('device_id', deviceId)
+                    .eq('avoid_tag', tag);
+                showToast('已取消 "' + tag + '" 雷区');
+            } else {
+                btn.classList.add('active');
+                await client
+                    .from('cp_avoids')
+                    .insert({
+                        cp_id: cpId,
+                        user_id: user.id,
+                        device_id: deviceId,
+                        avoid_tag: tag
+                    });
+                showToast('已添加 "' + tag + '" 雷区 🚫');
+            }
+
+            updateAvoidDisplay(cpId);
+        }
+
+        async function updateStyleDisplay(cpId) {
+            try {
+                var client = getClient();
+                var { data, error } = await client
+                    .from('cp_styles')
+                    .select('style_tag')
+                    .eq('cp_id', cpId);
+
+                if (error) throw error;
+
+                var tags = data ? data.map(function(s) { return s.style_tag; }) : [];
+                var el = document.getElementById('styleResult');
+                if (tags.length > 0) {
+                    el.textContent = '当前 ' + tags.length + ' 人选择：' + tags.join('、');
+                } else {
+                    el.textContent = '还没有人选择风格，快来定义吧 🎨';
+                }
+            } catch (err) {
+                console.warn('更新风格显示失败:', err);
+            }
+        }
+
+        async function updateAvoidDisplay(cpId) {
+            try {
+                var client = getClient();
+                var { data, error } = await client
+                    .from('cp_avoids')
+                    .select('avoid_tag')
+                    .eq('cp_id', cpId);
+
+                if (error) throw error;
+
+                var tags = data ? data.map(function(a) { return a.avoid_tag; }) : [];
+                var el = document.getElementById('avoidResult');
+                if (tags.length > 0) {
+                    el.textContent = '🚫 已避雷：' + tags.join('、');
+                } else {
+                    el.textContent = '还没有人避雷，快来提醒大家 🚫';
+                }
+            } catch (err) {
+                console.warn('更新雷区显示失败:', err);
+            }
+        }
+
+        // ============================================================
+        // 新增：吐槽区函数
+        // ============================================================
+        async function loadComplaints(cpId) {
+            try {
+                var client = getClient();
+                var { data, error } = await client
+                    .from('complaints')
+                    .select('id, user_id, device_id, content, flower_count, egg_count, created_at')
+                    .eq('cp_id', cpId)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                var container = document.getElementById('complaintList');
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:20px 0;font-size:14px;">还没有吐槽，快来成为第一个 🥚</div>';
+                    return;
+                }
+
+                var html = '';
+                data.forEach(function(c) {
+                    var isMine = c.device_id === myDeviceId;
+                    html += `
+                            <div class="complaint-item" data-id="${c.id}">
+                                <div class="complaint-content">“${escapeHtml(c.content)}”</div>
+                                <div class="complaint-actions">
+                                    <button class="flower-btn" data-id="${c.id}">🌹 共鸣 ${c.flower_count || 0}</button>
+                                    <button class="egg-btn" data-id="${c.id}">🥚 反对 ${c.egg_count || 0}</button>
+                                    ${isMine ? `<button class="delete-btn" data-id="${c.id}" style="color:#ef4444;">🗑️ 删除</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                });
+
+                container.innerHTML = html;
+
+                container.querySelectorAll('.flower-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var id = parseInt(this.getAttribute('data-id'));
+                        handleComplaintReaction(id, 'flower');
+                    });
+                });
+
+                container.querySelectorAll('.egg-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var id = parseInt(this.getAttribute('data-id'));
+                        handleComplaintReaction(id, 'egg');
+                    });
+                });
+
+                container.querySelectorAll('.delete-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var id = parseInt(this.getAttribute('data-id'));
+                        if (confirm('确定要删除这条吐槽吗？')) {
+                            deleteComplaint(id, cpId);
+                        }
+                    });
+                });
+
+            } catch (err) {
+                console.warn('加载吐槽失败:', err);
+            }
+        }
+
+        async function handleSubmitComplaint(cpId) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var input = document.getElementById('complaintInput');
+            var content = input.value.trim();
+
+            if (!content) {
+                showToast('写点什么再发射 🥚');
+                return;
+            }
+
+            try {
+                var client = getClient();
+                var { error } = await client
+                    .from('complaints')
+                    .insert({
+                        cp_id: cpId,
+                        user_id: user.id,
+                        device_id: user.id,
+                        content: content
+                    });
+
+                if (error) throw error;
+
+                showToast('🥚 吐槽发射成功！');
+                input.value = '';
+                loadComplaints(cpId);
+
+                await trackActivity('complaint_submit', String(cpId), 'cp', {
+                    content_length: content.length
+                });
+
+            } catch (err) {
+                console.error('提交吐槽失败:', err);
+                showToast('发射失败，请重试');
+            }
+        }
+
+        async function handleComplaintReaction(complaintId, type) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                var { data: existing } = await client
+                    .from('complaint_reactions')
+                    .select('id')
+                    .eq('complaint_id', complaintId)
+                    .eq('device_id', user.id)
+                    .maybeSingle();
+
+                if (existing) {
+                    showToast(type === 'flower' ? '你已经共鸣过了 🌹' : '你已经反对过了 🥚');
+                    return;
+                }
+
+                var { error } = await client
+                    .from('complaint_reactions')
+                    .insert({
+                        complaint_id: complaintId,
+                        user_id: user.id,
+                        device_id: user.id,
+                        reaction_type: type
+                    });
+
+                if (error) throw error;
+
+                var field = type === 'flower' ? 'flower_count' : 'egg_count';
+                var { data: complaint } = await client
+                    .from('complaints')
+                    .select(field)
+                    .eq('id', complaintId)
+                    .single();
+
+                var newCount = (complaint ? complaint[field] : 0) + 1;
+                await client
+                    .from('complaints')
+                    .update({ [field]: newCount })
+                    .eq('id', complaintId);
+
+                showToast(type === 'flower' ? '🌹 共鸣 +1' : '🥚 反对 +1');
+                loadComplaints(cpId);
+
+            } catch (err) {
+                console.error('互动失败:', err);
+                showToast('操作失败，请重试');
+            }
+        }
+
+        async function deleteComplaint(complaintId, cpId) {
+            try {
+                var client = getClient();
+                var { error } = await client
+                    .from('complaints')
+                    .delete()
+                    .eq('id', complaintId);
+
+                if (error) throw error;
+
+                showToast('已删除 🗑️');
+                loadComplaints(cpId);
+
+            } catch (err) {
+                console.error('删除失败:', err);
+                showToast('删除失败，请重试');
             }
         }
 
