@@ -3,247 +3,293 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>个人中心 · 捣蛋选角</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <title>我的捣蛋 · 捣蛋选角</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        .profile-container {
-            max-width: 400px;
-            margin: 40px auto 0;
-            padding: 0 20px;
+        .mycp-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 0 80px 0;
         }
-        .profile-container h2 {
+        .mycp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+        }
+        .mycp-header h1 {
+            font-size: 22px;
+        }
+        .mycp-stats {
+            background: #f8f6ff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-around;
             text-align: center;
-            margin-bottom: 4px;
-            font-size: 24px;
         }
-        .profile-container .brand-slogan {
+        .mycp-stats .stat-item .number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #6c5ce7;
+        }
+        .mycp-stats .stat-item .label {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .cp-list-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border: 1px solid #ede9fe;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .cp-list-item:active {
+            background: #f8f6ff;
+        }
+        .cp-list-item .cp-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .cp-list-item .cp-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+            align-items: center;
+        }
+        .cp-list-item .cp-meta .genre-tag {
+            background: #ede9fe;
+            color: #6c5ce7;
+            padding: 0 10px;
+            border-radius: 20px;
+        }
+        .cp-list-item .cp-status {
+            font-size: 12px;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        .cp-list-item .cp-status.approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .cp-list-item .cp-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .cp-list-item .cp-progress {
+            background: #ede9fe;
+            color: #6c5ce7;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        .empty-state .big-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .loading-state {
+            text-align: center;
+            padding: 40px 0;
+            color: #9ca3af;
+        }
+        .brand-slogan {
             text-align: center;
             color: #f59e0b;
             font-size: 14px;
             font-weight: 500;
-            margin-bottom: 20px;
-        }
-        .profile-container .subtitle {
-            text-align: center;
-            color: #9ca3af;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
-        .profile-container .btn-primary {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            border-radius: 12px;
-            margin-top: 8px;
-        }
-        .profile-container .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #9ca3af;
-            font-size: 14px;
-        }
-        .profile-container .back-link a {
-            color: #6c5ce7;
-        }
-        .section-title {
-            font-weight: bold;
-            margin: 20px 0 12px 0;
-            color: #1a1a2e;
-            border-bottom: 1px solid #ede9fe;
-            padding-bottom: 8px;
-        }
-        .email-display {
-            background: #f8f6ff;
-            padding: 12px 16px;
-            border-radius: 12px;
-            color: #4b5563;
-            font-size: 14px;
             margin-bottom: 16px;
-        }
-        .password-hint {
-            font-size: 13px;
-            color: #9ca3af;
-            margin-bottom: 12px;
         }
     </style>
 </head>
 <body>
-    <div class="profile-container">
-        <h2>👤 个人中心</h2>
+
+    <div class="mycp-container">
+        <div class="mycp-header">
+            <a href="index.html" class="btn-secondary">← 返回</a>
+            <h1>👤 我的捣蛋</h1>
+            <div style="width:60px;"></div>
+        </div>
+
         <div class="brand-slogan">🎯 选角不公？捣蛋有理！</div>
-        <p class="subtitle">管理你的昵称和密码</p>
 
-        <div class="email-display">
-            📧 当前账号：<strong id="userEmailDisplay">加载中...</strong>
+        <div class="mycp-stats" id="statsArea" style="display:none;">
+            <div class="stat-item">
+                <div class="number" id="totalCount">0</div>
+                <div class="label">总共捣蛋</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="approvedCount">0</div>
+                <div class="label">已上线</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="pendingCount">0</div>
+                <div class="label">审核中</div>
+            </div>
         </div>
 
-        <div class="section-title">📝 昵称设置</div>
-        <div class="form-group">
-            <label>显示昵称</label>
-            <input type="text" id="nicknameInput" placeholder="输入你的昵称" />
+        <div id="cpList">
+            <div class="loading-state">加载中...</div>
         </div>
-        <button class="btn-primary" id="updateNicknameBtn" style="margin-top:0;">更新昵称</button>
-
-        <div class="section-title" id="passwordSectionTitle">🔑 设置密码</div>
-        <p class="password-hint" id="passwordHint">设置密码后可使用密码登录</p>
-        <div class="form-group">
-            <label>新密码</label>
-            <input type="password" id="newPasswordInput" placeholder="至少6位" />
-        </div>
-        <div class="form-group">
-            <label>确认密码</label>
-            <input type="password" id="confirmPasswordInput" placeholder="再次输入" />
-        </div>
-        <button class="btn-primary" id="updatePasswordBtn" style="margin-top:0;">设置密码</button>
-
-        <p class="back-link"><a href="index.html">← 返回首页</a></p>
     </div>
 
     <div class="toast" id="toast"></div>
 
-    <script src="js/supabase.js"></script>
+    <script src="js/supabase.js">
+    </script>
     <script>
-        var currentUser = getCurrentUser();
-
-        if (!currentUser) {
-            showToast('请先登录');
-            setTimeout(function() { window.location.href = 'login.html'; }, 1500);
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if (!t) { alert(msg); return; }
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
         }
 
-        document.getElementById('userEmailDisplay').textContent = currentUser ? currentUser.email : '未设置';
-
-        var urlParams = new URLSearchParams(window.location.search);
-        var isFirstLogin = urlParams.get('first_login') === 'true';
-
-        if (isFirstLogin) {
-            document.getElementById('passwordSectionTitle').textContent = '🔑 设置登录密码（首次登录必填）';
-            document.getElementById('passwordHint').textContent = '请设置一个密码，以后可以使用密码登录';
-            showToast('请设置你的登录密码 🔑');
-            document.getElementById('newPasswordInput').focus();
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
-        async function loadUserProfile() {
+        // ============================================================
+        // 进度状态映射
+        // ============================================================
+        function getProgressText(phase) {
+            const map = {
+                1: '📝 已提名',
+                2: '🎨 风格解锁',
+                3: '🚫 雷区解锁',
+                4: '💢 吐槽解锁',
+                5: '📧 邮件已发'
+            };
+            return map[phase] || '📝 已提名';
+        }
+
+        async function loadMyCPs() {
+            var user = getCurrentUser();
+            var listContainer = document.getElementById('cpList');
+            var statsArea = document.getElementById('statsArea');
+
+            if (!user) {
+                listContainer.innerHTML = `
+                        <div class="empty-state">
+                            <span class="big-icon">🔒</span>
+                            请先登录查看你的捣蛋记录<br />
+                            <a href="login.html" class="btn-primary" style="display:inline-block;margin-top:16px;">去登录</a>
+                        </div>
+                    `;
+                return;
+            }
+
             try {
                 var client = getClient();
+
                 var { data, error } = await client
-                    .from('users')
-                    .select('nickname')
-                    .eq('id', currentUser.id)
-                    .maybeSingle();
+                    .from('cp_submissions')
+                    .select('id, male_actor, female_actor, genre, status, submit_time, votes ( id )')
+                    .eq('user_id', user.id)
+                    .order('submit_time', { ascending: false });
+
                 if (error) throw error;
-                if (data && data.nickname) {
-                    document.getElementById('nicknameInput').value = data.nickname;
-                }
-            } catch (err) {
-                console.error('加载用户信息失败:', err);
-            }
-        }
 
-        document.getElementById('updateNicknameBtn').addEventListener('click', async function() {
-            var nickname = document.getElementById('nicknameInput').value.trim();
-            if (!nickname) { showToast('请输入昵称'); return; }
+                var total = data ? data.length : 0;
+                var approved = data ? data.filter(function(item) { return item.status === 'approved'; }).length : 0;
+                var pending = data ? data.filter(function(item) { return item.status === 'pending'; }).length : 0;
 
-            try {
-                var client = getClient();
-                var { data: existing } = await client
-                    .from('users')
-                    .select('id')
-                    .eq('id', currentUser.id)
-                    .maybeSingle();
+                document.getElementById('totalCount').textContent = total;
+                document.getElementById('approvedCount').textContent = approved;
+                document.getElementById('pendingCount').textContent = pending;
 
-                if (existing) {
-                    await client.from('users').update({ nickname: nickname }).eq('id', currentUser.id);
+                if (total > 0) {
+                    statsArea.style.display = 'flex';
                 } else {
-                    await client.from('users').insert({
-                        id: currentUser.id,
-                        email: currentUser.email,
-                        nickname: nickname
-                    });
+                    statsArea.style.display = 'none';
                 }
-                await trackActivity('profile_update', currentUser.id, 'user', { field: 'nickname' });
-                showToast('昵称更新成功 ✅');
-            } catch (err) {
-                console.error('更新昵称失败:', err);
-                showToast('更新失败，请重试');
-            }
-        });
 
-        document.getElementById('updatePasswordBtn').addEventListener('click', async function() {
-            var newPwd = document.getElementById('newPasswordInput').value.trim();
-            var confirmPwd = document.getElementById('confirmPasswordInput').value.trim();
+                if (!data || data.length === 0) {
+                    listContainer.innerHTML = `
+                            <div class="empty-state">
+                                <span class="big-icon">📝</span>
+                                你还没有捣蛋过<br />
+                                <a href="index.html" class="btn-primary" style="display:inline-block;margin-top:16px;">去捣蛋</a>
+                            </div>
+                        `;
+                    return;
+                }
 
-            if (!newPwd || newPwd.length < 6) {
-                showToast('密码至少6位');
-                return;
-            }
-            if (newPwd !== confirmPwd) {
-                showToast('两次密码不一致');
-                return;
-            }
-
-            this.disabled = true;
-            this.textContent = '设置中...';
-
-            try {
-                var client = getClient();
-
-                var { data: sessionData, error: sessionError } = await client.auth.getSession();
-                if (sessionError || !sessionData.session) {
-                    var { data: refreshData, error: refreshError } = await client.auth.refreshSession();
-                    if (refreshError) {
-                        throw new Error('会话已过期，请重新登录');
+                // ============================================================
+                // 获取每个 CP 的进度
+                // ============================================================
+                var progressMap = {};
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    var prog = await getUserProgress(user.id, item.id);
+                    if (prog) {
+                        progressMap[item.id] = prog.phase;
+                    } else {
+                        // 首次访问，根据 CP 创建时间计算初始阶段
+                        var days = Math.floor((Date.now() - new Date(item.submit_time).getTime()) / (1000 * 60 * 60 * 24));
+                        var newPhase = days >= 3 ? 4 : days >= 2 ? 3 : days >= 1 ? 2 : 1;
+                        progressMap[item.id] = newPhase;
+                        // 异步写入（不阻塞渲染）
+                        upsertUserProgress(user.id, item.id, newPhase);
                     }
                 }
 
-                var { error } = await client.auth.updateUser({
-                    password: newPwd
+                var html = '';
+                data.forEach(function(item) {
+                    var voteCount = item.votes ? item.votes.length : 0;
+                    var statusClass = item.status === 'approved' ? 'approved' : 'pending';
+                    var statusText = item.status === 'approved' ? '✅ 已上线' : '⏳ 审核中';
+                    var phase = progressMap[item.id] || 1;
+                    var progressText = getProgressText(phase);
+
+                    html += `
+                            <div class="cp-list-item" data-id="${item.id}">
+                                <div class="cp-name">${escapeHtml(item.male_actor)} ✕ ${escapeHtml(item.female_actor)}</div>
+                                <div class="cp-meta">
+                                    <span class="genre-tag">${escapeHtml(item.genre)}</span>
+                                    <span>❤️ ${voteCount} 票</span>
+                                    <span class="cp-status ${statusClass}">${statusText}</span>
+                                    <span class="cp-progress">${progressText}</span>
+                                </div>
+                            </div>
+                        `;
                 });
 
-                if (error) {
-                    if (error.message && error.message.includes('session')) {
-                        showToast('会话已过期，请重新登录 🔑');
-                        setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-                        return;
-                    }
-                    throw error;
-                }
+                listContainer.innerHTML = html;
 
-                var { error: updateError } = await client
-                    .from('users')
-                    .update({ has_password: true })
-                    .eq('id', currentUser.id);
-
-                if (updateError) {
-                    console.warn('更新 has_password 失败:', updateError);
-                }
-
-                await trackActivity('password_set', currentUser.id, 'user', { method: 'profile_update' });
-
-                showToast('密码设置成功 ✅');
-                document.getElementById('newPasswordInput').value = '';
-                document.getElementById('confirmPasswordInput').value = '';
-
-                if (isFirstLogin) {
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500);
-                }
+                listContainer.querySelectorAll('.cp-list-item').forEach(function(item) {
+                    item.addEventListener('click', function() {
+                        var id = this.getAttribute('data-id');
+                        window.location.href = 'mycp.html?id=' + id;
+                    });
+                });
 
             } catch (err) {
-                console.error('设置密码失败:', err);
-                showToast('设置失败：' + (err.message || '请重试'));
-            } finally {
-                this.disabled = false;
-                this.textContent = '设置密码';
+                console.error('加载我的 CP 失败:', err);
+                listContainer.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败，请刷新重试</div>';
             }
-        });
-
-        if (currentUser) {
-            loadUserProfile();
         }
-        console.log('✅ 捣蛋选角 - 个人中心已加载');
+
+        loadMyCPs();
+        console.log('✅ 捣蛋选角 - 我的捣蛋已加载');
     </script>
 </body>
 </html>

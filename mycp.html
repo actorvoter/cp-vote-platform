@@ -673,6 +673,17 @@
                                 <div style="text-align:center;color:#9ca3af;padding:20px 0;font-size:14px;">加载中...</div>
                             </div>
                         </div>
+						
+						 <div class="feature-section" id="creationSection">
+						<div class="feature-header">
+							<span class="feature-icon">🎬</span>
+							<span class="feature-title">一起创作 · 属于你的角色</span>
+							<span class="feature-hint" id="creationProgress">进度 0/3</span>
+						</div>
+						<div id="creationContent">
+							<div style="text-align:center;color:#9ca3af;padding:20px 0;">加载中...</div>
+						</div>
+					</div>
 
                         <!-- ============================================================
                              原有：评论区
@@ -681,6 +692,8 @@
                     `;
 
                 commentArea.style.display = 'flex';
+				// 加载共创区域
+				await loadCreationSection(cpId);
 
                 // ============================================================
                 // 绑定原有事件
@@ -714,11 +727,304 @@
                 });
 
                 // ============================================================
-                // 加载新增模块的数据
-                // ============================================================
-                loadStylesAndAvoids(cpId);
-                loadComplaints(cpId);
+				// 加载进度并控制模块显示
+				// ============================================================
+				const user = getCurrentUser();
+				let currentPhase = 1;
+				let progress = null;
 
+				if (user) {
+					progress = await getUserProgress(user.id, cpId);
+					if (progress) {
+						currentPhase = progress.phase;
+					} else {
+						// 首次访问，根据 CP 创建时间计算初始阶段
+						const days = getDaysSince(cpData.created_at);
+						const newPhase = days >= 3 ? 4 : days >= 2 ? 3 : days >= 1 ? 2 : 1;
+						progress = await upsertUserProgress(user.id, cpId, newPhase);
+						currentPhase = progress ? progress.phase : 1;
+					}
+				}
+
+				// ===== 风格标签（Phase >= 2） =====
+				const styleSection = document.getElementById('styleSection');
+				if (currentPhase >= 2) {
+					styleSection.style.display = 'block';
+					loadStylesAndAvoids(cpId);
+				} else {
+					styleSection.innerHTML = `
+						<div class="feature-section" style="text-align:center;color:#9ca3af;padding:16px;">
+							🔒 风格标签将在 ${2 - currentPhase} 天后解锁
+						</div>
+					`;
+				}
+
+				// ===== 雷区（Phase >= 3） =====
+				const avoidSection = document.getElementById('avoidSection');
+				if (currentPhase >= 3) {
+					avoidSection.style.display = 'block';
+				} else {
+					avoidSection.innerHTML = `
+						<div class="feature-section" style="text-align:center;color:#9ca3af;padding:16px;">
+							🔒 雷区将在 ${3 - currentPhase} 天后解锁
+						</div>
+					`;
+				}
+
+				// ===== 吐槽区（Phase >= 4） =====
+				const complaintSection = document.getElementById('complaintSection');
+				if (currentPhase >= 4) {
+					complaintSection.style.display = 'block';
+					loadComplaints(cpId);
+				} else {
+					complaintSection.innerHTML = `
+						<div class="feature-section" style="text-align:center;color:#9ca3af;padding:16px;">
+							🔒 吐槽区将在 ${4 - currentPhase} 天后解锁
+						</div>
+					`;
+				}
+				
+				
+				// ============================================================
+				// 加载共创区域
+				// ============================================================
+				async function loadCreationSection(cpId) {
+					const container = document.getElementById('creationContent');
+					const progressEl = document.getElementById('creationProgress');
+					
+					const user = getCurrentUser();
+					if (!user) {
+						container.innerHTML = `
+							<div style="text-align:center;color:#9ca3af;padding:20px 0;">
+								🔒 请登录后参与共创
+								<br/><a href="login.html" class="btn-primary" style="display:inline-block;margin-top:12px;">去登录</a>
+							</div>
+						`;
+						return;
+					}
+					
+					const { creation, progress } = await loadCreationData(cpId);
+					if (!creation) {
+						// 初始化空记录
+						await upsertUserCreation(user.id, cpId, {});
+						return loadCreationSection(cpId);
+					}
+					
+					// 更新进度
+					progressEl.textContent = `进度 ${progress.completed}/${progress.total}`;
+					
+					// 角色设定模块
+					const roleData = creation.user_role || {};
+					const roleCompleted = !!roleData.role_name;
+					
+					// 剧情模块
+					const scenes = creation.story_scenes || [];
+					const storyCompleted = scenes.length > 0;
+					
+					// 视觉风格模块
+					const styleData = creation.visual_style || {};
+					const styleCompleted = styleData.style_tags && styleData.style_tags.length > 0;
+					
+					container.innerHTML = `
+						<!-- ===== 模块1：角色设定 ===== -->
+						<div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${roleCompleted ? '#d1fae5' : '#ede9fe'};">
+							<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('roleModule')">
+								<span style="font-weight:600;font-size:14px;">🎭 角色设定 ${roleCompleted ? '✅' : ''}</span>
+								<span style="color:#9ca3af;font-size:12px;">${roleCompleted ? '已填写' : '点击展开'}</span>
+							</div>
+							<div id="roleModule" style="${roleCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
+								<div style="display:grid;gap:8px;">
+									<input type="text" id="roleName" placeholder="你的角色名（如：江湖小贩）" value="${roleData.role_name || ''}" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;" />
+									<select id="roleType" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
+										<option value="">选择角色定位</option>
+										<option value="正派" ${roleData.role_type === '正派' ? 'selected' : ''}>正派</option>
+										<option value="反派" ${roleData.role_type === '反派' ? 'selected' : ''}>反派</option>
+										<option value="搞笑担当" ${roleData.role_type === '搞笑担当' ? 'selected' : ''}>搞笑担当</option>
+										<option value="神秘人" ${roleData.role_type === '神秘人' ? 'selected' : ''}>神秘人</option>
+										<option value="其他" ${roleData.role_type === '其他' ? 'selected' : ''}>其他</option>
+									</select>
+									<input type="text" id="roleLine" placeholder="一句台词（如：客官，这壶酒里有故事）" value="${roleData.role_line || ''}" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;" />
+									<button onclick="saveRoleModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存角色</button>
+								</div>
+							</div>
+						</div>
+						
+						<!-- ===== 模块2：剧情创作 ===== -->
+						<div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${storyCompleted ? '#d1fae5' : '#ede9fe'};">
+							<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('storyModule')">
+								<span style="font-weight:600;font-size:14px;">📝 剧情创作 ${storyCompleted ? '✅' : ''}</span>
+								<span style="color:#9ca3af;font-size:12px;">${storyCompleted ? '已填写' : '点击展开'}</span>
+							</div>
+							<div id="storyModule" style="${storyCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
+								<div style="display:grid;gap:8px;">
+									<div style="font-size:13px;color:#6b7280;">用3-5句话描述你心中的故事场景（每句话对应一个镜头）</div>
+									<div id="sceneContainer">
+										${scenes.length > 0 ? scenes.map((s, i) => `
+											<input type="text" class="scene-input" data-index="${i}" value="${s}" placeholder="场景 ${i+1}..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
+										`).join('') : `
+											<input type="text" class="scene-input" data-index="0" placeholder="场景 1..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
+											<input type="text" class="scene-input" data-index="1" placeholder="场景 2..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
+											<input type="text" class="scene-input" data-index="2" placeholder="场景 3..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
+										`}
+									</div>
+									<button onclick="saveStoryModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存剧情</button>
+								</div>
+							</div>
+						</div>
+						
+						<!-- ===== 模块3：视觉风格 ===== -->
+						<div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${styleCompleted ? '#d1fae5' : '#ede9fe'};">
+							<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('styleModule')">
+								<span style="font-weight:600;font-size:14px;">🎨 视觉风格 ${styleCompleted ? '✅' : ''}</span>
+								<span style="color:#9ca3af;font-size:12px;">${styleCompleted ? '已填写' : '点击展开'}</span>
+							</div>
+							<div id="styleModule" style="${styleCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
+								<div style="display:grid;gap:8px;">
+									<div style="font-size:13px;color:#6b7280;">选择你喜欢的视觉风格（可多选）</div>
+									<div style="display:flex;flex-wrap:wrap;gap:6px;">
+										${['古风','现代','悬疑','甜宠','暗黑','喜剧'].map(tag => `
+											<button class="style-tag-btn ${(styleData.style_tags || []).includes(tag) ? 'active' : ''}" data-tag="${tag}" onclick="toggleStyleTag('${tag}')" style="padding:4px 14px;border-radius:20px;border:1px solid ${(styleData.style_tags || []).includes(tag) ? '#6c5ce7' : '#e5e7eb'};background:${(styleData.style_tags || []).includes(tag) ? '#ede9fe' : '#f9fafb'};color:${(styleData.style_tags || []).includes(tag) ? '#6c5ce7' : '#4b5563'};font-size:13px;cursor:pointer;transition:all 0.2s;">
+												${tag}
+											</button>
+										`).join('')}
+									</div>
+									<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+										<select id="colorTone" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
+											<option value="">色调偏好</option>
+											<option value="暖色" ${styleData.color_tone === '暖色' ? 'selected' : ''}>暖色（温馨）</option>
+											<option value="冷色" ${styleData.color_tone === '冷色' ? 'selected' : ''}>冷色（清冷）</option>
+											<option value="高饱和" ${styleData.color_tone === '高饱和' ? 'selected' : ''}>高饱和（鲜艳）</option>
+											<option value="黑白灰" ${styleData.color_tone === '黑白灰' ? 'selected' : ''}>黑白灰（经典）</option>
+										</select>
+										<select id="sceneStyle" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
+											<option value="">场景风格</option>
+											<option value="室内" ${styleData.scene_style === '室内' ? 'selected' : ''}>室内</option>
+											<option value="室外" ${styleData.scene_style === '室外' ? 'selected' : ''}>室外</option>
+											<option value="城市" ${styleData.scene_style === '城市' ? 'selected' : ''}>城市</option>
+											<option value="自然" ${styleData.scene_style === '自然' ? 'selected' : ''}>自然</option>
+										</select>
+									</div>
+									<button onclick="saveStyleModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存风格</button>
+								</div>
+							</div>
+						</div>
+						
+						<!-- ===== 完成状态 ===== -->
+						${progress.completed === progress.total ? `
+							<div style="text-align:center;padding:16px;background:#d1fae5;border-radius:12px;color:#065f46;">
+								🎉 恭喜！你的剧本已就绪！
+								<br/><span style="font-size:13px;color:#065f46;">等待 AI 预览生成功能开放...</span>
+							</div>
+						` : `
+							<div style="text-align:center;padding:12px;color:#9ca3af;font-size:13px;">
+								⏳ 完成全部 3 个模块后，你的剧本将就绪
+							</div>
+						`}
+					`;
+				}				
+				
+                // ============================================================
+				// 辅助函数：展开/折叠模块
+				// ============================================================
+				function toggleCreationModule(moduleId) {
+					const el = document.getElementById(moduleId);
+					if (el) {
+						el.style.display = el.style.display === 'none' ? 'block' : 'none';
+					}
+				}
+
+				// ============================================================
+				// 辅助函数：切换风格标签
+				// ============================================================
+				var selectedStyleTags = [];
+
+				function toggleStyleTag(tag) {
+					const idx = selectedStyleTags.indexOf(tag);
+					if (idx > -1) {
+						selectedStyleTags.splice(idx, 1);
+					} else {
+						selectedStyleTags.push(tag);
+					}
+					// 更新UI
+					document.querySelectorAll('.style-tag-btn').forEach(btn => {
+						if (btn.dataset.tag === tag) {
+							btn.classList.toggle('active');
+							btn.style.border = btn.classList.contains('active') ? '1px solid #6c5ce7' : '1px solid #e5e7eb';
+							btn.style.background = btn.classList.contains('active') ? '#ede9fe' : '#f9fafb';
+							btn.style.color = btn.classList.contains('active') ? '#6c5ce7' : '#4b5563';
+						}
+					});
+				}
+
+				// ============================================================
+				// 保存各模块
+				// ============================================================
+				async function saveRoleModule(cpId) {
+					const roleName = document.getElementById('roleName')?.value.trim() || '';
+					const roleType = document.getElementById('roleType')?.value || '';
+					const roleLine = document.getElementById('roleLine')?.value.trim() || '';
+					
+					if (!roleName) {
+						showToast('请填写角色名 🎭');
+						return;
+					}
+					
+					const success = await saveRoleSetting(cpId, {
+						roleName,
+						roleType,
+						roleLine,
+						appearance: '',
+						avatarUrl: ''
+					});
+					
+					if (success) {
+						loadCreationSection(cpId);
+						await checkAndCompleteCreation(cpId);
+					}
+				}
+
+				async function saveStoryModule(cpId) {
+					const inputs = document.querySelectorAll('.scene-input');
+					const scenes = [];
+					inputs.forEach(input => {
+						const val = input.value.trim();
+						if (val) scenes.push(val);
+					});
+					
+					if (scenes.length === 0) {
+						showToast('请至少写一个场景 📝');
+						return;
+					}
+					
+					const success = await saveStoryScenes(cpId, scenes);
+					if (success) {
+						loadCreationSection(cpId);
+						await checkAndCompleteCreation(cpId);
+					}
+				}
+
+				async function saveStyleModule(cpId) {
+					const styleTags = selectedStyleTags.length > 0 ? selectedStyleTags : [];
+					const colorTone = document.getElementById('colorTone')?.value || '';
+					const sceneStyle = document.getElementById('sceneStyle')?.value || '';
+					
+					if (styleTags.length === 0) {
+						showToast('请至少选择一个风格标签 🎨');
+						return;
+					}
+					
+					const success = await saveVisualStyle(cpId, {
+						styleTags,
+						colorTone,
+						sceneStyle
+					});
+					
+					if (success) {
+						loadCreationSection(cpId);
+						await checkAndCompleteCreation(cpId);
+					}
+				}
+				
                 // ============================================================
                 // 绑定新增模块的事件
                 // ============================================================

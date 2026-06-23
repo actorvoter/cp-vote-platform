@@ -155,3 +155,112 @@ async function trackActivity(activityType, targetId, targetType, metadata) {
 function trackPageView(pageName) {
     trackActivity('page_view', null, null, { page: pageName || window.location.pathname });
 }
+
+// ============================================================
+// 用户进度管理
+// ============================================================
+
+async function getUserProgress(userId, cpId) {
+    const client = getClient();
+    const { data, error } = await client
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('cp_id', cpId)
+        .maybeSingle();
+    if (error && error.code !== 'PGRST116') {
+        console.warn('获取进度失败:', error);
+        return null;
+    }
+    return data;
+}
+
+async function upsertUserProgress(userId, cpId, phase) {
+    const client = getClient();
+    const { data, error } = await client
+        .from('user_progress')
+        .upsert({
+            user_id: userId,
+            cp_id: cpId,
+            phase: phase,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id, cp_id' })
+        .select()
+        .single();
+    if (error) {
+        console.error('更新进度失败:', error);
+        return null;
+    }
+    return data;
+}
+
+async function getCPFollowerCount(cpId) {
+    const client = getClient();
+    const { count, error } = await client
+        .from('user_progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('cp_id', cpId);
+    if (error) {
+        console.warn('获取关注数失败:', error);
+        return 0;
+    }
+    return count || 0;
+}
+
+// ============================================================
+// 1.5版本：用户共创管理
+// ============================================================
+
+async function getUserCreation(userId, cpId) {
+    const client = getClient();
+    const { data, error } = await client
+        .from('user_creations')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('cp_id', cpId)
+        .maybeSingle();
+    if (error && error.code !== 'PGRST116') {
+        console.warn('获取创作记录失败:', error);
+        return null;
+    }
+    return data;
+}
+
+async function upsertUserCreation(userId, cpId, updates) {
+    const client = getClient();
+    const { data, error } = await client
+        .from('user_creations')
+        .upsert({
+            user_id: userId,
+            cp_id: cpId,
+            ...updates,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id, cp_id' })
+        .select()
+        .single();
+    if (error) {
+        console.error('保存创作记录失败:', error);
+        return null;
+    }
+    return data;
+}
+
+async function getCreationProgress(userId, cpId) {
+    const creation = await getUserCreation(userId, cpId);
+    if (!creation) {
+        return { total: 3, completed: 0, items: [
+            { key: 'role', label: '🎭 角色设定', completed: false },
+            { key: 'story', label: '📝 剧情创作', completed: false },
+            { key: 'style', label: '🎨 视觉风格', completed: false }
+        ]};
+    }
+    
+    const items = [
+        { key: 'role', label: '🎭 角色设定', completed: !!creation.user_role?.role_name },
+        { key: 'story', label: '📝 剧情创作', completed: creation.story_scenes?.length > 0 },
+        { key: 'style', label: '🎨 视觉风格', completed: !!creation.visual_style?.style_tags?.length }
+    ];
+    
+    const completed = items.filter(i => i.completed).length;
+    return { total: items.length, completed, items };
+}

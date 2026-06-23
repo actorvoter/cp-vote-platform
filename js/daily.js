@@ -132,3 +132,39 @@ async function grantShareReward(userId) {
     }
     return { success: true, msg: '🎁 获得 20个人气灯 + 20个广告牌 + 10个火箭！' };
 }
+
+// ============================================================
+// 每日进度判断
+// ============================================================
+
+function getDaysSince(dateStr) {
+    const created = new Date(dateStr);
+    const now = new Date();
+    const diff = now - created;
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function getCurrentPhase(createdAt, hasStyle, hasAvoid, hasComplaint) {
+    const days = getDaysSince(createdAt);
+    
+    // 优先级：吐槽 > 雷区 > 风格 > 提名
+    if (days >= 3) return 4;          // 吐槽解锁
+    if (days >= 2) return 3;          // 雷区解锁
+    if (days >= 1) return 2;          // 风格解锁
+    return 1;                          // 仅提名
+}
+
+function shouldUnlock(phase, requiredPhase) {
+    return phase >= requiredPhase;
+}
+
+function getLockMessage(phase, requiredPhase) {
+    const labels = {
+        2: '🎨 风格标签',
+        3: '🚫 雷区投票',
+        4: '💢 吐槽区'
+    };
+    if (phase >= requiredPhase) return null;
+    const remaining = requiredPhase - phase;
+    return `🔒 ${labels[requiredPhase]} 将在 ${remaining} 天后解锁`;
+}
