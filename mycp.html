@@ -358,6 +358,32 @@
         .complaint-input-row button:active {
             transform: scale(0.95);
         }
+        .creation-preview {
+            text-align: center;
+            color: #9ca3af;
+            padding: 20px 0;
+            border: 1px dashed #ede9fe;
+            border-radius: 8px;
+        }
+        .creation-preview .lock-icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .creation-preview .preview-title {
+            font-weight: 500;
+            color: #6b7280;
+            font-size: 15px;
+        }
+        .creation-preview .preview-desc {
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        .creation-preview .preview-hint {
+            font-size: 12px;
+            color: #6c5ce7;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -719,19 +745,34 @@
                 }
 
                 // ============================================================
-                // 加载共创区域（直接内联，避免函数未定义问题）
+                // 加载共创区域（方案C：半开放预览）
                 // ============================================================
                 var creationContainer = document.getElementById('creationContent');
                 var progressEl = document.getElementById('creationProgress');
 
                 if (!user) {
+                    // 未登录用户：显示"登录后解锁"
                     creationContainer.innerHTML = `
-                        <div style="text-align:center;color:#9ca3af;padding:20px 0;">
-                            🔒 请登录后参与共创
-                            <br/><a href="login.html" class="btn-primary" style="display:inline-block;margin-top:12px;">去登录</a>
+                        <div class="creation-preview">
+                            <span class="lock-icon">🔒</span>
+                            <div class="preview-title">登录后解锁 · 一起创作</div>
+                            <div class="preview-desc">设定角色 · 创作剧情 · 选择视觉风格</div>
+                            <div class="preview-hint"><a href="login.html" class="btn-primary" style="display:inline-block;margin-top:8px;padding:6px 20px;font-size:13px;">去登录</a></div>
                         </div>
                     `;
+                } else if (currentPhase < 2) {
+                    // 已登录但 Day 1：显示"明日解锁"预览
+                    creationContainer.innerHTML = `
+                        <div class="creation-preview">
+                            <span class="lock-icon">🔒</span>
+                            <div class="preview-title">明日解锁 · 一起创作</div>
+                            <div class="preview-desc">你可以为自己设定角色、创作剧情、选择视觉风格</div>
+                            <div class="preview-hint">⏳ 明天回来，开启你的创作之旅 🎬</div>
+                        </div>
+                    `;
+                    progressEl.textContent = '进度 0/3';
                 } else {
+                    // 已登录且 Phase >= 2：完全开放
                     var creationData = await loadCreationData(cpId);
                     if (!creationData || !creationData.creation) {
                         await upsertUserCreation(user.id, cpId, {});
