@@ -31,10 +31,10 @@
     <!-- ===== 头部 ===== -->
     <div class="header">
         <h1>🥚 捣蛋选角</h1>
-		<!-- ===== 进度引导横幅 ===== -->
-		<div id="progressBanner" style="display:none; background:linear-gradient(135deg, #fef3c7, #ede9fe); border-radius:12px; padding:10px 16px; margin-bottom:12px; text-align:center; font-size:14px; color:#4b5563; border:1px solid #f59e0b;">
-			<span id="progressText">🔥 你提名的 CP 正在被更多人看见！</span>
-		</div>
+        <!-- ===== 进度引导横幅 ===== -->
+        <div id="progressBanner" style="display:none; background:linear-gradient(135deg, #fef3c7, #ede9fe); border-radius:12px; padding:10px 16px; margin-bottom:12px; text-align:center; font-size:14px; color:#4b5563; border:1px solid #f59e0b;">
+            <span id="progressText">🔥 你提名的 CP 正在被更多人看见！</span>
+        </div>
         <div class="user-area">
             <a href="login.html" id="loginBtn" class="btn-secondary">登录</a>
             <div id="userInfo" style="display:none; align-items:center; gap:8px;">
@@ -47,12 +47,13 @@
     </div>
 
     <!-- ===== 品牌口号 ===== -->
-	<div style="text-align:center; font-size:14px; color:#f59e0b; margin-bottom:2px; font-weight:600; letter-spacing:1px;">
-		🎯 选角不公？捣蛋有理！
-	</div>
-	<div style="text-align:center; font-size:14px; color:#6c5ce7; margin-bottom:10px; font-weight:500; background:linear-gradient(90deg, #f59e0b, #6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
-		⚡ 提名你心中的神仙CP，热度达标即有机会进入剧组视线！
-	</div>
+    <div style="text-align:center; font-size:14px; color:#f59e0b; margin-bottom:2px; font-weight:600; letter-spacing:1px;">
+        🎯 选角不公？捣蛋有理！
+    </div>
+    <div style="text-align:center; font-size:14px; color:#6c5ce7; margin-bottom:10px; font-weight:500; background:linear-gradient(90deg, #f59e0b, #6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+        ⚡ 提名你心中的神仙CP，热度达标即有机会进入剧组视线！
+    </div>
+
     <!-- ===== 滚动广告栏 ===== -->
     <div id="adContainer" style="min-height:60px; margin:0 0 12px 0; border-radius:12px; background:linear-gradient(135deg, #f8f6ff, #fef3c7); display:flex; align-items:center; justify-content:center; text-align:center; padding:6px 16px; border:1px solid #ede9fe; position:relative; overflow:hidden; cursor:pointer;">
         <div id="bannerContent" style="display:flex; align-items:center; gap:12px; transition:opacity 0.5s ease;">
@@ -100,8 +101,7 @@
         ⚠️ 网友观点不代表平台立场。请理性讨论，勿人身攻击。<br />
         本平台所有CP组合由用户自发投票产生，仅代表观众审美偏好。<br />
         不构成对任何艺人肖像权、名誉权的商业使用。<br />
-        <a href="terms.html">用户协议</a>
-		<a href="privacy.html">隐私政策</a>
+        <a href="terms.html">用户协议</a> · <a href="privacy.html">隐私政策</a>
     </div>
 
     <!-- ===== 底部导航 ===== -->
@@ -141,22 +141,23 @@
                         <option value="其他">其他</option>
                     </select>
                 </div>
-                <!-- ===== ✅ 期待钩子（优化版） ===== -->
-				<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;">
-					<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
-						<input type="checkbox" id="hopeWatch" value="watch" /> 第一时间观看
-					</label>
-					<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
-						<input type="checkbox" id="hopeShare" value="share" /> 分享推荐
-					</label>
-					<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
-						<input type="checkbox" id="hopeSupport" value="support" /> 提早解锁剧情
-					</label>
-					<label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
-						<input type="checkbox" id="hopeBuy" value="buy" /> 购买周边
-					</label>
-				</div>
-				<!-- ===== 期待钩子结束 ===== -->
+                <!-- ===== ✅ 期待钩子（修复版：包含 hopeOther） ===== -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; margin-top:12px; padding-top:12px; border-top:1px solid #ede9fe;">
+                    <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="hopeWatch" value="watch" /> 第一时间观看
+                    </label>
+                    <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="hopeShare" value="share" /> 分享推荐
+                    </label>
+                    <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="hopeSupport" value="support" /> 提早解锁剧情
+                    </label>
+                    <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="hopeBuy" value="buy" /> 购买周边
+                    </label>
+                </div>
+                <input type="text" id="hopeOther" placeholder="其他想法（选填）" style="width:100%; margin-top:8px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; outline:none;" />
+                <!-- ===== 期待钩子结束 ===== -->
                 <button class="btn-primary" id="confirmSubmitBtn" style="width:100%;padding:14px;font-size:16px;margin-top:12px;">提交捣蛋</button>
             </div>
         </div>
@@ -309,52 +310,52 @@
             }
             loadRanking();
         }
-		
-		// 加载进度引导
-		async function loadProgressBanner() {
-			const user = getCurrentUser();
-			if (!user) return;
-			
-			const banner = document.getElementById('progressBanner');
-			const text = document.getElementById('progressText');
-			
-			// 获取用户最新的 CP 提名
-			const client = getClient();
-			const { data: cp } = await client
-				.from('cp_submissions')
-				.select('id, created_at')
-				.eq('user_id', user.id)
-				.order('created_at', { ascending: false })
-				.limit(1)
-				.maybeSingle();
-			
-			if (!cp) return;
-			
-			const progress = await getUserProgress(user.id, cp.id);
-			if (!progress) return;
-			
-			const phase = progress.phase;
-			const days = getDaysSince(cp.created_at);
-			
-			let msg = '';
-			if (phase === 1) {
-				msg = '🎉 提名成功！明天回来为你的 CP 定义风格吧！';
-			} else if (phase === 2) {
-				msg = '🎨 你的 CP 已解锁风格标签！快去定义你心中的调性吧！';
-			} else if (phase === 3) {
-				msg = '🚫 雷区已解锁！快来帮大家避雷！';
-			} else if (phase >= 4) {
-				const followers = await getCPFollowerCount(cp.id);
-				if (followers >= 10000) {
-					msg = `🔥 你的 CP 已获得 ${followers} 人关注！热度达标，有机会进入剧组视线！`;
-				} else {
-					msg = `💢 吐槽区已解锁！说出你的真实想法！已有 ${followers} 人关注这对 CP`;
-				}
-			}
-			
-			text.textContent = msg;
-			banner.style.display = 'block';
-		}
+
+        // 加载进度引导
+        async function loadProgressBanner() {
+            const user = getCurrentUser();
+            if (!user) return;
+
+            const banner = document.getElementById('progressBanner');
+            const text = document.getElementById('progressText');
+
+            // 获取用户最新的 CP 提名
+            const client = getClient();
+            const { data: cp } = await client
+                .from('cp_submissions')
+                .select('id, created_at')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!cp) return;
+
+            const progress = await getUserProgress(user.id, cp.id);
+            if (!progress) return;
+
+            const phase = progress.phase;
+            const days = getDaysSince(cp.created_at);
+
+            let msg = '';
+            if (phase === 1) {
+                msg = '🎉 提名成功！明天回来为你的 CP 定义风格吧！';
+            } else if (phase === 2) {
+                msg = '🎨 你的 CP 已解锁风格标签！快去定义你心中的调性吧！';
+            } else if (phase === 3) {
+                msg = '🚫 雷区已解锁！快来帮大家避雷！';
+            } else if (phase >= 4) {
+                const followers = await getCPFollowerCount(cp.id);
+                if (followers >= 10000) {
+                    msg = '🔥 你的 CP 已获得 ' + followers + ' 人关注！热度达标，有机会进入剧组视线！';
+                } else {
+                    msg = '💢 吐槽区已解锁！说出你的真实想法！已有 ' + followers + ' 人关注这对 CP';
+                }
+            }
+
+            text.textContent = msg;
+            banner.style.display = 'block';
+        }
 
         // ============================================================
         // 鲜花/鸡蛋 互动
