@@ -3,9 +3,6 @@
 // 1.5版本：用户共创模块
 // ============================================================
 
-// ============================================================
-// 1. 加载创作数据
-// ============================================================
 async function loadCreationData(cpId) {
     const user = getCurrentUser();
     if (!user) {
@@ -20,8 +17,62 @@ async function loadCreationData(cpId) {
     return { creation, progress, user };
 }
 
+async function getUserCreation(userId, cpId) {
+    const client = getClient();
+    const { data, error } = await client
+        .from('user_creations')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('cp_id', cpId)
+        .maybeSingle();
+    if (error && error.code !== 'PGRST116') {
+        console.warn('获取创作记录失败:', error);
+        return null;
+    }
+    return data;
+}
+
+async function upsertUserCreation(userId, cpId, updates) {
+    const client = getClient();
+    const { data, error } = await client
+        .from('user_creations')
+        .upsert({
+            user_id: userId,
+            cp_id: cpId,
+            ...updates,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id, cp_id' })
+        .select()
+        .single();
+    if (error) {
+        console.error('保存创作记录失败:', error);
+        return null;
+    }
+    return data;
+}
+
+async function getCreationProgress(userId, cpId) {
+    const creation = await getUserCreation(userId, cpId);
+    if (!creation) {
+        return { total: 3, completed: 0, items: [
+            { key: 'role', label: '🎭 角色设定', completed: false },
+            { key: 'story', label: '📝 剧情创作', completed: false },
+            { key: 'style', label: '🎨 视觉风格', completed: false }
+        ]};
+    }
+    
+    const items = [
+        { key: 'role', label: '🎭 角色设定', completed: !!creation.user_role?.role_name },
+        { key: 'story', label: '📝 剧情创作', completed: creation.story_scenes?.length > 0 },
+        { key: 'style', label: '🎨 视觉风格', completed: !!creation.visual_style?.style_tags?.length }
+    ];
+    
+    const completed = items.filter(i => i.completed).length;
+    return { total: items.length, completed, items };
+}
+
 // ============================================================
-// 2. 保存角色设定
+// 保存各模块
 // ============================================================
 async function saveRoleSetting(cpId, roleData) {
     const user = getCurrentUser();
@@ -49,9 +100,6 @@ async function saveRoleSetting(cpId, roleData) {
     return false;
 }
 
-// ============================================================
-// 3. 保存剧情脉络
-// ============================================================
 async function saveStoryScenes(cpId, scenes) {
     const user = getCurrentUser();
     if (!user) {
@@ -59,7 +107,6 @@ async function saveStoryScenes(cpId, scenes) {
         return false;
     }
     
-    // 过滤空行，只保留有内容的句子
     const validScenes = scenes.filter(s => s.trim().length > 0);
     if (validScenes.length === 0) {
         showToast('请至少写一个场景 📝');
@@ -78,9 +125,6 @@ async function saveStoryScenes(cpId, scenes) {
     return false;
 }
 
-// ============================================================
-// 4. 保存视觉风格
-// ============================================================
 async function saveVisualStyle(cpId, styleData) {
     const user = getCurrentUser();
     if (!user) {
@@ -104,9 +148,6 @@ async function saveVisualStyle(cpId, styleData) {
     return false;
 }
 
-// ============================================================
-// 5. 检查并完成创作
-// ============================================================
 async function checkAndCompleteCreation(cpId) {
     const user = getCurrentUser();
     if (!user) return false;
