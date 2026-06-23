@@ -881,20 +881,23 @@
                 // ============================================================
                 // 绑定新增模块的事件
                 // ============================================================
-                document.getElementById('submitComplaintBtn').onclick = function() {
-                    handleSubmitComplaint(cpId);
-                };
-                document.getElementById('complaintInput').addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        handleSubmitComplaint(cpId);
-                    }
-                });
-
-            } catch (err) {
-                console.error('加载详情失败:', err);
-                body.innerHTML = '<div class="error-state">❌ 加载失败，请刷新重试</div>';
-                commentArea.style.display = 'none';
-            }
+                // ============================================================
+				// 绑定新增模块的事件（检查元素是否存在）
+				// ============================================================
+				const submitBtn = document.getElementById('submitComplaintBtn');
+				if (submitBtn) {
+					submitBtn.onclick = function() {
+						handleSubmitComplaint(cpId);
+					};
+				}
+				const complaintInput = document.getElementById('complaintInput');
+				if (complaintInput) {
+					complaintInput.addEventListener('keydown', function(e) {
+						if (e.key === 'Enter') {
+							handleSubmitComplaint(cpId);
+						}
+					});
+				}
         }
 
         // ============================================================
