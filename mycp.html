@@ -721,11 +721,12 @@
                 // ============================================================
                 // 加载共创区域
                 // ============================================================
-                // 直接内联加载共创区域，避免函数未定义问题
+				// 加载共创区域（直接内联，避免函数未定义问题）
+				// ============================================================
 				const creationContainer = document.getElementById('creationContent');
 				const progressEl = document.getElementById('creationProgress');
 
-				const user = getCurrentUser();
+				// user 已在上面声明，直接使用
 				if (!user) {
 					creationContainer.innerHTML = `
 						<div style="text-align:center;color:#9ca3af;padding:20px 0;">
@@ -737,7 +738,6 @@
 					const { creation, progress } = await loadCreationData(cpId);
 					if (!creation) {
 						await upsertUserCreation(user.id, cpId, {});
-						// 重新加载当前页面
 						location.reload();
 						return;
 					}
@@ -847,7 +847,6 @@
 						`}
 					`;
 				}
-
                 // ============================================================
                 // 绑定原有事件
                 // ============================================================
