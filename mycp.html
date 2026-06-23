@@ -36,7 +36,6 @@
         .cp-summary .cp-meta .status-tag {
             color: #9ca3af;
         }
-
         .reason-item {
             background: #f8f6ff;
             border-radius: 8px;
@@ -74,7 +73,6 @@
             color: #9ca3af;
             padding: 8px 0;
         }
-
         .comment-item {
             padding: 12px 0;
             border-bottom: 1px solid #f3f4f6;
@@ -245,7 +243,6 @@
         .avatar-color-5 { background: #1abc9c; }
         .avatar-color-6 { background: #e67e22; }
         .avatar-color-7 { background: #9b59b6; }
-
         .feature-section {
             background: #fff;
             border-radius: 12px;
@@ -277,7 +274,8 @@
             flex-wrap: wrap;
             gap: 8px;
         }
-        .style-tag, .avoid-tag {
+        .style-tag,
+        .avoid-tag {
             padding: 6px 16px;
             border-radius: 20px;
             border: 1px solid #e5e7eb;
@@ -287,11 +285,13 @@
             transition: all 0.2s;
             color: #4b5563;
         }
-        .style-tag:hover, .avoid-tag:hover {
+        .style-tag:hover,
+        .avoid-tag:hover {
             border-color: #6c5ce7;
             background: #f8f6ff;
         }
-        .style-tag.active, .avoid-tag.active {
+        .style-tag.active,
+        .avoid-tag.active {
             border-color: #6c5ce7;
             background: #ede9fe;
             color: #6c5ce7;
@@ -719,134 +719,133 @@
                 }
 
                 // ============================================================
-                // 加载共创区域
+                // 加载共创区域（直接内联，避免函数未定义问题）
                 // ============================================================
-				// 加载共创区域（直接内联，避免函数未定义问题）
-				// ============================================================
-				const creationContainer = document.getElementById('creationContent');
-				const progressEl = document.getElementById('creationProgress');
+                var creationContainer = document.getElementById('creationContent');
+                var progressEl = document.getElementById('creationProgress');
 
-				// user 已在上面声明，直接使用
-				if (!user) {
-					creationContainer.innerHTML = `
-						<div style="text-align:center;color:#9ca3af;padding:20px 0;">
-							🔒 请登录后参与共创
-							<br/><a href="login.html" class="btn-primary" style="display:inline-block;margin-top:12px;">去登录</a>
-						</div>
-					`;
-				} else {
-					const { creation, progress } = await loadCreationData(cpId);
-					if (!creation) {
-						await upsertUserCreation(user.id, cpId, {});
-						location.reload();
-						return;
-					}
-					
-					progressEl.textContent = `进度 ${progress.completed}/${progress.total}`;
-					
-					const roleData = creation.user_role || {};
-					const roleCompleted = !!roleData.role_name;
-					const scenes = creation.story_scenes || [];
-					const storyCompleted = scenes.length > 0;
-					const styleData = creation.visual_style || {};
-					const styleCompleted = styleData.style_tags && styleData.style_tags.length > 0;
-					
-					creationContainer.innerHTML = `
-						<!-- 模块1：角色设定 -->
-						<div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${roleCompleted ? '#d1fae5' : '#ede9fe'};">
-							<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('roleModule')">
-								<span style="font-weight:600;font-size:14px;">🎭 角色设定 ${roleCompleted ? '✅' : ''}</span>
-								<span style="color:#9ca3af;font-size:12px;">${roleCompleted ? '已填写' : '点击展开'}</span>
-							</div>
-							<div id="roleModule" style="${roleCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
-								<div style="display:grid;gap:8px;">
-									<input type="text" id="roleName" placeholder="你的角色名（如：江湖小贩）" value="${roleData.role_name || ''}" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;" />
-									<select id="roleType" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
-										<option value="">选择角色定位</option>
-										<option value="正派" ${roleData.role_type === '正派' ? 'selected' : ''}>正派</option>
-										<option value="反派" ${roleData.role_type === '反派' ? 'selected' : ''}>反派</option>
-										<option value="搞笑担当" ${roleData.role_type === '搞笑担当' ? 'selected' : ''}>搞笑担当</option>
-										<option value="神秘人" ${roleData.role_type === '神秘人' ? 'selected' : ''}>神秘人</option>
-										<option value="其他" ${roleData.role_type === '其他' ? 'selected' : ''}>其他</option>
-									</select>
-									<input type="text" id="roleLine" placeholder="一句台词（如：客官，这壶酒里有故事）" value="${roleData.role_line || ''}" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;" />
-									<button onclick="saveRoleModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存角色</button>
-								</div>
-							</div>
-						</div>
-						
-						<!-- 模块2：剧情创作 -->
-						<div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${storyCompleted ? '#d1fae5' : '#ede9fe'};">
-							<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('storyModule')">
-								<span style="font-weight:600;font-size:14px;">📝 剧情创作 ${storyCompleted ? '✅' : ''}</span>
-								<span style="color:#9ca3af;font-size:12px;">${storyCompleted ? '已填写' : '点击展开'}</span>
-							</div>
-							<div id="storyModule" style="${storyCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
-								<div style="display:grid;gap:8px;">
-									<div style="font-size:13px;color:#6b7280;">用3-5句话描述你心中的故事场景（每句话对应一个镜头）</div>
-									<div id="sceneContainer">
-										${scenes.length > 0 ? scenes.map((s, i) => `
-											<input type="text" class="scene-input" data-index="${i}" value="${s}" placeholder="场景 ${i+1}..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
-										`).join('') : `
-											<input type="text" class="scene-input" data-index="0" placeholder="场景 1..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
-											<input type="text" class="scene-input" data-index="1" placeholder="场景 2..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
-											<input type="text" class="scene-input" data-index="2" placeholder="场景 3..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
-										`}
-									</div>
-									<button onclick="saveStoryModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存剧情</button>
-								</div>
-							</div>
-						</div>
-						
-						<!-- 模块3：视觉风格 -->
-						<div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${styleCompleted ? '#d1fae5' : '#ede9fe'};">
-							<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('styleModule')">
-								<span style="font-weight:600;font-size:14px;">🎨 视觉风格 ${styleCompleted ? '✅' : ''}</span>
-								<span style="color:#9ca3af;font-size:12px;">${styleCompleted ? '已填写' : '点击展开'}</span>
-							</div>
-							<div id="styleModule" style="${styleCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
-								<div style="display:grid;gap:8px;">
-									<div style="font-size:13px;color:#6b7280;">选择你喜欢的视觉风格（可多选）</div>
-									<div style="display:flex;flex-wrap:wrap;gap:6px;">
-										${['古风','现代','悬疑','甜宠','暗黑','喜剧'].map(tag => `
-											<button class="style-tag-btn ${(styleData.style_tags || []).includes(tag) ? 'active' : ''}" data-tag="${tag}" onclick="toggleStyleTag('${tag}')" style="padding:4px 14px;border-radius:20px;border:1px solid ${(styleData.style_tags || []).includes(tag) ? '#6c5ce7' : '#e5e7eb'};background:${(styleData.style_tags || []).includes(tag) ? '#ede9fe' : '#f9fafb'};color:${(styleData.style_tags || []).includes(tag) ? '#6c5ce7' : '#4b5563'};font-size:13px;cursor:pointer;transition:all 0.2s;">
-												${tag}
-											</button>
-										`).join('')}
-									</div>
-									<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
-										<select id="colorTone" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
-											<option value="">色调偏好</option>
-											<option value="暖色" ${styleData.color_tone === '暖色' ? 'selected' : ''}>暖色（温馨）</option>
-											<option value="冷色" ${styleData.color_tone === '冷色' ? 'selected' : ''}>冷色（清冷）</option>
-											<option value="高饱和" ${styleData.color_tone === '高饱和' ? 'selected' : ''}>高饱和（鲜艳）</option>
-											<option value="黑白灰" ${styleData.color_tone === '黑白灰' ? 'selected' : ''}>黑白灰（经典）</option>
-										</select>
-										<select id="sceneStyle" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
-											<option value="">场景风格</option>
-											<option value="室内" ${styleData.scene_style === '室内' ? 'selected' : ''}>室内</option>
-											<option value="室外" ${styleData.scene_style === '室外' ? 'selected' : ''}>室外</option>
-											<option value="城市" ${styleData.scene_style === '城市' ? 'selected' : ''}>城市</option>
-											<option value="自然" ${styleData.scene_style === '自然' ? 'selected' : ''}>自然</option>
-										</select>
-									</div>
-									<button onclick="saveStyleModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存风格</button>
-								</div>
-							</div>
-						</div>
-						
-						${progress.completed === progress.total ? `
-							<div style="text-align:center;padding:16px;background:#d1fae5;border-radius:12px;color:#065f46;">
-								🎉 恭喜！你的剧本已就绪！
-								<br/><span style="font-size:13px;color:#065f46;">等待 AI 预览生成功能开放...</span>
-							</div>
-						` : `
-							<div style="text-align:center;padding:12px;color:#9ca3af;font-size:13px;">
-								⏳ 完成全部 3 个模块后，你的剧本将就绪
-							</div>
-						`}
-					`;
-				}
+                if (!user) {
+                    creationContainer.innerHTML = `
+                        <div style="text-align:center;color:#9ca3af;padding:20px 0;">
+                            🔒 请登录后参与共创
+                            <br/><a href="login.html" class="btn-primary" style="display:inline-block;margin-top:12px;">去登录</a>
+                        </div>
+                    `;
+                } else {
+                    var creationData = await loadCreationData(cpId);
+                    if (!creationData || !creationData.creation) {
+                        await upsertUserCreation(user.id, cpId, {});
+                        location.reload();
+                        return;
+                    }
+                    var creation = creationData.creation;
+                    var progressData = creationData.progress;
+
+                    progressEl.textContent = '进度 ' + progressData.completed + '/' + progressData.total;
+
+                    var roleData = creation.user_role || {};
+                    var roleCompleted = !!roleData.role_name;
+                    var scenes = creation.story_scenes || [];
+                    var storyCompleted = scenes.length > 0;
+                    var styleData = creation.visual_style || {};
+                    var styleCompleted = styleData.style_tags && styleData.style_tags.length > 0;
+
+                    creationContainer.innerHTML = `
+                        <!-- 模块1：角色设定 -->
+                        <div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${roleCompleted ? '#d1fae5' : '#ede9fe'};">
+                            <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('roleModule')">
+                                <span style="font-weight:600;font-size:14px;">🎭 角色设定 ${roleCompleted ? '✅' : ''}</span>
+                                <span style="color:#9ca3af;font-size:12px;">${roleCompleted ? '已填写' : '点击展开'}</span>
+                            </div>
+                            <div id="roleModule" style="${roleCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
+                                <div style="display:grid;gap:8px;">
+                                    <input type="text" id="roleName" placeholder="你的角色名（如：江湖小贩）" value="${roleData.role_name || ''}" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;" />
+                                    <select id="roleType" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
+                                        <option value="">选择角色定位</option>
+                                        <option value="正派" ${roleData.role_type === '正派' ? 'selected' : ''}>正派</option>
+                                        <option value="反派" ${roleData.role_type === '反派' ? 'selected' : ''}>反派</option>
+                                        <option value="搞笑担当" ${roleData.role_type === '搞笑担当' ? 'selected' : ''}>搞笑担当</option>
+                                        <option value="神秘人" ${roleData.role_type === '神秘人' ? 'selected' : ''}>神秘人</option>
+                                        <option value="其他" ${roleData.role_type === '其他' ? 'selected' : ''}>其他</option>
+                                    </select>
+                                    <input type="text" id="roleLine" placeholder="一句台词（如：客官，这壶酒里有故事）" value="${roleData.role_line || ''}" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;" />
+                                    <button onclick="saveRoleModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存角色</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 模块2：剧情创作 -->
+                        <div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${storyCompleted ? '#d1fae5' : '#ede9fe'};">
+                            <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('storyModule')">
+                                <span style="font-weight:600;font-size:14px;">📝 剧情创作 ${storyCompleted ? '✅' : ''}</span>
+                                <span style="color:#9ca3af;font-size:12px;">${storyCompleted ? '已填写' : '点击展开'}</span>
+                            </div>
+                            <div id="storyModule" style="${storyCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
+                                <div style="display:grid;gap:8px;">
+                                    <div style="font-size:13px;color:#6b7280;">用3-5句话描述你心中的故事场景（每句话对应一个镜头）</div>
+                                    <div id="sceneContainer">
+                                        ${scenes.length > 0 ? scenes.map(function(s, i) {
+                                            return '<input type="text" class="scene-input" data-index="' + i + '" value="' + s + '" placeholder="场景 ' + (i + 1) + '..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />';
+                                        }).join('') : `
+                                            <input type="text" class="scene-input" data-index="0" placeholder="场景 1..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
+                                            <input type="text" class="scene-input" data-index="1" placeholder="场景 2..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
+                                            <input type="text" class="scene-input" data-index="2" placeholder="场景 3..." style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;margin-bottom:6px;" />
+                                        `}
+                                    </div>
+                                    <button onclick="saveStoryModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存剧情</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 模块3：视觉风格 -->
+                        <div class="creation-module" style="background:#f8f6ff;border-radius:8px;padding:12px 16px;margin-bottom:10px;border:1px solid ${styleCompleted ? '#d1fae5' : '#ede9fe'};">
+                            <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleCreationModule('styleModule')">
+                                <span style="font-weight:600;font-size:14px;">🎨 视觉风格 ${styleCompleted ? '✅' : ''}</span>
+                                <span style="color:#9ca3af;font-size:12px;">${styleCompleted ? '已填写' : '点击展开'}</span>
+                            </div>
+                            <div id="styleModule" style="${styleCompleted ? 'display:none;' : 'display:block;'}margin-top:10px;">
+                                <div style="display:grid;gap:8px;">
+                                    <div style="font-size:13px;color:#6b7280;">选择你喜欢的视觉风格（可多选）</div>
+                                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                                        ${['古风','现代','悬疑','甜宠','暗黑','喜剧'].map(function(tag) {
+                                            var isActive = (styleData.style_tags || []).indexOf(tag) !== -1;
+                                            return '<button class="style-tag-btn' + (isActive ? ' active' : '') + '" data-tag="' + tag + '" onclick="toggleStyleTag(\'' + tag + '\')" style="padding:4px 14px;border-radius:20px;border:1px solid ' + (isActive ? '#6c5ce7' : '#e5e7eb') + ';background:' + (isActive ? '#ede9fe' : '#f9fafb') + ';color:' + (isActive ? '#6c5ce7' : '#4b5563') + ';font-size:13px;cursor:pointer;transition:all 0.2s;">' + tag + '</button>';
+                                        }).join('')}
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+                                        <select id="colorTone" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
+                                            <option value="">色调偏好</option>
+                                            <option value="暖色" ${styleData.color_tone === '暖色' ? 'selected' : ''}>暖色（温馨）</option>
+                                            <option value="冷色" ${styleData.color_tone === '冷色' ? 'selected' : ''}>冷色（清冷）</option>
+                                            <option value="高饱和" ${styleData.color_tone === '高饱和' ? 'selected' : ''}>高饱和（鲜艳）</option>
+                                            <option value="黑白灰" ${styleData.color_tone === '黑白灰' ? 'selected' : ''}>黑白灰（经典）</option>
+                                        </select>
+                                        <select id="sceneStyle" style="padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
+                                            <option value="">场景风格</option>
+                                            <option value="室内" ${styleData.scene_style === '室内' ? 'selected' : ''}>室内</option>
+                                            <option value="室外" ${styleData.scene_style === '室外' ? 'selected' : ''}>室外</option>
+                                            <option value="城市" ${styleData.scene_style === '城市' ? 'selected' : ''}>城市</option>
+                                            <option value="自然" ${styleData.scene_style === '自然' ? 'selected' : ''}>自然</option>
+                                        </select>
+                                    </div>
+                                    <button onclick="saveStyleModule(${cpId})" class="btn-primary" style="padding:8px 16px;font-size:14px;">保存风格</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${progressData.completed === progressData.total ? `
+                            <div style="text-align:center;padding:16px;background:#d1fae5;border-radius:12px;color:#065f46;">
+                                🎉 恭喜！你的剧本已就绪！
+                                <br/><span style="font-size:13px;color:#065f46;">等待 AI 预览生成功能开放...</span>
+                            </div>
+                        ` : `
+                            <div style="text-align:center;padding:12px;color:#9ca3af;font-size:13px;">
+                                ⏳ 完成全部 3 个模块后，你的剧本将就绪
+                            </div>
+                        `}
+                    `;
+                }
+
                 // ============================================================
                 // 绑定原有事件
                 // ============================================================
@@ -879,25 +878,28 @@
                 });
 
                 // ============================================================
-                // 绑定新增模块的事件
+                // 绑定新增模块的事件（检查元素是否存在）
                 // ============================================================
-                // ============================================================
-				// 绑定新增模块的事件（检查元素是否存在）
-				// ============================================================
-				const submitBtn = document.getElementById('submitComplaintBtn');
-				if (submitBtn) {
-					submitBtn.onclick = function() {
-						handleSubmitComplaint(cpId);
-					};
-				}
-				const complaintInput = document.getElementById('complaintInput');
-				if (complaintInput) {
-					complaintInput.addEventListener('keydown', function(e) {
-						if (e.key === 'Enter') {
-							handleSubmitComplaint(cpId);
-						}
-					});
-				}
+                var submitBtn = document.getElementById('submitComplaintBtn');
+                if (submitBtn) {
+                    submitBtn.onclick = function() {
+                        handleSubmitComplaint(cpId);
+                    };
+                }
+                var complaintInput = document.getElementById('complaintInput');
+                if (complaintInput) {
+                    complaintInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            handleSubmitComplaint(cpId);
+                        }
+                    });
+                }
+
+            } catch (err) {
+                console.error('加载详情失败:', err);
+                body.innerHTML = '<div class="error-state">❌ 加载失败，请刷新重试</div>';
+                commentArea.style.display = 'none';
+            }
         }
 
         // ============================================================
@@ -1058,7 +1060,7 @@
                 if (!sError && styles) {
                     var selectedStyles = styles.map(function(s) { return s.style_tag; });
                     document.querySelectorAll('.style-tag').forEach(function(btn) {
-                        if (selectedStyles.includes(btn.getAttribute('data-tag'))) {
+                        if (selectedStyles.indexOf(btn.getAttribute('data-tag')) !== -1) {
                             btn.classList.add('active');
                         }
                         btn.onclick = function() {
@@ -1082,7 +1084,7 @@
                 if (!aError && avoids) {
                     var selectedAvoids = avoids.map(function(a) { return a.avoid_tag; });
                     document.querySelectorAll('.avoid-tag').forEach(function(btn) {
-                        if (selectedAvoids.includes(btn.getAttribute('data-tag'))) {
+                        if (selectedAvoids.indexOf(btn.getAttribute('data-tag')) !== -1) {
                             btn.classList.add('active');
                         }
                         btn.onclick = function() {
@@ -1406,104 +1408,104 @@
                 showToast('删除失败，请重试');
             }
         }
-		// ============================================================
-		// 辅助函数：展开/折叠模块
-		// ============================================================
-		function toggleCreationModule(moduleId) {
-			const el = document.getElementById(moduleId);
-			if (el) {
-				el.style.display = el.style.display === 'none' ? 'block' : 'none';
-			}
-		}
 
-		// ============================================================
-		// 辅助函数：切换风格标签
-		// ============================================================
-		var selectedStyleTags = [];
+        // ============================================================
+        // 辅助函数：展开/折叠模块
+        // ============================================================
+        function toggleCreationModule(moduleId) {
+            var el = document.getElementById(moduleId);
+            if (el) {
+                el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            }
+        }
 
-		function toggleStyleTag(tag) {
-			const idx = selectedStyleTags.indexOf(tag);
-			if (idx > -1) {
-				selectedStyleTags.splice(idx, 1);
-			} else {
-				selectedStyleTags.push(tag);
-			}
-			document.querySelectorAll('.style-tag-btn').forEach(btn => {
-				if (btn.dataset.tag === tag) {
-					btn.classList.toggle('active');
-					btn.style.border = btn.classList.contains('active') ? '1px solid #6c5ce7' : '1px solid #e5e7eb';
-					btn.style.background = btn.classList.contains('active') ? '#ede9fe' : '#f9fafb';
-					btn.style.color = btn.classList.contains('active') ? '#6c5ce7' : '#4b5563';
-				}
-			});
-		}
+        // ============================================================
+        // 辅助函数：切换风格标签
+        // ============================================================
+        var selectedStyleTags = [];
 
-		// ============================================================
-		// 保存各模块（调用 creation.js 中的函数）
-		// ============================================================
-		async function saveRoleModule(cpId) {
-			const roleName = document.getElementById('roleName')?.value.trim() || '';
-			const roleType = document.getElementById('roleType')?.value || '';
-			const roleLine = document.getElementById('roleLine')?.value.trim() || '';
-			
-			if (!roleName) {
-				showToast('请填写角色名 🎭');
-				return;
-			}
-			
-			const success = await saveRoleSetting(cpId, {
-				roleName,
-				roleType,
-				roleLine,
-				appearance: '',
-				avatarUrl: ''
-			});
-			
-			if (success) {
-				// 刷新当前页面以更新进度
-				location.reload();
-			}
-		}
+        function toggleStyleTag(tag) {
+            var idx = selectedStyleTags.indexOf(tag);
+            if (idx > -1) {
+                selectedStyleTags.splice(idx, 1);
+            } else {
+                selectedStyleTags.push(tag);
+            }
+            document.querySelectorAll('.style-tag-btn').forEach(function(btn) {
+                if (btn.dataset.tag === tag) {
+                    btn.classList.toggle('active');
+                    btn.style.border = btn.classList.contains('active') ? '1px solid #6c5ce7' : '1px solid #e5e7eb';
+                    btn.style.background = btn.classList.contains('active') ? '#ede9fe' : '#f9fafb';
+                    btn.style.color = btn.classList.contains('active') ? '#6c5ce7' : '#4b5563';
+                }
+            });
+        }
 
-		async function saveStoryModule(cpId) {
-			const inputs = document.querySelectorAll('.scene-input');
-			const scenes = [];
-			inputs.forEach(input => {
-				const val = input.value.trim();
-				if (val) scenes.push(val);
-			});
-			
-			if (scenes.length === 0) {
-				showToast('请至少写一个场景 📝');
-				return;
-			}
-			
-			const success = await saveStoryScenes(cpId, scenes);
-			if (success) {
-				location.reload();
-			}
-		}
+        // ============================================================
+        // 保存各模块
+        // ============================================================
+        async function saveRoleModule(cpId) {
+            var roleName = document.getElementById('roleName')?.value.trim() || '';
+            var roleType = document.getElementById('roleType')?.value || '';
+            var roleLine = document.getElementById('roleLine')?.value.trim() || '';
 
-		async function saveStyleModule(cpId) {
-			const styleTags = selectedStyleTags.length > 0 ? selectedStyleTags : [];
-			const colorTone = document.getElementById('colorTone')?.value || '';
-			const sceneStyle = document.getElementById('sceneStyle')?.value || '';
-			
-			if (styleTags.length === 0) {
-				showToast('请至少选择一个风格标签 🎨');
-				return;
-			}
-			
-			const success = await saveVisualStyle(cpId, {
-				styleTags,
-				colorTone,
-				sceneStyle
-			});
-			
-			if (success) {
-				location.reload();
-			}
-		}
+            if (!roleName) {
+                showToast('请填写角色名 🎭');
+                return;
+            }
+
+            var success = await saveRoleSetting(cpId, {
+                roleName: roleName,
+                roleType: roleType,
+                roleLine: roleLine,
+                appearance: '',
+                avatarUrl: ''
+            });
+
+            if (success) {
+                location.reload();
+            }
+        }
+
+        async function saveStoryModule(cpId) {
+            var inputs = document.querySelectorAll('.scene-input');
+            var scenes = [];
+            inputs.forEach(function(input) {
+                var val = input.value.trim();
+                if (val) scenes.push(val);
+            });
+
+            if (scenes.length === 0) {
+                showToast('请至少写一个场景 📝');
+                return;
+            }
+
+            var success = await saveStoryScenes(cpId, scenes);
+            if (success) {
+                location.reload();
+            }
+        }
+
+        async function saveStyleModule(cpId) {
+            var styleTags = selectedStyleTags.length > 0 ? selectedStyleTags : [];
+            var colorTone = document.getElementById('colorTone')?.value || '';
+            var sceneStyle = document.getElementById('sceneStyle')?.value || '';
+
+            if (styleTags.length === 0) {
+                showToast('请至少选择一个风格标签 🎨');
+                return;
+            }
+
+            var success = await saveVisualStyle(cpId, {
+                styleTags: styleTags,
+                colorTone: colorTone,
+                sceneStyle: sceneStyle
+            });
+
+            if (success) {
+                location.reload();
+            }
+        }
 
         console.log('✅ 捣蛋选角 - CP详情页已加载');
     </script>
