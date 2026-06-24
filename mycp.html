@@ -658,7 +658,7 @@
 
                 var { data: cpData, error: cpError } = await client
                     .from('cp_submissions')
-                    .select('id, male_actor, female_actor, genre, status, flower_count, egg_count, created_at, votes ( id )')
+                    .select('id, male_actor, female_actor, genre, status, flower_count, egg_count, submit_time, votes ( id )')
                     .eq('id', cpId)
                     .maybeSingle();
 
@@ -859,7 +859,7 @@
                     if (progress) {
                         currentPhase = progress.phase;
                     } else {
-                        var days = getDaysSince(cpData.created_at);
+                        var days = getDaysSince(cpData.submit_time);
                         var newPhase = days >= 3 ? 4 : days >= 2 ? 3 : days >= 1 ? 2 : 1;
                         progress = await upsertUserProgress(user.id, cpId, newPhase);
                         currentPhase = progress ? progress.phase : 1;

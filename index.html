@@ -1249,10 +1249,22 @@
                 return;
             }
 
-            if (getOnboardingStatus()) {
+            // 检查本地缓存是否已完成
+            if (localStorage.getItem('onboarding_' + user.id) === 'completed') {
                 showToast('你已经完成新手引导了 🎉');
                 return;
             }
+
+            // 检查今天是否已经弹出过
+            var today = new Date().toISOString().split('T')[0];
+            var todayShownKey = 'onboarding_shown_' + user.id + '_' + today;
+            if (localStorage.getItem(todayShownKey) === 'true') {
+                // 今天已经弹出过，静默返回
+                return;
+            }
+
+            // 记录今日已弹出
+            localStorage.setItem(todayShownKey, 'true');
 
             isOnboardingActive = true;
             currentStep = 1;
@@ -1298,6 +1310,23 @@
             try {
                 var client = getClient();
 
+                // 检查是否已经完成过引导（防止重复提交）
+                var { data: existingProgress } = await client
+                    .from('user_progress')
+                    .select('has_seen_onboarding')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+
+                if (existingProgress && existingProgress.has_seen_onboarding === true) {
+                    // 已经完成过，直接关闭弹窗跳转
+                    document.getElementById('onboardingOverlay').style.display = 'none';
+                    document.body.style.overflow = '';
+                    isOnboardingActive = false;
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // 更新 user_progress 表
                 var { error: updateError } = await client
                     .from('user_progress')
                     .update({
@@ -1307,6 +1336,7 @@
                     .eq('user_id', user.id);
 
                 if (updateError) {
+                    // 如果记录不存在，插入新记录
                     var { error: insertError } = await client
                         .from('user_progress')
                         .insert({
@@ -1318,6 +1348,7 @@
                     if (insertError) throw insertError;
                 }
 
+                // 发放奖励：5 个人气灯
                 var today = new Date().toISOString().split('T')[0];
                 var { data: activity } = await client
                     .from('daily_activities')
@@ -1344,6 +1375,7 @@
                         });
                 }
 
+                // 记录奖励发放
                 await client
                     .from('onboarding_rewards')
                     .insert({
@@ -1353,8 +1385,12 @@
                     .onConflict('user_id')
                     .ignore();
 
+                // 本地缓存 - 标记已完成
                 localStorage.setItem('onboarding_' + user.id, 'completed');
+                // 同时记录完成日期，用于每日检查
+                localStorage.setItem('onboarding_completed_date_' + user.id, today);
 
+                // 关闭弹窗
                 document.getElementById('onboardingOverlay').style.display = 'none';
                 document.body.style.overflow = '';
                 isOnboardingActive = false;
@@ -1367,6 +1403,9 @@
                     updateItemDisplay();
                 }
 
+                // 跳转到首页
+                window.location.href = 'index.html';
+
             } catch (err) {
                 console.error('完成引导失败:', err);
                 showToast('保存失败，请重试');
@@ -1377,10 +1416,17 @@
             document.getElementById('onboardingOverlay').style.display = 'none';
             document.body.style.overflow = '';
             isOnboardingActive = false;
+
             var user = getCurrentUser();
             if (user) {
                 trackActivity('onboarding_skip', user.id, 'user', { step: currentStep });
+
+                // 记录今天已跳过（同一天不再弹出）
+                var today = new Date().toISOString().split('T')[0];
+                var todayShownKey = 'onboarding_shown_' + user.id + '_' + today;
+                localStorage.setItem(todayShownKey, 'true');
             }
+
             showToast('已跳过，你可以随时在个人中心重新开始');
         }
 
@@ -1388,28 +1434,53 @@
             var user = getCurrentUser();
             if (!user) return;
 
-            var client = getClient();
-            var { data, error } = await client
-                .from('user_progress')
-                .select('has_seen_onboarding')
-                .eq('user_id', user.id)
-                .maybeSingle();
-
-            if (error) {
-                console.warn('检查引导状态失败:', error);
+            // 检查本地缓存 - 是否已经完成过（永久标记）
+            var completedCache = localStorage.getItem('onboarding_' + user.id);
+            if (completedCache === 'completed') {
+                // 已经完成过，不再弹出
                 return;
             }
 
-            var hasSeen = data ? data.has_seen_onboarding : false;
-
-            if (hasSeen) {
-                localStorage.setItem('onboarding_' + user.id, 'completed');
+            // 检查今天是否已经弹出过（同一天只弹1次）
+            var today = new Date().toISOString().split('T')[0];
+            var todayShownKey = 'onboarding_shown_' + user.id + '_' + today;
+            var todayShown = localStorage.getItem(todayShownKey);
+            if (todayShown === 'true') {
+                // 今天已经弹出过，不再弹出
                 return;
             }
 
-            setTimeout(function() {
-                startOnboarding();
-            }, 1500);
+            try {
+                var client = getClient();
+                var { data, error } = await client
+                    .from('user_progress')
+                    .select('has_seen_onboarding, onboarding_completed_at')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+
+                if (error) {
+                    console.warn('检查引导状态失败:', error);
+                    return;
+                }
+
+                // 如果数据库显示已完成
+                if (data && data.has_seen_onboarding === true) {
+                    // 同步到本地缓存
+                    localStorage.setItem('onboarding_' + user.id, 'completed');
+                    return;
+                }
+
+                // 如果没有完成记录，记录今日已弹出
+                localStorage.setItem(todayShownKey, 'true');
+
+                // 延迟弹出引导
+                setTimeout(function() {
+                    startOnboarding();
+                }, 1500);
+
+            } catch (err) {
+                console.warn('检查引导状态异常:', err);
+            }
         }
 
         // ============================================================
