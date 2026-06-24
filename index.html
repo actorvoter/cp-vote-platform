@@ -8,19 +8,13 @@
     <!-- ===== SEO 基础优化 ===== -->
     <meta name="description" content="捣蛋选角是一个观众投票平台，你可以为喜欢的明星CP投票、提名、丢鸡蛋，表达你对选角的真实看法。涵盖肖战、迪丽热巴、张凌赫、田曦薇、王鹤棣、虞书欣、成毅、杨紫等热门演员。" />
     <meta name="keywords" content="CP投票, 明星CP, 选角, 捣蛋选角, 肖战, 迪丽热巴, 张凌赫, 田曦薇, 王鹤棣, 虞书欣, 成毅, 杨紫, CP榜, 投票平台, 短剧选角, 古装CP, 现代CP" />
-
-    <!-- ===== 搜索引擎抓取 ===== -->
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://www.cpmaker.com/" />
-
-    <!-- ===== 社交媒体分享优化 ===== -->
     <meta property="og:title" content="捣蛋选角 · 选角不公？捣蛋有理！" />
     <meta property="og:description" content="为喜欢的明星CP投票、提名、丢鸡蛋，表达你对选角的真实看法。" />
     <meta property="og:url" content="https://www.cpmaker.com/" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="捣蛋选角 · 选角不公？捣蛋有理！" />
-    <meta name="twitter:description" content="为喜欢的明星CP投票、提名、丢鸡蛋，表达你对选角的真实看法。" />
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
     </script>
@@ -31,7 +25,6 @@
     <!-- ===== 头部 ===== -->
     <div class="header">
         <h1>🥚 捣蛋选角</h1>
-        <!-- ===== 进度引导横幅 ===== -->
         <div id="progressBanner" style="display:none; background:linear-gradient(135deg, #fef3c7, #ede9fe); border-radius:12px; padding:10px 16px; margin-bottom:12px; text-align:center; font-size:14px; color:#4b5563; border:1px solid #f59e0b;">
             <span id="progressText">🔥 你提名的 CP 正在被更多人看见！</span>
         </div>
@@ -91,6 +84,28 @@
         <p style="text-align:center; color:#9ca3af; padding:40px 0;">加载中...</p>
     </div>
 
+    <!-- ===== 🆕 剧集孵化入口 ===== -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:12px;">
+        <span style="font-size:18px; font-weight:600;">🎬 平民剧集孵化</span>
+        <a href="drama.html" style="font-size:13px; color:#6c5ce7; text-decoration:none;">查看全部 →</a>
+    </div>
+    <div id="dramaPreview" style="display:flex; gap:12px; overflow-x:auto; padding:4px 0 16px 0; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;">
+        <div style="min-width:200px; background:#f8f6ff; border-radius:16px; padding:16px; scroll-snap-align:start; border:1px solid #ede9fe;">
+            <div style="font-size:14px; font-weight:600; color:#6c5ce7;">🔥 热门</div>
+            <div style="font-weight:600; margin:4px 0;">《赘婿2》</div>
+            <div style="font-size:12px; color:#6b7280;">角色需求：男主、女主</div>
+            <div style="font-size:12px; color:#6b7280;">已有 23 人投稿</div>
+            <button onclick="location.href='drama.html?id=1'" style="margin-top:8px; padding:4px 16px; background:#6c5ce7; color:#fff; border:none; border-radius:20px; font-size:12px; cursor:pointer;">查看详情</button>
+        </div>
+        <div style="min-width:200px; background:#fef3c7; border-radius:16px; padding:16px; scroll-snap-align:start; border:1px solid #f59e0b;">
+            <div style="font-size:14px; font-weight:600; color:#d97706;">⭐ 新项目</div>
+            <div style="font-weight:600; margin:4px 0;">《我在古代当网红》</div>
+            <div style="font-size:12px; color:#6b7280;">角色需求：女主、女配</div>
+            <div style="font-size:12px; color:#6b7280;">已有 12 人投稿</div>
+            <button onclick="location.href='drama.html?id=2'" style="margin-top:8px; padding:4px 16px; background:#d97706; color:#fff; border:none; border-radius:20px; font-size:12px; cursor:pointer;">查看详情</button>
+        </div>
+    </div>
+
     <!-- ===== 访问统计 ===== -->
     <div style="text-align:center; font-size:12px; color:#9ca3af; padding:12px 0; border-top:1px solid #ede9fe; margin-top:12px;">
         <span id="siteStats">👁️ 加载中...</span>
@@ -141,7 +156,6 @@
                         <option value="其他">其他</option>
                     </select>
                 </div>
-                <!-- ===== ✅ 期待钩子（修复版：包含 hopeOther） ===== -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; margin-top:12px; padding-top:12px; border-top:1px solid #ede9fe;">
                     <label style="font-size:14px; color:#4b5563; display:flex; align-items:center; gap:8px; cursor:pointer;">
                         <input type="checkbox" id="hopeWatch" value="watch" /> 第一时间观看
@@ -157,9 +171,133 @@
                     </label>
                 </div>
                 <input type="text" id="hopeOther" placeholder="其他想法（选填）" style="width:100%; margin-top:8px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; outline:none;" />
-                <!-- ===== 期待钩子结束 ===== -->
                 <button class="btn-primary" id="confirmSubmitBtn" style="width:100%;padding:14px;font-size:16px;margin-top:12px;">提交捣蛋</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ===== 🆕 新手引导覆盖层 ===== -->
+    <div id="onboardingOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:9999; backdrop-filter:blur(4px);">
+        <div id="onboardingContainer" style="max-width:500px; margin:10vh auto; background:#fff; border-radius:24px; padding:32px 24px 24px; position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <!-- 进度条 -->
+            <div style="display:flex; gap:8px; margin-bottom:24px; align-items:center;">
+                <div id="onboardingProgressBar" style="flex:1; height:4px; background:#e5e7eb; border-radius:2px; overflow:hidden;">
+                    <div id="onboardingProgressFill" style="height:100%; width:20%; background:linear-gradient(90deg, #6c5ce7, #f59e0b); transition:width 0.5s ease;"></div>
+                </div>
+                <span id="onboardingStepCounter" style="font-size:13px; color:#9ca3af; font-weight:500; min-width:60px; text-align:right;">1/5</span>
+            </div>
+
+            <!-- Step 1 -->
+            <div class="onboarding-step" data-step="1" style="display:block;">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <span style="font-size:48px;">🏷️</span>
+                    <h2 style="margin:8px 0 4px 0; font-size:22px;">提名你的第一对 CP</h2>
+                    <p style="color:#6b7280; font-size:14px; margin:0;">你心中的神仙CP是谁？快来提名吧！</p>
+                </div>
+                <div style="background:#f8f6ff; border-radius:12px; padding:16px; margin-bottom:16px;">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+                        <span style="background:#ede9fe; padding:4px 16px; border-radius:20px; font-size:13px;">张凌赫 ✕ 田曦薇</span>
+                        <span style="background:#ede9fe; padding:4px 16px; border-radius:20px; font-size:13px;">王鹤棣 ✕ 虞书欣</span>
+                        <span style="background:#ede9fe; padding:4px 16px; border-radius:20px; font-size:13px;">成毅 ✕ 杨紫</span>
+                    </div>
+                    <p style="text-align:center; font-size:13px; color:#6c5ce7; margin-top:8px;">👆 点击首页 "提名 CP" 按钮开始</p>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button onclick="skipOnboarding()" style="flex:1; padding:12px; background:#f3f4f6; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#6b7280;">跳过</button>
+                    <button onclick="nextOnboardingStep()" style="flex:2; padding:12px; background:#6c5ce7; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#fff; font-weight:600;">下一步 →</button>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="onboarding-step" data-step="2" style="display:none;">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <span style="font-size:48px;">❤️</span>
+                    <h2 style="margin:8px 0 4px 0; font-size:22px;">为你喜欢的 CP 投票</h2>
+                    <p style="color:#6b7280; font-size:14px; margin:0;">每对CP都有机会成为爆款！</p>
+                </div>
+                <div style="background:#f8f6ff; border-radius:12px; padding:16px; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:center; gap:24px;">
+                        <div style="text-align:center;">
+                            <span style="font-size:24px;">❤️</span>
+                            <div style="font-weight:600; color:#6c5ce7;">428万</div>
+                            <div style="font-size:12px; color:#9ca3af;">当前最高票</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <span style="font-size:24px;">🌹</span>
+                            <div style="font-weight:600; color:#e74c3c;">1.2万</div>
+                            <div style="font-size:12px; color:#9ca3af;">鲜花支持</div>
+                        </div>
+                    </div>
+                    <p style="text-align:center; font-size:13px; color:#6c5ce7; margin-top:8px;">👆 点击 "❤️ 投票" 按钮支持你喜欢的 CP</p>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button onclick="skipOnboarding()" style="flex:1; padding:12px; background:#f3f4f6; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#6b7280;">跳过</button>
+                    <button onclick="nextOnboardingStep()" style="flex:2; padding:12px; background:#6c5ce7; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#fff; font-weight:600;">下一步 →</button>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="onboarding-step" data-step="3" style="display:none;">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <span style="font-size:48px;">🥚</span>
+                    <h2 style="margin:8px 0 4px 0; font-size:22px;">大胆丢出你的鸡蛋</h2>
+                    <p style="color:#6b7280; font-size:14px; margin:0;">选角不公？说出你的真实想法！</p>
+                </div>
+                <div style="background:#fef3c7; border-radius:12px; padding:16px; margin-bottom:16px;">
+                    <div style="display:flex; justify-content:center; gap:24px;">
+                        <div style="text-align:center;">
+                            <span style="font-size:24px;">🥚</span>
+                            <div style="font-weight:600; color:#d97706;">8,732</div>
+                            <div style="font-size:12px; color:#9ca3af;">今日已丢鸡蛋</div>
+                        </div>
+                    </div>
+                    <p style="text-align:center; font-size:13px; color:#d97706; margin-top:8px;">👆 点击 "🥚" 按钮，然后分享你的理由</p>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button onclick="skipOnboarding()" style="flex:1; padding:12px; background:#f3f4f6; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#6b7280;">跳过</button>
+                    <button onclick="nextOnboardingStep()" style="flex:2; padding:12px; background:#6c5ce7; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#fff; font-weight:600;">下一步 →</button>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="onboarding-step" data-step="4" style="display:none;">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <span style="font-size:48px;">🎬</span>
+                    <h2 style="margin:8px 0 4px 0; font-size:22px;">参与共创 · 成为编剧</h2>
+                    <p style="color:#6b7280; font-size:14px; margin:0;">设定角色、创作剧情、选择视觉风格</p>
+                </div>
+                <div style="background:#f8f6ff; border-radius:12px; padding:16px; margin-bottom:16px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center;">
+                        <div><span style="font-size:20px;">🎭</span><br><span style="font-size:12px; color:#6b7280;">角色设定</span></div>
+                        <div><span style="font-size:20px;">📝</span><br><span style="font-size:12px; color:#6b7280;">剧情创作</span></div>
+                        <div><span style="font-size:20px;">🎨</span><br><span style="font-size:12px; color:#6b7280;">视觉风格</span></div>
+                    </div>
+                    <p style="text-align:center; font-size:13px; color:#6c5ce7; margin-top:8px;">👆 进入 CP 详情页，在 "一起创作" 区域开始</p>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button onclick="skipOnboarding()" style="flex:1; padding:12px; background:#f3f4f6; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#6b7280;">跳过</button>
+                    <button onclick="nextOnboardingStep()" style="flex:2; padding:12px; background:#6c5ce7; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#fff; font-weight:600;">下一步 →</button>
+                </div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="onboarding-step" data-step="5" style="display:none;">
+                <div style="text-align:center; margin-bottom:16px;">
+                    <span style="font-size:64px;">🎉</span>
+                    <h2 style="margin:8px 0 4px 0; font-size:22px;">恭喜完成新手引导！</h2>
+                    <p style="color:#6b7280; font-size:14px; margin:0;">你已经掌握了捣蛋选角的所有玩法</p>
+                </div>
+                <div style="background:#d1fae5; border-radius:12px; padding:20px; text-align:center; margin-bottom:16px;">
+                    <span style="font-size:28px;">✨</span>
+                    <div style="font-weight:600; font-size:20px; color:#065f46;">+5 人气灯</div>
+                    <div style="font-size:13px; color:#065f46;">已发放到你的账户 🎁</div>
+                </div>
+                <button onclick="completeOnboarding()" style="width:100%; padding:14px; background:linear-gradient(135deg, #6c5ce7, #f59e0b); border:none; border-radius:12px; font-size:16px; cursor:pointer; color:#fff; font-weight:600;">
+                    🚀 开始捣蛋之旅
+                </button>
+            </div>
+
+            <button onclick="skipOnboarding()" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:20px; color:#9ca3af; cursor:pointer;">✕</button>
         </div>
     </div>
 
@@ -282,9 +420,6 @@
         // ============================================================
         var currentTab = 'hot';
 
-        // ============================================================
-        // Tab 切换
-        // ============================================================
         document.getElementById('tabHot').addEventListener('click', function() {
             switchTab('hot');
         });
@@ -309,52 +444,6 @@
                 activeBtn.style.color = '#fff';
             }
             loadRanking();
-        }
-
-        // 加载进度引导
-        async function loadProgressBanner() {
-            const user = getCurrentUser();
-            if (!user) return;
-
-            const banner = document.getElementById('progressBanner');
-            const text = document.getElementById('progressText');
-
-            // 获取用户最新的 CP 提名
-            const client = getClient();
-            const { data: cp } = await client
-                .from('cp_submissions')
-                .select('id, created_at')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-            if (!cp) return;
-
-            const progress = await getUserProgress(user.id, cp.id);
-            if (!progress) return;
-
-            const phase = progress.phase;
-            const days = getDaysSince(cp.created_at);
-
-            let msg = '';
-            if (phase === 1) {
-                msg = '🎉 提名成功！明天回来为你的 CP 定义风格吧！';
-            } else if (phase === 2) {
-                msg = '🎨 你的 CP 已解锁风格标签！快去定义你心中的调性吧！';
-            } else if (phase === 3) {
-                msg = '🚫 雷区已解锁！快来帮大家避雷！';
-            } else if (phase >= 4) {
-                const followers = await getCPFollowerCount(cp.id);
-                if (followers >= 10000) {
-                    msg = '🔥 你的 CP 已获得 ' + followers + ' 人关注！热度达标，有机会进入剧组视线！';
-                } else {
-                    msg = '💢 吐槽区已解锁！说出你的真实想法！已有 ' + followers + ' 人关注这对 CP';
-                }
-            }
-
-            text.textContent = msg;
-            banner.style.display = 'block';
         }
 
         // ============================================================
@@ -931,7 +1020,7 @@
         });
 
         // ============================================================
-        // ✅ 故事分享弹窗（提交CP后）
+        // 故事分享弹窗
         // ============================================================
         function openReasonModal(cpId, male, female, hopeData) {
             var overlay = document.createElement('div');
@@ -1049,7 +1138,7 @@
         }
 
         // ============================================================
-        // ✅ 提交 CP（包含期待钩子数据）
+        // 提交 CP
         // ============================================================
         document.getElementById('confirmSubmitBtn').addEventListener('click', async function() {
             var male = document.getElementById('maleInput').value.trim();
@@ -1064,7 +1153,6 @@
             var user = getCurrentUser();
             var deviceId = user ? user.id : myDeviceId;
 
-            // ✅ 收集期待钩子数据
             var hopeData = [];
             if (document.getElementById('hopeWatch').checked) hopeData.push('watch');
             if (document.getElementById('hopeShare').checked) hopeData.push('share');
@@ -1120,7 +1208,6 @@
                 showToast('提交成功！已上线 🎉');
                 document.getElementById('maleInput').value = '';
                 document.getElementById('femaleInput').value = '';
-                // ✅ 清空期待钩子
                 document.getElementById('hopeWatch').checked = false;
                 document.getElementById('hopeShare').checked = false;
                 document.getElementById('hopeSupport').checked = false;
@@ -1138,6 +1225,192 @@
                 showToast('提交失败，请重试');
             }
         });
+
+        // ============================================================
+        // 🆕 新手引导系统
+        // ============================================================
+        var currentStep = 1;
+        var totalSteps = 5;
+        var isOnboardingActive = false;
+
+        function getOnboardingStatus() {
+            var user = getCurrentUser();
+            if (!user) return false;
+            var cached = localStorage.getItem('onboarding_' + user.id);
+            if (cached === 'completed') return true;
+            return false;
+        }
+
+        function startOnboarding() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (getOnboardingStatus()) {
+                showToast('你已经完成新手引导了 🎉');
+                return;
+            }
+
+            isOnboardingActive = true;
+            currentStep = 1;
+            document.getElementById('onboardingOverlay').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            showStep(1);
+            trackActivity('onboarding_start', user.id, 'user', { step: 1 });
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.onboarding-step').forEach(function(el) {
+                el.style.display = 'none';
+            });
+
+            var currentEl = document.querySelector('.onboarding-step[data-step="' + step + '"]');
+            if (currentEl) {
+                currentEl.style.display = 'block';
+            }
+
+            var progress = (step / totalSteps) * 100;
+            document.getElementById('onboardingProgressFill').style.width = progress + '%';
+            document.getElementById('onboardingStepCounter').textContent = step + '/' + totalSteps;
+        }
+
+        function nextOnboardingStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+                var user = getCurrentUser();
+                if (user) {
+                    trackActivity('onboarding_step', user.id, 'user', { step: currentStep });
+                }
+            }
+        }
+
+        async function completeOnboarding() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                var { error: updateError } = await client
+                    .from('user_progress')
+                    .update({
+                        has_seen_onboarding: true,
+                        onboarding_completed_at: new Date().toISOString()
+                    })
+                    .eq('user_id', user.id);
+
+                if (updateError) {
+                    var { error: insertError } = await client
+                        .from('user_progress')
+                        .insert({
+                            user_id: user.id,
+                            has_seen_onboarding: true,
+                            onboarding_completed_at: new Date().toISOString(),
+                            phase: 1
+                        });
+                    if (insertError) throw insertError;
+                }
+
+                var today = new Date().toISOString().split('T')[0];
+                var { data: activity } = await client
+                    .from('daily_activities')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('activity_date', today)
+                    .maybeSingle();
+
+                if (activity) {
+                    await client
+                        .from('daily_activities')
+                        .update({
+                            items_light: (activity.items_light || 0) + 5
+                        })
+                        .eq('id', activity.id);
+                } else {
+                    await client
+                        .from('daily_activities')
+                        .insert({
+                            user_id: user.id,
+                            activity_date: today,
+                            items_light: 5,
+                            used_votes: []
+                        });
+                }
+
+                await client
+                    .from('onboarding_rewards')
+                    .insert({
+                        user_id: user.id,
+                        reward_amount: 5
+                    })
+                    .onConflict('user_id')
+                    .ignore();
+
+                localStorage.setItem('onboarding_' + user.id, 'completed');
+
+                document.getElementById('onboardingOverlay').style.display = 'none';
+                document.body.style.overflow = '';
+                isOnboardingActive = false;
+
+                await trackActivity('onboarding_complete', user.id, 'user', { reward: 5 });
+
+                showToast('🎉 新手引导完成！获得 5 个人气灯！');
+
+                if (typeof updateItemDisplay === 'function') {
+                    updateItemDisplay();
+                }
+
+            } catch (err) {
+                console.error('完成引导失败:', err);
+                showToast('保存失败，请重试');
+            }
+        }
+
+        function skipOnboarding() {
+            document.getElementById('onboardingOverlay').style.display = 'none';
+            document.body.style.overflow = '';
+            isOnboardingActive = false;
+            var user = getCurrentUser();
+            if (user) {
+                trackActivity('onboarding_skip', user.id, 'user', { step: currentStep });
+            }
+            showToast('已跳过，你可以随时在个人中心重新开始');
+        }
+
+        async function checkAndStartOnboarding() {
+            var user = getCurrentUser();
+            if (!user) return;
+
+            var client = getClient();
+            var { data, error } = await client
+                .from('user_progress')
+                .select('has_seen_onboarding')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (error) {
+                console.warn('检查引导状态失败:', error);
+                return;
+            }
+
+            var hasSeen = data ? data.has_seen_onboarding : false;
+
+            if (hasSeen) {
+                localStorage.setItem('onboarding_' + user.id, 'completed');
+                return;
+            }
+
+            setTimeout(function() {
+                startOnboarding();
+            }, 1500);
+        }
 
         // ============================================================
         // 内容推荐位轮播
@@ -1249,7 +1522,10 @@
         updateItemDisplay();
         updateSiteStats();
 
-        console.log('✅ 捣蛋选角已启动 🥚');
+        // 新手引导 - 延迟触发
+        setTimeout(checkAndStartOnboarding, 2000);
+
+        console.log('✅ 捣蛋选角 2.0 已启动 🥚');
     </script>
 </body>
 </html>

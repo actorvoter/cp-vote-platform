@@ -3,293 +3,827 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>我的捣蛋 · 捣蛋选角</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
-    </script>
+    <title>个人中心 · 捣蛋选角</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        .mycp-container {
+        .profile-container {
             max-width: 480px;
             margin: 0 auto;
-            padding: 0 0 80px 0;
+            padding: 16px 20px 80px 20px;
         }
-        .mycp-header {
+        .profile-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 16px 0;
+            border-bottom: 2px solid #ede9fe;
+            margin-bottom: 24px;
         }
-        .mycp-header h1 {
+        .profile-header h1 {
             font-size: 22px;
         }
-        .mycp-stats {
-            background: #f8f6ff;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: space-around;
-            text-align: center;
-        }
-        .mycp-stats .stat-item .number {
-            font-size: 24px;
-            font-weight: 700;
-            color: #6c5ce7;
-        }
-        .mycp-stats .stat-item .label {
-            font-size: 12px;
-            color: #9ca3af;
-        }
-        .cp-list-item {
+        .profile-card {
             background: #fff;
-            border-radius: 12px;
-            padding: 14px 16px;
-            margin-bottom: 10px;
+            border-radius: 16px;
+            padding: 20px;
             border: 1px solid #ede9fe;
+            margin-bottom: 16px;
+        }
+        .profile-card .avatar-large {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 auto 12px auto;
+        }
+        .profile-card .user-name {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .profile-card .user-email {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .profile-card .user-badge {
+            text-align: center;
+            margin-top: 8px;
+        }
+        .profile-card .user-badge .badge {
+            background: #ede9fe;
+            color: #6c5ce7;
+            padding: 2px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #f3f4f6;
             cursor: pointer;
             transition: background 0.15s;
         }
-        .cp-list-item:active {
-            background: #f8f6ff;
+        .menu-item:last-child {
+            border-bottom: none;
         }
-        .cp-list-item .cp-name {
+        .menu-item:active {
+            background: #f8f6ff;
+            margin: 0 -20px;
+            padding: 14px 20px;
+        }
+        .menu-item .menu-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .menu-item .menu-left .icon {
+            font-size: 20px;
+        }
+        .menu-item .menu-left .label {
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .menu-item .menu-right {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+        .menu-item .menu-right .arrow {
+            font-size: 16px;
+        }
+        .section-title {
             font-size: 16px;
             font-weight: 600;
+            color: #1a1a2e;
+            margin: 20px 0 12px 0;
         }
-        .cp-list-item .cp-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px 12px;
-            font-size: 13px;
-            color: #6b7280;
-            margin-top: 4px;
+        .logout-btn {
+            width: 100%;
+            padding: 14px;
+            background: #fef2f2;
+            color: #ef4444;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        .logout-btn:active {
+            transform: scale(0.98);
+            background: #fee2e2;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
             align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-        .cp-list-item .cp-meta .genre-tag {
-            background: #ede9fe;
-            color: #6c5ce7;
-            padding: 0 10px;
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #fff;
             border-radius: 20px;
+            max-width: 440px;
+            width: 100%;
+            padding: 24px 20px 20px;
+            animation: slideUp 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
         }
-        .cp-list-item .cp-status {
-            font-size: 12px;
-            padding: 2px 10px;
-            border-radius: 20px;
+        .modal-box .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
-        .cp-list-item .cp-status.approved {
-            background: #d1fae5;
-            color: #065f46;
+        .modal-box .modal-header h3 {
+            font-size: 20px;
+            margin: 0;
         }
-        .cp-list-item .cp-status.pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .cp-list-item .cp-progress {
-            background: #ede9fe;
-            color: #6c5ce7;
-            padding: 2px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
+        .modal-box .modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
             color: #9ca3af;
+            padding: 0 4px;
         }
-        .empty-state .big-icon {
-            font-size: 48px;
+        .modal-box .form-group {
+            margin-bottom: 14px;
+        }
+        .modal-box .form-group label {
             display: block;
-            margin-bottom: 12px;
-        }
-        .loading-state {
-            text-align: center;
-            padding: 40px 0;
-            color: #9ca3af;
-        }
-        .brand-slogan {
-            text-align: center;
-            color: #f59e0b;
             font-size: 14px;
             font-weight: 500;
+            color: #4b5563;
+            margin-bottom: 4px;
+        }
+        .modal-box .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .modal-box .form-group input:focus {
+            border-color: #6c5ce7;
+        }
+        .modal-box .form-group .input-hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+        .modal-box .btn-primary {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 12px;
+            margin-top: 4px;
+        }
+        .modal-box .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .modal-box .btn-secondary-outline {
+            width: 100%;
+            padding: 12px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+        .modal-box .btn-secondary-outline:active {
+            transform: scale(0.98);
+        }
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            background: #e5e7eb;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .password-strength .fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        .password-strength .fill.weak { width: 33%; background: #ef4444; }
+        .password-strength .fill.medium { width: 66%; background: #f59e0b; }
+        .password-strength .fill.strong { width: 100%; background: #10b981; }
+        .password-strength-label {
+            font-size: 12px;
+            color: #9ca3af;
+            text-align: right;
+            margin-top: 2px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            max-width: 80%;
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .first-login-banner {
+            background: linear-gradient(135deg, #fef3c7, #ede9fe);
+            border-radius: 12px;
+            padding: 16px;
             margin-bottom: 16px;
+            border: 2px solid #f59e0b;
+            text-align: center;
+        }
+        .first-login-banner .banner-icon {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .first-login-banner .banner-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1a1a2e;
+        }
+        .first-login-banner .banner-desc {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .first-login-banner .banner-btn {
+            margin-top: 8px;
+            padding: 8px 24px;
+            background: #f59e0b;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .first-login-banner .banner-btn:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
 <body>
 
-    <div class="mycp-container">
-        <div class="mycp-header">
+    <div class="profile-container">
+        <!-- 头部 -->
+        <div class="profile-header">
             <a href="index.html" class="btn-secondary">← 返回</a>
-            <h1>👤 我的捣蛋</h1>
+            <h1>⚙️ 个人中心</h1>
             <div style="width:60px;"></div>
         </div>
 
-        <div class="brand-slogan">🎯 选角不公？捣蛋有理！</div>
+        <!-- 🆕 首次登录提示横幅 -->
+        <div id="firstLoginBanner" class="first-login-banner" style="display:none;">
+            <span class="banner-icon">🔑</span>
+            <div class="banner-title">首次登录，请设置密码</div>
+            <div class="banner-desc">为了账户安全，建议你设置一个密码，方便下次登录</div>
+            <button class="banner-btn" onclick="openPasswordModal()">🔑 立即设置密码</button>
+        </div>
 
-        <div class="mycp-stats" id="statsArea" style="display:none;">
-            <div class="stat-item">
-                <div class="number" id="totalCount">0</div>
-                <div class="label">总共捣蛋</div>
-            </div>
-            <div class="stat-item">
-                <div class="number" id="approvedCount">0</div>
-                <div class="label">已上线</div>
-            </div>
-            <div class="stat-item">
-                <div class="number" id="pendingCount">0</div>
-                <div class="label">审核中</div>
+        <!-- 用户信息卡片 -->
+        <div class="profile-card" id="userCard">
+            <div class="avatar-large" id="userAvatarLarge" style="background:#6c5ce7;">👤</div>
+            <div class="user-name" id="userNameDisplay">加载中...</div>
+            <div class="user-email" id="userEmailDisplay">加载中...</div>
+            <div class="user-badge">
+                <span class="badge" id="userStatusBadge">✅ 已登录</span>
             </div>
         </div>
 
-        <div id="cpList">
-            <div class="loading-state">加载中...</div>
+        <!-- 菜单 -->
+        <div class="section-title">📋 账户管理</div>
+        <div class="profile-card" style="padding:0 20px;">
+            <!-- 🆕 修改密码 -->
+            <div class="menu-item" onclick="openPasswordModal()">
+                <div class="menu-left">
+                    <span class="icon">🔑</span>
+                    <span class="label">修改密码</span>
+                </div>
+                <div class="menu-right">
+                    <span class="arrow">→</span>
+                </div>
+            </div>
+            <!-- 修改昵称 -->
+            <div class="menu-item" onclick="openNicknameModal()">
+                <div class="menu-left">
+                    <span class="icon">✏️</span>
+                    <span class="label">修改昵称</span>
+                </div>
+                <div class="menu-right">
+                    <span class="arrow">→</span>
+                </div>
+            </div>
+            <!-- 我的 CP -->
+            <div class="menu-item" onclick="location.href='my-submissions.html'">
+                <div class="menu-left">
+                    <span class="icon">📝</span>
+                    <span class="label">我的捣蛋记录</span>
+                </div>
+                <div class="menu-right">
+                    <span class="arrow">→</span>
+                </div>
+            </div>
+            <!-- 演员入驻（如果已登录） -->
+            <div class="menu-item" onclick="location.href='actors.html'">
+                <div class="menu-left">
+                    <span class="icon">⭐</span>
+                    <span class="label">演员入驻</span>
+                </div>
+                <div class="menu-right">
+                    <span class="arrow">→</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 退出登录 -->
+        <button class="logout-btn" onclick="handleLogout()">🚪 退出登录</button>
+
+        <!-- ===== 🆕 修改密码弹窗 ===== -->
+        <div class="modal-overlay" id="passwordModal">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h3>🔑 修改密码</h3>
+                    <button class="close-btn" onclick="closePasswordModal()">✕</button>
+                </div>
+                <div id="passwordModalBody">
+                    <!-- 当前密码（如果用户已有密码） -->
+                    <div class="form-group" id="currentPasswordGroup">
+                        <label>当前密码</label>
+                        <input type="password" id="currentPassword" placeholder="请输入当前密码" />
+                        <div class="input-hint">如果忘记密码，请使用验证码登录后重新设置</div>
+                    </div>
+                    <div class="form-group">
+                        <label>新密码</label>
+                        <input type="password" id="newPassword" placeholder="至少 8 位，包含字母和数字" oninput="checkPasswordStrength(this.value)" />
+                        <div class="password-strength"><div class="fill" id="strengthFill"></div></div>
+                        <div class="password-strength-label" id="strengthLabel">请输入密码</div>
+                    </div>
+                    <div class="form-group">
+                        <label>确认新密码</label>
+                        <input type="password" id="confirmPassword" placeholder="再次输入新密码" />
+                    </div>
+                    <button class="btn-primary" id="updatePasswordBtn" onclick="updatePassword()">✅ 确认修改</button>
+                    <button class="btn-secondary-outline" onclick="closePasswordModal()">取消</button>
+                </div>
+                <!-- 成功状态 -->
+                <div id="passwordSuccess" style="display:none; text-align:center; padding:20px 0;">
+                    <span style="font-size:48px;">🎉</span>
+                    <h3 style="margin:8px 0 4px 0;">密码修改成功！</h3>
+                    <p style="color:#9ca3af; font-size:14px;">下次登录请使用新密码</p>
+                    <button class="btn-primary" onclick="closePasswordModal()" style="margin-top:12px;">我知道了</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 修改昵称弹窗 ===== -->
+        <div class="modal-overlay" id="nicknameModal">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h3>✏️ 修改昵称</h3>
+                    <button class="close-btn" onclick="closeNicknameModal()">✕</button>
+                </div>
+                <div class="form-group">
+                    <label>新昵称</label>
+                    <input type="text" id="newNickname" placeholder="输入你的新昵称" maxlength="20" />
+                    <div class="input-hint">昵称将显示在你的评论和投票中</div>
+                </div>
+                <button class="btn-primary" onclick="updateNickname()">✅ 确认修改</button>
+                <button class="btn-secondary-outline" onclick="closeNicknameModal()">取消</button>
+            </div>
         </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
-    <script src="js/supabase.js">
-    </script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
     <script>
+        // ============================================================
+        // profile.html - 个人中心
+        // ============================================================
+
+        var currentUser = getCurrentUser();
+
+        // ============================================================
+        // 检查首次登录
+        // ============================================================
+        function checkFirstLogin() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var isFirstLogin = urlParams.get('first_login') === 'true';
+
+            // 检查 local storage 标记
+            var firstLoginFlag = localStorage.getItem('cp_first_login_' + (currentUser ? currentUser.id : ''));
+
+            if (isFirstLogin || firstLoginFlag === 'true') {
+                document.getElementById('firstLoginBanner').style.display = 'block';
+                // 自动打开密码弹窗
+                setTimeout(function() {
+                    openPasswordModal();
+                }, 800);
+                // 清除标记，避免重复弹出
+                if (firstLoginFlag === 'true') {
+                    localStorage.removeItem('cp_first_login_' + currentUser.id);
+                }
+            }
+        }
+
+        // ============================================================
+        // 加载用户信息
+        // ============================================================
+        async function loadUserProfile() {
+            if (!currentUser) {
+                document.getElementById('userNameDisplay').textContent = '未登录';
+                document.getElementById('userEmailDisplay').textContent = '请先登录';
+                document.getElementById('userAvatarLarge').textContent = '👤';
+                document.getElementById('userAvatarLarge').style.background = '#9ca3af';
+                document.getElementById('userStatusBadge').textContent = '❌ 未登录';
+                document.getElementById('userStatusBadge').style.background = '#fef2f2';
+                document.getElementById('userStatusBadge').style.color = '#ef4444';
+                return;
+            }
+
+            try {
+                var client = getClient();
+                var { data, error } = await client
+                    .from('users')
+                    .select('nickname, email, has_password, created_at')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                var displayName = data?.nickname || currentUser.email?.split('@')[0] || '用户';
+                var email = data?.email || currentUser.email || '未设置邮箱';
+
+                document.getElementById('userNameDisplay').textContent = displayName;
+                document.getElementById('userEmailDisplay').textContent = email;
+                document.getElementById('userAvatarLarge').textContent = displayName.substr(0, 1).toUpperCase();
+                document.getElementById('userAvatarLarge').style.background = getAvatarColor(displayName);
+                document.getElementById('userStatusBadge').textContent = '✅ 已登录';
+                document.getElementById('userStatusBadge').style.background = '#d1fae5';
+                document.getElementById('userStatusBadge').style.color = '#065f46';
+
+                // 检查是否首次登录（没有设置密码）
+                checkFirstLogin();
+
+            } catch (err) {
+                console.error('加载用户信息失败:', err);
+                document.getElementById('userNameDisplay').textContent = '加载失败';
+                document.getElementById('userEmailDisplay').textContent = '请刷新重试';
+            }
+        }
+
+        // ============================================================
+        // 头像颜色
+        // ============================================================
+        function getAvatarColor(name) {
+            var colors = ['#6c5ce7', '#e74c3c', '#2ecc71', '#f39c12', '#3498db', '#1abc9c', '#e67e22', '#9b59b6'];
+            var hash = 0;
+            for (var i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        // ============================================================
+        // 🆕 修改密码弹窗
+        // ============================================================
+        function openPasswordModal() {
+            if (!currentUser) {
+                showToast('请先登录 🚀');
+                return;
+            }
+            document.getElementById('passwordModal').classList.add('active');
+            document.getElementById('passwordSuccess').style.display = 'none';
+            document.getElementById('passwordModalBody').style.display = 'block';
+            // 清空输入
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('strengthFill').className = 'fill';
+            document.getElementById('strengthLabel').textContent = '请输入密码';
+            document.getElementById('updatePasswordBtn').disabled = false;
+            document.getElementById('updatePasswordBtn').textContent = '✅ 确认修改';
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('active');
+        }
+
+        // ============================================================
+        // 密码强度检查
+        // ============================================================
+        function checkPasswordStrength(password) {
+            var fill = document.getElementById('strengthFill');
+            var label = document.getElementById('strengthLabel');
+
+            if (!password) {
+                fill.className = 'fill';
+                label.textContent = '请输入密码';
+                return;
+            }
+
+            var score = 0;
+            if (password.length >= 8) score++;
+            if (password.match(/[a-z]/)) score++;
+            if (password.match(/[A-Z]/)) score++;
+            if (password.match(/[0-9]/)) score++;
+            if (password.match(/[^a-zA-Z0-9]/)) score++;
+
+            if (score <= 1) {
+                fill.className = 'fill weak';
+                label.textContent = '🔴 弱 - 建议使用至少8位，包含大小写字母和数字';
+            } else if (score <= 3) {
+                fill.className = 'fill medium';
+                label.textContent = '🟡 中等 - 可以更安全';
+            } else {
+                fill.className = 'fill strong';
+                label.textContent = '🟢 强 - 密码强度很好';
+            }
+        }
+
+        // ============================================================
+        // 🆕 更新密码
+        // ============================================================
+        async function updatePassword() {
+            var currentPwd = document.getElementById('currentPassword').value;
+            var newPwd = document.getElementById('newPassword').value;
+            var confirmPwd = document.getElementById('confirmPassword').value;
+
+            if (!newPwd || newPwd.length < 8) {
+                showToast('新密码至少 8 位 🔑');
+                return;
+            }
+
+            if (newPwd !== confirmPwd) {
+                showToast('两次输入的密码不一致');
+                return;
+            }
+
+            var btn = document.getElementById('updatePasswordBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 更新中...';
+
+            try {
+                var client = getClient();
+
+                // 1. 获取用户邮箱
+                var { data: userData } = await client
+                    .from('users')
+                    .select('email')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                var email = userData?.email || currentUser.email;
+
+                if (!email) {
+                    showToast('无法获取邮箱信息');
+                    btn.disabled = false;
+                    btn.textContent = '✅ 确认修改';
+                    return;
+                }
+
+                // 2. 检查用户是否有密码（通过 Supabase Auth 检查）
+                var { data: authData, error: authError } = await client.auth.admin.getUserById(currentUser.id);
+
+                var hasPassword = false;
+                if (!authError && authData && authData.user) {
+                    // 检查是否有密码（通过检查 password 字段是否存在）
+                    // Supabase 不直接暴露是否有密码，我们尝试用旧密码登录来验证
+                    if (currentPwd) {
+                        try {
+                            var { error: signInError } = await client.auth.signInWithPassword({
+                                email: email,
+                                password: currentPwd
+                            });
+                            if (!signInError) {
+                                hasPassword = true;
+                            }
+                        } catch (e) {
+                            // 旧密码错误或用户没有密码
+                            hasPassword = false;
+                        }
+                    }
+                }
+
+                // 3. 如果用户有密码但未提供当前密码
+                if (hasPassword && !currentPwd) {
+                    showToast('请输入当前密码 🔑');
+                    btn.disabled = false;
+                    btn.textContent = '✅ 确认修改';
+                    return;
+                }
+
+                // 4. 更新密码（使用 Supabase Auth API）
+                // 注意：更新密码需要用户会话，使用 updateUser 方法
+                var { error: updateError } = await client.auth.updateUser({
+                    password: newPwd
+                });
+
+                if (updateError) {
+                    // 如果 updateUser 失败（可能因为会话过期），尝试使用管理员 API
+                    console.warn('updateUser 失败，尝试管理员 API:', updateError);
+
+                    // 使用管理员 API 更新密码（需要 SERVICE_ROLE_KEY）
+                    var { error: adminError } = await client.auth.admin.updateUserById(
+                        currentUser.id,
+                        { password: newPwd }
+                    );
+
+                    if (adminError) {
+                        throw adminError;
+                    }
+                }
+
+                // 5. 更新 users 表的 has_password 字段
+                await client
+                    .from('users')
+                    .update({ has_password: true })
+                    .eq('id', currentUser.id);
+
+                // 6. 显示成功
+                document.getElementById('passwordModalBody').style.display = 'none';
+                document.getElementById('passwordSuccess').style.display = 'block';
+
+                showToast('🎉 密码修改成功！');
+
+                // 清除首次登录标记
+                localStorage.removeItem('cp_first_login_' + currentUser.id);
+                document.getElementById('firstLoginBanner').style.display = 'none';
+
+                await trackActivity('password_update', currentUser.id, 'user', {
+                    method: 'profile'
+                });
+
+                btn.disabled = false;
+                btn.textContent = '✅ 确认修改';
+
+            } catch (err) {
+                console.error('修改密码失败:', err);
+                showToast('修改失败：' + (err.message || '请重试'));
+                btn.disabled = false;
+                btn.textContent = '✅ 确认修改';
+            }
+        }
+
+        // ============================================================
+        // 修改昵称
+        // ============================================================
+        function openNicknameModal() {
+            if (!currentUser) {
+                showToast('请先登录 🚀');
+                return;
+            }
+            document.getElementById('nicknameModal').classList.add('active');
+            document.getElementById('newNickname').value = '';
+            document.getElementById('newNickname').focus();
+        }
+
+        function closeNicknameModal() {
+            document.getElementById('nicknameModal').classList.remove('active');
+        }
+
+        async function updateNickname() {
+            var nickname = document.getElementById('newNickname').value.trim();
+
+            if (!nickname || nickname.length < 1) {
+                showToast('请输入昵称 ✏️');
+                return;
+            }
+
+            if (nickname.length > 20) {
+                showToast('昵称不能超过 20 个字符');
+                return;
+            }
+
+            try {
+                var client = getClient();
+                var { error } = await client
+                    .from('users')
+                    .update({ nickname: nickname })
+                    .eq('id', currentUser.id);
+
+                if (error) throw error;
+
+                showToast('✅ 昵称已更新！');
+                closeNicknameModal();
+                loadUserProfile();
+
+                await trackActivity('nickname_update', currentUser.id, 'user', {
+                    new_nickname: nickname
+                });
+
+            } catch (err) {
+                console.error('更新昵称失败:', err);
+                showToast('更新失败，请重试');
+            }
+        }
+
+        // ============================================================
+        // 退出登录
+        // ============================================================
+        function handleLogout() {
+            if (confirm('确定要退出登录吗？')) {
+                setCurrentUser(null);
+                window.location.href = 'index.html';
+            }
+        }
+
+        // ============================================================
+        // Toast 工具
+        // ============================================================
         function showToast(msg) {
             var t = document.getElementById('toast');
             if (!t) { alert(msg); return; }
             t.textContent = msg;
             t.classList.add('show');
             clearTimeout(t._hideTimer);
-            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            var div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 3000);
         }
 
         // ============================================================
-        // 进度状态映射
+        // 键盘事件（Enter 键提交）
         // ============================================================
-        function getProgressText(phase) {
-            const map = {
-                1: '📝 已提名',
-                2: '🎨 风格解锁',
-                3: '🚫 雷区解锁',
-                4: '💢 吐槽解锁',
-                5: '📧 邮件已发'
-            };
-            return map[phase] || '📝 已提名';
-        }
-
-        async function loadMyCPs() {
-            var user = getCurrentUser();
-            var listContainer = document.getElementById('cpList');
-            var statsArea = document.getElementById('statsArea');
-
-            if (!user) {
-                listContainer.innerHTML = `
-                        <div class="empty-state">
-                            <span class="big-icon">🔒</span>
-                            请先登录查看你的捣蛋记录<br />
-                            <a href="login.html" class="btn-primary" style="display:inline-block;margin-top:16px;">去登录</a>
-                        </div>
-                    `;
-                return;
-            }
-
-            try {
-                var client = getClient();
-
-                var { data, error } = await client
-                    .from('cp_submissions')
-                    .select('id, male_actor, female_actor, genre, status, submit_time, votes ( id )')
-                    .eq('user_id', user.id)
-                    .order('submit_time', { ascending: false });
-
-                if (error) throw error;
-
-                var total = data ? data.length : 0;
-                var approved = data ? data.filter(function(item) { return item.status === 'approved'; }).length : 0;
-                var pending = data ? data.filter(function(item) { return item.status === 'pending'; }).length : 0;
-
-                document.getElementById('totalCount').textContent = total;
-                document.getElementById('approvedCount').textContent = approved;
-                document.getElementById('pendingCount').textContent = pending;
-
-                if (total > 0) {
-                    statsArea.style.display = 'flex';
-                } else {
-                    statsArea.style.display = 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('newPassword').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('confirmPassword').focus();
                 }
-
-                if (!data || data.length === 0) {
-                    listContainer.innerHTML = `
-                            <div class="empty-state">
-                                <span class="big-icon">📝</span>
-                                你还没有捣蛋过<br />
-                                <a href="index.html" class="btn-primary" style="display:inline-block;margin-top:16px;">去捣蛋</a>
-                            </div>
-                        `;
-                    return;
+            });
+            document.getElementById('confirmPassword').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    updatePassword();
                 }
-
-                // ============================================================
-                // 获取每个 CP 的进度
-                // ============================================================
-                var progressMap = {};
-                for (var i = 0; i < data.length; i++) {
-                    var item = data[i];
-                    var prog = await getUserProgress(user.id, item.id);
-                    if (prog) {
-                        progressMap[item.id] = prog.phase;
-                    } else {
-                        // 首次访问，根据 CP 创建时间计算初始阶段
-                        var days = Math.floor((Date.now() - new Date(item.submit_time).getTime()) / (1000 * 60 * 60 * 24));
-                        var newPhase = days >= 3 ? 4 : days >= 2 ? 3 : days >= 1 ? 2 : 1;
-                        progressMap[item.id] = newPhase;
-                        // 异步写入（不阻塞渲染）
-                        upsertUserProgress(user.id, item.id, newPhase);
-                    }
+            });
+            document.getElementById('newNickname').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    updateNickname();
                 }
+            });
 
-                var html = '';
-                data.forEach(function(item) {
-                    var voteCount = item.votes ? item.votes.length : 0;
-                    var statusClass = item.status === 'approved' ? 'approved' : 'pending';
-                    var statusText = item.status === 'approved' ? '✅ 已上线' : '⏳ 审核中';
-                    var phase = progressMap[item.id] || 1;
-                    var progressText = getProgressText(phase);
+            // 点击弹窗外部关闭
+            document.getElementById('passwordModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closePasswordModal();
+                }
+            });
+            document.getElementById('nicknameModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeNicknameModal();
+                }
+            });
+        });
 
-                    html += `
-                            <div class="cp-list-item" data-id="${item.id}">
-                                <div class="cp-name">${escapeHtml(item.male_actor)} ✕ ${escapeHtml(item.female_actor)}</div>
-                                <div class="cp-meta">
-                                    <span class="genre-tag">${escapeHtml(item.genre)}</span>
-                                    <span>❤️ ${voteCount} 票</span>
-                                    <span class="cp-status ${statusClass}">${statusText}</span>
-                                    <span class="cp-progress">${progressText}</span>
-                                </div>
-                            </div>
-                        `;
-                });
+        // ============================================================
+        // 初始化
+        // ============================================================
+        loadUserProfile();
 
-                listContainer.innerHTML = html;
-
-                listContainer.querySelectorAll('.cp-list-item').forEach(function(item) {
-                    item.addEventListener('click', function() {
-                        var id = this.getAttribute('data-id');
-                        window.location.href = 'mycp.html?id=' + id;
-                    });
-                });
-
-            } catch (err) {
-                console.error('加载我的 CP 失败:', err);
-                listContainer.innerHTML = '<div class="empty-state" style="color:#ef4444;">加载失败，请刷新重试</div>';
-            }
-        }
-
-        loadMyCPs();
-        console.log('✅ 捣蛋选角 - 我的捣蛋已加载');
+        console.log('✅ 个人中心已加载');
     </script>
 </body>
 </html>

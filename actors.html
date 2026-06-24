@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>演员入驻 · 捣蛋选角</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .actor-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px 20px 80px 20px;
+        }
+        .invite-card {
+            background: linear-gradient(135deg, #fef3c7, #f8f6ff);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 2px solid #f59e0b;
+        }
+        .invite-card .badge {
+            background: #f59e0b;
+            color: #fff;
+            padding: 2px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .profile-form {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #ede9fe;
+        }
+        .profile-form input,
+        .profile-form textarea,
+        .profile-form select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 10px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .profile-form .btn-primary {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 12px;
+        }
+        .nomination-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+            margin-bottom: 20px;
+        }
+        .nomination-item {
+            background: #f8f6ff;
+            border-radius: 12px;
+            padding: 14px 16px;
+            border-left: 4px solid #f59e0b;
+        }
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            max-width: 80%;
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="actor-container">
+        <div class="invite-card">
+            <span class="badge">⭐ 平台邀约</span>
+            <h2 style="margin:8px 0 4px 0;">你被观众提名了！</h2>
+            <p style="color:#6b7280;">已有 <span id="nominationCount">0</span> 位观众推荐你出演心仪角色</p>
+            <button onclick="document.getElementById('profileForm').scrollIntoView({behavior:'smooth'})" style="margin-top:8px; padding:8px 24px; background:#f59e0b; color:#fff; border:none; border-radius:20px; font-size:14px; cursor:pointer;">📝 立即入驻</button>
+        </div>
+
+        <div id="nominationList" class="nomination-list">
+            <div style="text-align:center; color:#9ca3af; padding:20px 0;">加载中...</div>
+        </div>
+
+        <div id="profileForm" class="profile-form">
+            <h3>📝 建立演员档案</h3>
+            <input type="text" id="stageName" placeholder="艺名（必填）" />
+            <input type="text" id="realName" placeholder="真实姓名" />
+            <textarea id="bio" placeholder="自我介绍 / 演艺经历" style="min-height:80px;"></textarea>
+            <input type="text" id="demoVideo" placeholder="试镜视频链接（B站/YouTube/抖音）" />
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <input type="text" id="socialWeibo" placeholder="微博链接（选填）" />
+                <input type="text" id="socialDouyin" placeholder="抖音链接（选填）" />
+            </div>
+            <button class="btn-primary" onclick="submitActorProfile()">📤 提交入驻</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        // ============================================================
+        // actors.html - 演员入驻页面
+        // ============================================================
+
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if (!t) { alert(msg); return; }
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        // 加载演员的提名记录
+        // ============================================================
+        async function loadActorNominations() {
+            var user = getCurrentUser();
+            if (!user) {
+                document.getElementById('nominationList').innerHTML =
+                    '<div style="text-align:center; color:#9ca3af; padding:20px 0;">请先登录查看你的提名 🚀</div>';
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                var { data, error } = await client
+                    .from('actor_nominations')
+                    .select('actor_name, drama_projects(title), drama_roles(role_name), nomination_count, created_at')
+                    .eq('nominated_by', user.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                var container = document.getElementById('nominationList');
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                            <div style="text-align:center; color:#9ca3af; padding:20px 0;">
+                                <span style="font-size:36px; display:block;">⭐</span>
+                                还没有人推荐你，快去展示你的才华吧！
+                            </div>
+                        `;
+                    document.getElementById('nominationCount').textContent = '0';
+                    return;
+                }
+
+                document.getElementById('nominationCount').textContent = data.length;
+
+                var html = '';
+                data.forEach(function(item) {
+                    var dramaTitle = item.drama_projects ? item.drama_projects.title : '未知剧集';
+                    var roleName = item.drama_roles ? item.drama_roles.role_name : '未知角色';
+                    html += `
+                            <div class="nomination-item">
+                                <div style="font-weight:600;">🎯 ${escapeHtml(dramaTitle)}</div>
+                                <div style="font-size:14px;">角色：<strong>${escapeHtml(roleName)}</strong></div>
+                                <div style="font-size:13px; color:#6b7280;">推荐人：${escapeHtml(item.actor_name || '观众')} · ${formatTime(item.created_at)}</div>
+                                <div style="font-size:12px; color:#f59e0b;">⭐ 已有 ${item.nomination_count || 1} 人推荐</div>
+                            </div>
+                        `;
+                });
+
+                container.innerHTML = html;
+
+            } catch (err) {
+                console.error('加载提名失败:', err);
+                document.getElementById('nominationList').innerHTML =
+                    '<div style="text-align:center; color:#ef4444; padding:20px 0;">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // ============================================================
+        // 提交演员档案
+        // ============================================================
+        async function submitActorProfile() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var stageName = document.getElementById('stageName').value.trim();
+            var realName = document.getElementById('realName').value.trim();
+            var bio = document.getElementById('bio').value.trim();
+            var demoVideo = document.getElementById('demoVideo').value.trim();
+            var socialWeibo = document.getElementById('socialWeibo').value.trim();
+            var socialDouyin = document.getElementById('socialDouyin').value.trim();
+
+            if (!stageName) {
+                showToast('请填写艺名 ⭐');
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                var socialLinks = {};
+                if (socialWeibo) socialLinks.weibo = socialWeibo;
+                if (socialDouyin) socialLinks.douyin = socialDouyin;
+
+                var { error } = await client
+                    .from('actor_profiles')
+                    .upsert({
+                        user_id: user.id,
+                        stage_name: stageName,
+                        real_name: realName || null,
+                        bio: bio || null,
+                        demo_video_url: demoVideo || null,
+                        social_links: Object.keys(socialLinks).length > 0 ? socialLinks : null,
+                        is_active: true,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
+
+                if (error) throw error;
+
+                showToast('📤 入驻成功！你的档案已提交');
+
+                await trackActivity('actor_profile_submit', user.id, 'user', {
+                    stage_name: stageName,
+                    has_demo: !!demoVideo
+                });
+
+                // 跳转到个人中心
+                setTimeout(function() {
+                    window.location.href = 'profile.html';
+                }, 1500);
+
+            } catch (err) {
+                console.error('提交失败:', err);
+                showToast('提交失败，请重试');
+            }
+        }
+
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function formatTime(iso) {
+            if (!iso) return '';
+            var d = new Date(iso);
+            return d.getMonth() + 1 + '/' + d.getDate() + ' ' +
+                String(d.getHours()).padStart(2, '0') + ':' +
+                String(d.getMinutes()).padStart(2, '0');
+        }
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        loadActorNominations();
+
+        console.log('✅ 演员入驻页面已加载');
+    </script>
+</body>
+</html>

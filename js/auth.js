@@ -25,7 +25,6 @@ async function sendVerificationCode(email) {
 // ============================================================
 // 2. 验证码登录
 // ============================================================
-// auth.js - 修改 verifyAndLogin 函数
 async function verifyAndLogin(email, code) {
     try {
         var client = getClient();
@@ -52,7 +51,7 @@ async function verifyAndLogin(email, code) {
         // 确保用户记录存在
         await ensureUserRecord(user.id, user.email);
 
-        // ✅ 新增：检测用户是否已有密码（首次登录标记）
+        // 检测用户是否已有密码
         var { data: userData, error: userError } = await client
             .from('users')
             .select('has_password, nickname')
@@ -63,8 +62,10 @@ async function verifyAndLogin(email, code) {
         var isFirstLogin = !userData || !userData.has_password;
 
         if (isFirstLogin) {
+            // 设置首次登录标记（用于 profile 页面显示）
+            localStorage.setItem('cp_first_login_' + user.id, 'true');
             showToast('首次登录，请设置密码 🔑');
-            // ✅ 跳转到密码设置页面，并标记为首次登录
+            // 跳转到个人中心，带上首次登录参数
             window.location.href = 'profile.html?first_login=true';
         } else {
             showToast('登录成功！🎉');
@@ -156,7 +157,9 @@ async function signUpWithEmail(email, password) {
     }
 }
 
-// 新增辅助函数：确保用户记录存在
+// ============================================================
+// 5. 确保用户记录存在
+// ============================================================
 async function ensureUserRecord(userId, email) {
     try {
         var client = getClient();
@@ -174,7 +177,8 @@ async function ensureUserRecord(userId, email) {
             await client.from('users').insert({
                 id: userId,
                 email: email || 'unknown@email.com',
-                nickname: nickname
+                nickname: nickname,
+                has_password: false
             });
             console.log('✅ 已创建用户记录');
             return;
@@ -186,7 +190,8 @@ async function ensureUserRecord(userId, email) {
             await client.from('users').insert({
                 id: userId,
                 email: email || 'unknown@email.com',
-                nickname: nickname
+                nickname: nickname,
+                has_password: false
             });
             console.log('✅ 已创建用户记录');
         } else {
@@ -206,3 +211,161 @@ async function ensureUserRecord(userId, email) {
         // 不抛出错误，避免影响主登录流程
     }
 }
+
+// ============================================================
+// 6. 密码更新函数
+// ============================================================
+
+/**
+ * 更新用户密码（使用 Supabase Auth）
+ * @param {string} userId - 用户 ID
+ * @param {string} newPassword - 新密码
+ * @param {string} currentPassword - 当前密码（可选，用于验证）
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+async function updateUserPassword(userId, newPassword, currentPassword) {
+    try {
+        var client = getClient();
+
+        // 1. 获取用户邮箱
+        var { data: userData } = await client
+            .from('users')
+            .select('email')
+            .eq('id', userId)
+            .single();
+
+        var email = userData?.email;
+
+        if (!email) {
+            return { success: false, message: '无法获取邮箱信息' };
+        }
+
+        // 2. 检查用户是否有密码
+        var hasPassword = false;
+        if (currentPassword) {
+            try {
+                var { error: signInError } = await client.auth.signInWithPassword({
+                    email: email,
+                    password: currentPassword
+                });
+                if (!signInError) {
+                    hasPassword = true;
+                }
+            } catch (e) {
+                // 旧密码错误
+                return { success: false, message: '当前密码错误' };
+            }
+        }
+
+        // 3. 如果用户有密码但未提供当前密码
+        if (hasPassword && !currentPassword) {
+            return { success: false, message: '请输入当前密码' };
+        }
+
+        // 4. 更新密码
+        var { error: updateError } = await client.auth.updateUser({
+            password: newPassword
+        });
+
+        if (updateError) {
+            // 如果 updateUser 失败，尝试使用管理员 API
+            console.warn('updateUser 失败，尝试管理员 API:', updateError);
+            var { error: adminError } = await client.auth.admin.updateUserById(
+                userId,
+                { password: newPassword }
+            );
+            if (adminError) {
+                throw adminError;
+            }
+        }
+
+        // 5. 更新 users 表的 has_password 字段
+        await client
+            .from('users')
+            .update({ has_password: true })
+            .eq('id', userId);
+
+        // 6. 清除首次登录标记
+        clearFirstLoginFlag(userId);
+
+        return { success: true, message: '密码修改成功' };
+
+    } catch (err) {
+        console.error('更新密码失败:', err);
+        return { success: false, message: err.message || '更新失败，请重试' };
+    }
+}
+
+// ============================================================
+// 7. 检查用户是否设置了密码
+// ============================================================
+
+/**
+ * 检查用户是否设置了密码
+ * @param {string} userId - 用户 ID
+ * @returns {Promise<boolean>}
+ */
+async function userHasPassword(userId) {
+    try {
+        var client = getClient();
+        var { data, error } = await client
+            .from('users')
+            .select('has_password')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (error) return false;
+        return data?.has_password === true;
+    } catch (e) {
+        return false;
+    }
+}
+
+// ============================================================
+// 8. 首次登录标记管理
+// ============================================================
+
+/**
+ * 清除首次登录标记
+ * @param {string} userId - 用户 ID
+ */
+function clearFirstLoginFlag(userId) {
+    localStorage.removeItem('cp_first_login_' + userId);
+}
+
+/**
+ * 检查是否首次登录
+ * @param {string} userId - 用户 ID
+ * @returns {boolean}
+ */
+function isFirstLogin(userId) {
+    return localStorage.getItem('cp_first_login_' + userId) === 'true';
+}
+
+/**
+ * 设置首次登录标记
+ * @param {string} userId - 用户 ID
+ */
+function setFirstLoginFlag(userId) {
+    localStorage.setItem('cp_first_login_' + userId, 'true');
+}
+
+// ============================================================
+// 9. 导出函数（用于其他文件）
+// ============================================================
+
+// 如果使用 ES6 模块，取消注释以下代码
+// export {
+//     sendVerificationCode,
+//     verifyAndLogin,
+//     signInWithEmail,
+//     signUpWithEmail,
+//     ensureUserRecord,
+//     updateUserPassword,
+//     userHasPassword,
+//     clearFirstLoginFlag,
+//     isFirstLogin,
+//     setFirstLoginFlag
+// };
+
+console.log('✅ auth.js 已加载');

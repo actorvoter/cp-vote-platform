@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>剧集孵化 · 捣蛋选角</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .drama-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px 20px 80px 20px;
+        }
+        .drama-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 2px solid #ede9fe;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .role-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #ede9fe;
+            margin-bottom: 16px;
+        }
+        .role-card .role-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .role-card .role-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .audition-item {
+            background: #f8f6ff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #ede9fe;
+        }
+        .audition-item .audition-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .audition-item .audition-user {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .audition-item .audition-video {
+            margin: 12px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1a1a2e;
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+        }
+        .audition-item .audition-video iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        .audition-item .audition-text {
+            font-size: 14px;
+            color: #374151;
+            margin: 8px 0;
+        }
+        .audition-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .audition-actions button {
+            background: none;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        .audition-actions .flower-btn {
+            background: #fce4ec;
+            color: #e74c3c;
+        }
+        .audition-actions .flower-btn:hover {
+            background: #f8d7da;
+        }
+        .audition-actions .egg-btn {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .audition-actions .egg-btn:hover {
+            background: #fde68a;
+        }
+        .audition-actions .selected-badge {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .submit-section {
+            background: #f8f6ff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #ede9fe;
+        }
+        .submit-section input,
+        .submit-section textarea,
+        .submit-section select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 10px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .submit-section textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .submit-section .btn-primary {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 12px;
+        }
+        .video-platform-select {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .video-platform-select button {
+            padding: 6px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .video-platform-select button.active {
+            border-color: #6c5ce7;
+            background: #ede9fe;
+            color: #6c5ce7;
+        }
+        .embed-preview {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 10px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+        .embed-preview iframe {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+        .tab-bar {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #ede9fe;
+        }
+        .tab-bar button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #f9fafb;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-bar button.active {
+            background: #6c5ce7;
+            color: #fff;
+        }
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            max-width: 80%;
+            text-align: center;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="drama-container">
+        <div class="drama-header">
+            <div>
+                <a href="index.html" class="btn-secondary" style="font-size:13px;">← 返回</a>
+                <h1 id="dramaTitle" style="margin:8px 0 0 0; font-size:24px;">🎬 剧集孵化</h1>
+            </div>
+            <span id="dramaStatus" style="background:#fef3c7; color:#d97706; padding:4px 16px; border-radius:20px; font-size:13px; font-weight:500;">招募中</span>
+        </div>
+
+        <div id="dramaInfo" style="background:#f8f6ff; border-radius:16px; padding:16px; margin-bottom:20px;">
+            <p id="dramaDesc" style="color:#4b5563; margin:0;">加载中...</p>
+        </div>
+
+        <div class="tab-bar">
+            <button id="tabRoles" class="active" onclick="switchTab('roles')">📋 角色需求</button>
+            <button id="tabSubmit" onclick="switchTab('submit')">✏️ 我要投稿</button>
+            <button id="tabRanking" onclick="switchTab('ranking')">🏆 竞演排行</button>
+        </div>
+
+        <div id="rolesTab">
+            <div id="roleList"><div class="empty-state">加载中...</div></div>
+        </div>
+
+        <div id="submitTab" style="display:none;">
+            <div class="submit-section">
+                <h3 style="margin:0 0 12px 0;">🎬 投稿你的竞演</h3>
+                <select id="submitRoleSelect">
+                    <option value="">选择你要竞演的角色</option>
+                </select>
+                <div class="video-platform-select" id="platformSelect">
+                    <button class="active" data-platform="bilibili">B站</button>
+                    <button data-platform="youtube">YouTube</button>
+                    <button data-platform="douyin">抖音</button>
+                    <button data-platform="custom">自定义链接</button>
+                </div>
+                <input type="text" id="videoUrlInput" placeholder="粘贴视频链接（如：https://www.bilibili.com/video/BV1xxx）" />
+                <div id="embedPreview" class="embed-preview">📺 预览区域</div>
+                <textarea id="performanceText" placeholder="表演说明：这段表演展示了什么？"></textarea>
+                <textarea id="selfIntro" placeholder="自我介绍：你是谁？为什么适合这个角色？"></textarea>
+                <button class="btn-primary" onclick="submitAudition()">📤 提交竞演</button>
+            </div>
+        </div>
+
+        <div id="rankingTab" style="display:none;">
+            <div id="rankingList"><div class="empty-state">加载中...</div></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/supabase.js"></script>
+    <script>
+        // ============================================================
+        // drama.html - 剧集孵化页面
+        // ============================================================
+
+        var dramaId = getDramaIdFromUrl();
+        var currentUser = getCurrentUser();
+        var currentPlatform = 'bilibili';
+
+        function getDramaIdFromUrl() {
+            var params = new URLSearchParams(window.location.search);
+            var id = params.get('id');
+            if (id && !isNaN(id)) return parseInt(id);
+            return 1;
+        }
+
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if (!t) { alert(msg); return; }
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(iso) {
+            if (!iso) return '';
+            var d = new Date(iso);
+            return d.getMonth() + 1 + '/' + d.getDate() + ' ' +
+                String(d.getHours()).padStart(2, '0') + ':' +
+                String(d.getMinutes()).padStart(2, '0');
+        }
+
+        // ============================================================
+        // 加载剧集数据
+        // ============================================================
+        async function loadDramaData() {
+            try {
+                var client = getClient();
+
+                var { data: drama, error: dramaError } = await client
+                    .from('drama_projects')
+                    .select('*')
+                    .eq('id', dramaId)
+                    .maybeSingle();
+
+                if (dramaError || !drama) {
+                    document.getElementById('dramaTitle').textContent = '📋 剧集未找到';
+                    document.getElementById('dramaDesc').textContent = '该剧集不存在或已被删除';
+                    return;
+                }
+
+                document.getElementById('dramaTitle').textContent = '🎬 ' + drama.title;
+                document.getElementById('dramaDesc').textContent = drama.description || '暂无描述';
+                document.getElementById('dramaStatus').textContent = getStatusLabel(drama.status);
+
+                await loadRoles(drama.id);
+                await loadRanking(drama.id);
+                await populateRoleSelect(drama.id);
+
+            } catch (err) {
+                console.error('加载剧集失败:', err);
+                document.getElementById('roleList').innerHTML = '<div class="empty-state">❌ 加载失败，请刷新重试</div>';
+            }
+        }
+
+        function getStatusLabel(status) {
+            var map = {
+                'recruiting': '📢 招募中',
+                'voting': '🗳️ 投票中',
+                'filming': '🎬 拍摄中',
+                'completed': '✅ 已完结'
+            };
+            return map[status] || status || '招募中';
+        }
+
+        // ============================================================
+        // 加载角色
+        // ============================================================
+        async function loadRoles(dramaId) {
+            try {
+                var client = getClient();
+                var { data: roles, error } = await client
+                    .from('drama_roles')
+                    .select('*')
+                    .eq('drama_id', dramaId)
+                    .order('id');
+
+                if (error) throw error;
+
+                var container = document.getElementById('roleList');
+
+                if (!roles || roles.length === 0) {
+                    container.innerHTML = '<div class="empty-state">📋 暂无角色需求，请关注后续更新</div>';
+                    return;
+                }
+
+                var html = '';
+                for (var i = 0; i < roles.length; i++) {
+                    var role = roles[i];
+                    var { data: auditions } = await client
+                        .from('role_auditions')
+                        .select('id, flower_count, egg_count, status, user_id, video_url, video_platform, embed_code, performance_text, self_intro, submitted_at')
+                        .eq('role_id', role.id)
+                        .eq('status', 'approved')
+                        .order('flower_count', { ascending: false })
+                        .limit(3);
+
+                    html += `
+                            <div class="role-card">
+                                <div class="role-title">${escapeHtml(role.role_name)}</div>
+                                <div class="role-meta">
+                                    <span>${escapeHtml(role.role_type || '未分类')}</span>
+                                    <span>${escapeHtml(role.gender || '不限性别')}</span>
+                                    <span>${escapeHtml(role.age_range || '不限年龄')}</span>
+                                    ${role.is_filled ? '<span style="color:#065f46;background:#d1fae5;padding:0 12px;border-radius:20px;">✅ 已定角</span>' : ''}
+                                </div>
+                                <div style="font-size:14px; color:#6b7280; margin-top:4px;">${escapeHtml(role.role_description || '')}</div>
+                                ${role.requirements ? `<div style="font-size:13px; color:#9ca3af; margin-top:4px;">📋 要求：${escapeHtml(role.requirements)}</div>` : ''}
+
+                                ${auditions && auditions.length > 0 ? `
+                                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid #ede9fe;">
+                                        <div style="font-size:13px; font-weight:600; color:#6b7280; margin-bottom:8px;">🏆 热门投稿 (${auditions.length}人竞演)</div>
+                                        ${auditions.map(function(a) {
+                                            return renderAuditionItem(a);
+                                        }).join('')}
+                                    </div>
+                                ` : `
+                                    <div style="margin-top:12px; padding-top:12px; border-top:1px solid #ede9fe; font-size:13px; color:#9ca3af;">
+                                        🤔 还没有人投稿，快来成为第一个！
+                                    </div>
+                                `}
+                                <button onclick="switchTab('submit'); document.getElementById('submitRoleSelect').value='${role.id}'" style="margin-top:10px; padding:6px 20px; background:#6c5ce7; color:#fff; border:none; border-radius:20px; font-size:13px; cursor:pointer;">✏️ 投稿竞演</button>
+                                <button onclick="openNominationModal('${escapeHtml(role.role_name)}', ${role.id})" style="margin-top:10px; margin-left:8px; padding:6px 20px; background:#fef3c7; color:#d97706; border:none; border-radius:20px; font-size:13px; cursor:pointer;">⭐ 推荐演员</button>
+                            </div>
+                        `;
+                }
+
+                container.innerHTML = html;
+
+            } catch (err) {
+                console.error('加载角色失败:', err);
+                document.getElementById('roleList').innerHTML = '<div class="empty-state">❌ 加载失败，请刷新重试</div>';
+            }
+        }
+
+        // ============================================================
+        // 渲染投稿项
+        // ============================================================
+        function renderAuditionItem(audition) {
+            var embedHtml = '';
+            if (audition.embed_code) {
+                embedHtml = audition.embed_code;
+            } else if (audition.video_url) {
+                var platform = audition.video_platform || 'custom';
+                embedHtml = getEmbedCode(audition.video_url, platform);
+            }
+
+            var statusBadge = '';
+            if (audition.status === 'selected') {
+                statusBadge = '<span class="selected-badge">⭐ 已选中</span>';
+            }
+
+            return `
+                    <div class="audition-item">
+                        <div class="audition-header">
+                            <div>
+                                <span class="audition-user">👤 ${escapeHtml(audition.user_id ? '用户' : '匿名')}</span>
+                                <span style="font-size:12px; color:#9ca3af; margin-left:8px;">${formatTime(audition.submitted_at)}</span>
+                                ${statusBadge}
+                            </div>
+                            <div style="font-size:13px; color:#6b7280;">
+                                🌹 ${audition.flower_count || 0} · 🥚 ${audition.egg_count || 0}
+                            </div>
+                        </div>
+                        ${audition.performance_text ? `<div class="audition-text">${escapeHtml(audition.performance_text)}</div>` : ''}
+                        ${audition.self_intro ? `<div style="font-size:13px; color:#6b7280; margin-bottom:6px;">💬 ${escapeHtml(audition.self_intro)}</div>` : ''}
+                        ${embedHtml ? `<div class="audition-video">${embedHtml}</div>` : ''}
+                        <div class="audition-actions">
+                            <button class="flower-btn" onclick="handleAuditionVote(${audition.id}, 'flower')">🌹 支持 (${audition.flower_count || 0})</button>
+                            <button class="egg-btn" onclick="handleAuditionVote(${audition.id}, 'egg')">🥚 反对 (${audition.egg_count || 0})</button>
+                        </div>
+                    </div>
+                `;
+        }
+
+        function getEmbedCode(url, platform) {
+            if (!url) return '';
+
+            if (platform === 'auto') {
+                if (url.includes('bilibili.com')) platform = 'bilibili';
+                else if (url.includes('youtube.com') || url.includes('youtu.be')) platform = 'youtube';
+                else if (url.includes('douyin.com')) platform = 'douyin';
+                else platform = 'custom';
+            }
+
+            var embedMap = {
+                'bilibili': function(u) {
+                    var bvid = u.match(/BV[a-zA-Z0-9]+/);
+                    if (bvid) {
+                        return `<iframe src="https://player.bilibili.com/player.html?bvid=${bvid[0]}&page=1" allowfullscreen></iframe>`;
+                    }
+                    var aid = u.match(/av(\d+)/);
+                    if (aid) {
+                        return `<iframe src="https://player.bilibili.com/player.html?aid=${aid[1]}&page=1" allowfullscreen></iframe>`;
+                    }
+                    return `<a href="${escapeHtml(u)}" target="_blank" style="color:#6c5ce7;">📺 点击查看视频</a>`;
+                },
+                'youtube': function(u) {
+                    var id = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+                    if (id) {
+                        return `<iframe src="https://www.youtube.com/embed/${id[1]}" allowfullscreen></iframe>`;
+                    }
+                    return `<a href="${escapeHtml(u)}" target="_blank" style="color:#6c5ce7;">📺 点击查看视频</a>`;
+                },
+                'douyin': function(u) {
+                    return `<a href="${escapeHtml(u)}" target="_blank" style="color:#6c5ce7;">📱 点击查看抖音视频</a>`;
+                },
+                'custom': function(u) {
+                    if (u.includes('<iframe') || u.includes('embed')) {
+                        return u;
+                    }
+                    return `<a href="${escapeHtml(u)}" target="_blank" style="color:#6c5ce7;">📺 点击查看视频</a>`;
+                }
+            };
+
+            var handler = embedMap[platform] || embedMap['custom'];
+            return handler(url);
+        }
+
+        // ============================================================
+        // 投稿投票
+        // ============================================================
+        async function handleAuditionVote(auditionId, type) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                var { data: existing } = await client
+                    .from('audition_votes')
+                    .select('id')
+                    .eq('audition_id', auditionId)
+                    .eq('user_id', user.id)
+                    .eq('vote_type', type)
+                    .maybeSingle();
+
+                if (existing) {
+                    showToast(type === 'flower' ? '你已经支持过了 🌹' : '你已经反对过了 🥚');
+                    return;
+                }
+
+                var { error: voteError } = await client
+                    .from('audition_votes')
+                    .insert({
+                        audition_id: auditionId,
+                        user_id: user.id,
+                        vote_type: type
+                    });
+
+                if (voteError) throw voteError;
+
+                var field = type === 'flower' ? 'flower_count' : 'egg_count';
+                var { data: audition } = await client
+                    .from('role_auditions')
+                    .select(field)
+                    .eq('id', auditionId)
+                    .single();
+
+                var newCount = (audition ? audition[field] : 0) + 1;
+                await client
+                    .from('role_auditions')
+                    .update({ [field]: newCount })
+                    .eq('id', auditionId);
+
+                showToast(type === 'flower' ? '🌹 支持成功！' : '🥚 反对成功！');
+
+                loadDramaData();
+
+            } catch (err) {
+                console.error('投票失败:', err);
+                showToast('操作失败，请重试');
+            }
+        }
+
+        // ============================================================
+        // Tab 切换
+        // ============================================================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-bar button').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            document.getElementById('tabRoles').classList.remove('active');
+            document.getElementById('tabSubmit').classList.remove('active');
+            document.getElementById('tabRanking').classList.remove('active');
+
+            document.getElementById('rolesTab').style.display = 'none';
+            document.getElementById('submitTab').style.display = 'none';
+            document.getElementById('rankingTab').style.display = 'none';
+
+            if (tab === 'roles') {
+                document.getElementById('tabRoles').classList.add('active');
+                document.getElementById('rolesTab').style.display = 'block';
+            } else if (tab === 'submit') {
+                document.getElementById('tabSubmit').classList.add('active');
+                document.getElementById('submitTab').style.display = 'block';
+            } else if (tab === 'ranking') {
+                document.getElementById('tabRanking').classList.add('active');
+                document.getElementById('rankingTab').style.display = 'block';
+                loadRanking(dramaId);
+            }
+        }
+
+        // ============================================================
+        // 平台选择
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('#platformSelect button').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#platformSelect button').forEach(function(b) {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    currentPlatform = this.dataset.platform;
+
+                    var url = document.getElementById('videoUrlInput').value;
+                    updateEmbedPreview(url, currentPlatform);
+                });
+            });
+
+            document.getElementById('videoUrlInput').addEventListener('input', function() {
+                var url = this.value;
+                updateEmbedPreview(url, currentPlatform);
+            });
+        });
+
+        function updateEmbedPreview(url, platform) {
+            var preview = document.getElementById('embedPreview');
+            if (!url) {
+                preview.innerHTML = '📺 粘贴链接后，这里会显示预览';
+                return;
+            }
+
+            var embed = getEmbedCode(url, platform);
+            if (embed.includes('<iframe')) {
+                preview.innerHTML = embed;
+                preview.style.padding = '0';
+                preview.style.minHeight = '200px';
+            } else if (embed.includes('<a')) {
+                preview.innerHTML = embed;
+                preview.style.padding = '12px';
+                preview.style.minHeight = '60px';
+            } else {
+                preview.innerHTML = '📺 预览区域';
+                preview.style.padding = '12px';
+                preview.style.minHeight = '60px';
+            }
+        }
+
+        // ============================================================
+        // 填充角色下拉
+        // ============================================================
+        async function populateRoleSelect(dramaId) {
+            try {
+                var client = getClient();
+                var { data: roles } = await client
+                    .from('drama_roles')
+                    .select('id, role_name')
+                    .eq('drama_id', dramaId)
+                    .eq('is_filled', false);
+
+                var select = document.getElementById('submitRoleSelect');
+                select.innerHTML = '<option value="">选择你要竞演的角色</option>';
+                if (roles) {
+                    roles.forEach(function(role) {
+                        select.innerHTML += `<option value="${role.id}">${escapeHtml(role.role_name)}</option>`;
+                    });
+                }
+            } catch (err) {
+                console.warn('加载角色下拉失败:', err);
+            }
+        }
+
+        // ============================================================
+        // 提交投稿
+        // ============================================================
+        async function submitAudition() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var roleId = document.getElementById('submitRoleSelect').value;
+            var videoUrl = document.getElementById('videoUrlInput').value.trim();
+            var performanceText = document.getElementById('performanceText').value.trim();
+            var selfIntro = document.getElementById('selfIntro').value.trim();
+
+            if (!roleId) {
+                showToast('请选择要竞演的角色');
+                return;
+            }
+
+            if (!videoUrl) {
+                showToast('请粘贴视频链接或嵌入代码');
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                var { data: existing } = await client
+                    .from('role_auditions')
+                    .select('id')
+                    .eq('role_id', roleId)
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+
+                if (existing) {
+                    showToast('你已经投稿过这个角色了 📤');
+                    return;
+                }
+
+                var embedCode = getEmbedCode(videoUrl, currentPlatform);
+
+                var { error } = await client
+                    .from('role_auditions')
+                    .insert({
+                        drama_id: dramaId,
+                        role_id: roleId,
+                        user_id: user.id,
+                        video_url: videoUrl,
+                        video_platform: currentPlatform,
+                        embed_code: embedCode,
+                        performance_text: performanceText || null,
+                        self_intro: selfIntro || null,
+                        status: 'pending'
+                    });
+
+                if (error) throw error;
+
+                showToast('📤 投稿成功！等待审核');
+
+                document.getElementById('videoUrlInput').value = '';
+                document.getElementById('performanceText').value = '';
+                document.getElementById('selfIntro').value = '';
+                document.getElementById('embedPreview').innerHTML = '📺 预览区域';
+                document.getElementById('embedPreview').style.padding = '12px';
+                document.getElementById('embedPreview').style.minHeight = '60px';
+
+                await trackActivity('audition_submit', String(roleId), 'drama_role', {
+                    drama_id: dramaId,
+                    video_url: videoUrl,
+                    platform: currentPlatform
+                });
+
+                loadDramaData();
+
+            } catch (err) {
+                console.error('提交失败:', err);
+                showToast('提交失败，请重试');
+            }
+        }
+
+        // ============================================================
+        // 加载排行
+        // ============================================================
+        async function loadRanking(dramaId) {
+            try {
+                var client = getClient();
+                var { data: auditions, error } = await client
+                    .from('role_auditions')
+                    .select('id, role_id, user_id, flower_count, egg_count, video_url, performance_text, submitted_at, drama_roles(role_name)')
+                    .eq('drama_id', dramaId)
+                    .eq('status', 'approved')
+                    .order('flower_count', { ascending: false });
+
+                if (error) throw error;
+
+                var container = document.getElementById('rankingList');
+
+                if (!auditions || auditions.length === 0) {
+                    container.innerHTML = '<div class="empty-state">🏆 暂无竞演数据</div>';
+                    return;
+                }
+
+                var html = '';
+                auditions.forEach(function(a, index) {
+                    var rankIcon = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '#' + (index + 1);
+                    var roleName = a.drama_roles ? a.drama_roles.role_name : '未知角色';
+                    html += `
+                            <div class="audition-item" style="border-left:4px solid ${index === 0 ? '#f59e0b' : index === 1 ? '#9ca3af' : index === 2 ? '#d97706' : '#ede9fe'};">
+                                <div class="audition-header">
+                                    <div>
+                                        <span style="font-weight:700; font-size:18px;">${rankIcon}</span>
+                                        <span style="font-weight:600; margin-left:8px;">${escapeHtml(roleName)}</span>
+                                        <span style="font-size:12px; color:#9ca3af; margin-left:8px;">${formatTime(a.submitted_at)}</span>
+                                    </div>
+                                    <div style="font-size:14px; color:#6b7280;">
+                                        🌹 ${a.flower_count || 0} · 🥚 ${a.egg_count || 0}
+                                    </div>
+                                </div>
+                                ${a.performance_text ? `<div style="font-size:13px; color:#6b7280; margin-top:4px;">${escapeHtml(a.performance_text)}</div>` : ''}
+                            </div>
+                        `;
+                });
+
+                container.innerHTML = html;
+
+            } catch (err) {
+                console.error('加载排行失败:', err);
+                document.getElementById('rankingList').innerHTML = '<div class="empty-state">❌ 加载失败</div>';
+            }
+        }
+
+        // ============================================================
+        // 星探：推荐演员弹窗
+        // ============================================================
+        function openNominationModal(roleName, roleId) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var overlay = document.createElement('div');
+            overlay.id = 'nominationModal';
+            overlay.style.cssText = `
+                    position: fixed; top:0; left:0; right:0; bottom:0;
+                    background:rgba(0,0,0,0.5); z-index:999;
+                    display:flex; align-items:center; justify-content:center; padding:20px;
+                `;
+            overlay.onclick = function(e) {
+                if (e.target === this) {
+                    document.body.removeChild(this);
+                }
+            };
+
+            var modal = document.createElement('div');
+            modal.style.cssText = `
+                    background:#fff; border-radius:20px; max-width:480px; width:100%;
+                    padding:24px 20px 20px; animation:slideUp 0.3s ease;
+                `;
+            modal.innerHTML = `
+                    <div style="text-align:center; margin-bottom:12px;">
+                        <span style="font-size:36px;">⭐</span>
+                        <h3 style="margin:8px 0 4px 0; font-size:20px;">推荐演员</h3>
+                        <p style="color:#9ca3af; font-size:14px; margin:0;">
+                            你希望谁来演 <strong>${escapeHtml(roleName)}</strong>？
+                        </p>
+                    </div>
+                    <input type="text" id="nominationActor" placeholder="输入演员名字（如：张凌赫）" style="width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:12px; font-size:14px; outline:none; margin-bottom:10px; box-sizing:border-box;" />
+                    <textarea id="nominationReason" placeholder="为什么推荐他/她？（选填）" style="width:100%; min-height:60px; padding:12px; border:1px solid #e5e7eb; border-radius:12px; font-size:14px; outline:none; resize:vertical; font-family:inherit; box-sizing:border-box; margin-bottom:12px;"></textarea>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="closeNominationModal()" style="flex:1; padding:12px; background:#f3f4f6; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#6b7280;">取消</button>
+                        <button onclick="submitNomination(${roleId}, '${escapeHtml(roleName)}')" style="flex:2; padding:12px; background:#f59e0b; border:none; border-radius:12px; font-size:14px; cursor:pointer; color:#fff; font-weight:600;">⭐ 推荐</button>
+                    </div>
+                `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            setTimeout(function() {
+                document.getElementById('nominationActor').focus();
+            }, 300);
+        }
+
+        function closeNominationModal() {
+            var el = document.getElementById('nominationModal');
+            if (el) document.body.removeChild(el);
+        }
+
+        async function submitNomination(roleId, roleName) {
+            var actorName = document.getElementById('nominationActor').value.trim();
+            var reason = document.getElementById('nominationReason').value.trim();
+
+            if (!actorName) {
+                showToast('请输入演员名字 ⭐');
+                return;
+            }
+
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                return;
+            }
+
+            try {
+                var client = getClient();
+
+                var { error } = await client
+                    .from('actor_nominations')
+                    .insert({
+                        actor_name: actorName,
+                        drama_id: dramaId,
+                        role_id: roleId,
+                        nominated_by: user.id,
+                        nomination_reason: reason || null,
+                        nomination_count: 1
+                    });
+
+                if (error) {
+                    if (error.code === '23505') {
+                        showToast('你已经推荐过这位演员了 ⭐');
+                    } else {
+                        throw error;
+                    }
+                    return;
+                }
+
+                closeNominationModal();
+                showToast(`⭐ 已推荐 ${actorName} 出演 ${roleName}！`);
+
+                await trackActivity('actor_nomination', null, null, {
+                    actor_name: actorName,
+                    role_id: roleId,
+                    drama_id: dramaId,
+                    reason: reason
+                });
+
+            } catch (err) {
+                console.error('推荐失败:', err);
+                showToast('推荐失败，请重试');
+            }
+        }
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        loadDramaData();
+
+        console.log('✅ 剧集孵化页面已加载');
+    </script>
+</body>
+</html>
