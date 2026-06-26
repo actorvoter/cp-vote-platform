@@ -1999,16 +1999,7 @@
                 return;
             }
 
-            // 检查今日剩余次数
-            var today = new Date().toISOString().split('T')[0];
-            var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
-            var count = parseInt(localStorage.getItem(guideCountKey) || '0');
-
-            if (count >= 5) {
-                showToast('今天已经导航了5次啦，明天再来吧～ 🧭');
-                return;
-            }
-
+            
             // 直接触发导航弹窗
             showGuidePrompt();
         });
