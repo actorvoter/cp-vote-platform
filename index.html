@@ -298,7 +298,46 @@
             transform: scale(0.96);
         }
 
-        /* ===== 🆕 导航按钮样式 ===== */
+        /* ===== 🆕 顶部导航按钮行 ===== */
+        .nav-buttons-row {
+            display: flex;
+            gap: 10px;
+            margin: 8px 0 12px 0;
+        }
+        .nav-buttons-row .nav-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .nav-buttons-row .nav-btn:active {
+            transform: scale(0.96);
+        }
+        .nav-buttons-row .nav-btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #f59e0b);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(108, 92, 231, 0.25);
+        }
+        .nav-buttons-row .nav-btn-guide {
+            background: #6c5ce7;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(108, 92, 231, 0.2);
+        }
+        .nav-buttons-row .nav-btn-guide:hover {
+            background: #5a4bd1;
+        }
+
+        /* ===== 每日任务横幅 ===== */
         .share-btn {
             background: #f59e0b;
             color: #fff;
@@ -313,14 +352,6 @@
         }
         .share-btn:active {
             transform: scale(0.95);
-        }
-        #guideBtn {
-            background: #6c5ce7;
-            color: #fff;
-            border-color: #6c5ce7;
-        }
-        #guideBtn:hover {
-            background: #5a4bd1;
         }
     </style>
 </head>
@@ -351,10 +382,15 @@
         ⚡ 提名你心中的神仙CP，热度达标即有机会进入剧组视线！
     </div>
 
-    <!-- ===== 🎬 捣蛋剧场 · 入口 ===== -->
-    <a href="guide.html" class="theater-entry">
-        🎬 捣蛋剧场 · 接取任务
-    </a>
+    <!-- ===== 🆕 顶部导航按钮行（捣蛋剧场 + 开启导航） ===== -->
+    <div class="nav-buttons-row">
+        <a href="guide.html" class="nav-btn nav-btn-primary">
+            🎬 捣蛋剧场
+        </a>
+        <button class="nav-btn nav-btn-guide" id="guideBtn">
+            🧭 开启导航
+        </button>
+    </div>
 
     <!-- ===== 滚动广告栏 ===== -->
     <div id="adContainer" style="min-height:60px; margin:0 0 12px 0; border-radius:12px; background:linear-gradient(135deg, #f8f6ff, #fef3c7); display:flex; align-items:center; justify-content:center; text-align:center; padding:6px 16px; border:1px solid #ede9fe; position:relative; overflow:hidden; cursor:pointer;">
@@ -372,10 +408,7 @@
             <span class="info-item">🎁 今日捣蛋工具：</span>
             <span class="info-item" id="itemDisplay">🪄 3个 · 📢 0个 · 🚀 0个</span>
         </div>
-        <div style="display:flex; gap:8px;">
-            <button class="share-btn" id="shareBtn">📤 分享得道具</button>
-            <button class="share-btn" id="guideBtn" style="background:#6c5ce7; color:#fff; border-color:#6c5ce7;">🧭 开启导航</button>
-        </div>
+        <button class="share-btn" id="shareBtn">📤 分享得道具</button>
     </div>
 
     <!-- ===== 快捷入口 ===== -->
@@ -1956,7 +1989,7 @@
         window.showCustomModal = showCustomModal;
 
         // ============================================================
-        // 🆕 手动开启导航按钮
+        // 🆕 手动开启导航按钮（置顶按钮）
         // ============================================================
         document.getElementById('guideBtn').addEventListener('click', function() {
             var user = getCurrentUser();
