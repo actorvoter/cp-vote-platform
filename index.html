@@ -2101,6 +2101,93 @@
         }
 
         // ============================================================
+        // 🆕 智能导航弹窗 - 每次进入首页询问
+        // ============================================================
+        function showGuidePrompt() {
+            var user = getCurrentUser();
+            if (!user) {
+                // 游客不弹窗
+                return;
+            }
+
+            // 检查今天是否已经弹过（每天最多5次）
+            var today = new Date().toISOString().split('T')[0];
+            var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
+            var count = parseInt(localStorage.getItem(guideCountKey) || '0');
+
+            // 如果已经弹了5次，不再自动弹出
+            if (count >= 5) {
+                return;
+            }
+
+            // 延迟1.5秒弹出，让页面先加载
+            setTimeout(function() {
+                // 创建自定义弹窗
+                var overlay = document.createElement('div');
+                overlay.className = 'guide-prompt-overlay';
+                overlay.id = 'guidePromptOverlay';
+
+                var modal = document.createElement('div');
+                modal.className = 'guide-prompt-modal';
+
+                var remaining = 5 - count;
+
+                modal.innerHTML = `
+                    <div class="decor">🥚</div>
+                    <div style="position:relative; z-index:1;">
+                        <span class="big-icon">🧭</span>
+                        <h2>网络漫漫，是否要蛋蛋给你导航？</h2>
+                        <p>
+                            蛋蛋带你玩转捣蛋选角，解锁全部玩法！<br>
+                            <span class="highlight-text">✨ 包含：提名CP · 投票 · 丢鸡蛋 · 共创 · 捣蛋剧场</span>
+                        </p>
+                        <div style="font-size:13px; color:#9ca3af; margin-bottom:12px;">
+                            💡 今日剩余导航次数：${remaining} 次
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:10px;">
+                            <button id="guideAcceptBtn" class="btn-accept">
+                                ✅ 要！蛋蛋带我飞～
+                            </button>
+                            <button id="guideSkipBtn" class="btn-skip">
+                                ⏳ 下次再说
+                            </button>
+                        </div>
+                        <div class="footer-hint">
+                            💡 每天可以导航 5 次，不会过度打扰你哦～
+                        </div>
+                    </div>
+                `;
+
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+
+                // 记录今天已弹过（增加计数）
+                localStorage.setItem(guideCountKey, String(count + 1));
+
+                // 接受按钮 - 开始导航
+                document.getElementById('guideAcceptBtn').addEventListener('click', function() {
+                    if (overlay.parentNode) document.body.removeChild(overlay);
+                    startGuidedTourSimple();
+                });
+
+                // 跳过按钮
+                document.getElementById('guideSkipBtn').addEventListener('click', function() {
+                    if (overlay.parentNode) document.body.removeChild(overlay);
+                    showToast('⏳ 随时可以找蛋蛋导航哦～');
+                });
+
+                // 点击外部关闭
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        if (overlay.parentNode) document.body.removeChild(overlay);
+                        showToast('⏳ 下次再来找蛋蛋吧～');
+                    }
+                });
+
+            }, 1500);
+        }
+
+        // ============================================================
         // 初始化
         // ============================================================
         updateUserUI();
@@ -2116,6 +2203,11 @@
                 // 静默处理
             }
         }, 2000);
+
+        // ===== 🆕 启动智能导航（在页面加载后3秒检查） =====
+        setTimeout(function() {
+            showGuidePrompt();
+        }, 3000);
 
         console.log('✅ 捣蛋选角 2.0 已启动 🥚');
         console.log('✅ 智能导航系统已加载');
