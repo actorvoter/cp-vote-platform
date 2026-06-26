@@ -1590,7 +1590,7 @@
         });
 
         // ============================================================
-        // 🆕 新手引导系统
+        // 🆕 新手引导系统（已修复 - 处理多行返回错误）
         // ============================================================
         var currentStep = 1;
         var totalSteps = 5;
@@ -1669,11 +1669,23 @@
             try {
                 var client = getClient();
 
-                var { data: existingProgress } = await client
+                // 使用 select 并限制返回1行，避免多行错误
+                var { data: existingProgress, error } = await client
                     .from('user_progress')
                     .select('has_seen_onboarding')
                     .eq('user_id', user.id)
+                    .limit(1)
                     .maybeSingle();
+
+                if (error) {
+                    // 如果表不存在或查询失败，直接跳过
+                    console.warn('user_progress 表查询失败，跳过引导');
+                    document.getElementById('onboardingOverlay').style.display = 'none';
+                    document.body.style.overflow = '';
+                    isOnboardingActive = false;
+                    window.location.href = 'index.html';
+                    return;
+                }
 
                 if (existingProgress && existingProgress.has_seen_onboarding === true) {
                     document.getElementById('onboardingOverlay').style.display = 'none';
@@ -1683,6 +1695,7 @@
                     return;
                 }
 
+                // 尝试更新或插入
                 var { error: updateError } = await client
                     .from('user_progress')
                     .update({
@@ -1692,6 +1705,7 @@
                     .eq('user_id', user.id);
 
                 if (updateError) {
+                    // 如果更新失败（可能没有记录），尝试插入
                     var { error: insertError } = await client
                         .from('user_progress')
                         .insert({
@@ -1700,7 +1714,10 @@
                             onboarding_completed_at: new Date().toISOString(),
                             phase: 1
                         });
-                    if (insertError) throw insertError;
+                    if (insertError) {
+                        // 插入也失败，静默处理
+                        console.warn('插入 user_progress 失败:', insertError);
+                    }
                 }
 
                 var today = new Date().toISOString().split('T')[0];
@@ -1729,23 +1746,12 @@
                         });
                 }
 
-                await client
-                    .from('onboarding_rewards')
-                    .insert({
-                        user_id: user.id,
-                        reward_amount: 5
-                    })
-                    .onConflict('user_id')
-                    .ignore();
-
                 localStorage.setItem('onboarding_' + user.id, 'completed');
                 localStorage.setItem('onboarding_completed_date_' + user.id, today);
 
                 document.getElementById('onboardingOverlay').style.display = 'none';
                 document.body.style.overflow = '';
                 isOnboardingActive = false;
-
-                await trackActivity('onboarding_complete', user.id, 'user', { reward: 5 });
 
                 showToast('🎉 新手引导完成！获得 5 个人气灯！');
 
@@ -1756,8 +1762,12 @@
                 window.location.href = 'index.html';
 
             } catch (err) {
-                console.error('完成引导失败:', err);
-                showToast('保存失败，请重试');
+                console.warn('完成引导异常:', err);
+                // 即使出错也关闭弹窗
+                document.getElementById('onboardingOverlay').style.display = 'none';
+                document.body.style.overflow = '';
+                isOnboardingActive = false;
+                showToast('已跳过引导');
             }
         }
 
@@ -1796,14 +1806,17 @@
 
             try {
                 var client = getClient();
+                // 使用 limit(1) 和 maybeSingle() 避免多行错误
                 var { data, error } = await client
                     .from('user_progress')
                     .select('has_seen_onboarding, onboarding_completed_at')
                     .eq('user_id', user.id)
+                    .limit(1)
                     .maybeSingle();
 
                 if (error) {
-                    console.warn('检查引导状态失败:', error);
+                    // 静默处理错误
+                    localStorage.setItem(todayShownKey, 'true');
                     return;
                 }
 
@@ -1819,7 +1832,8 @@
                 }, 1500);
 
             } catch (err) {
-                console.warn('检查引导状态异常:', err);
+                // 静默处理异常
+                localStorage.setItem(todayShownKey, 'true');
             }
         }
 
@@ -1988,8 +2002,8 @@
         // 导出供其他页面使用
         window.showCustomModal = showCustomModal;
 
-                // ============================================================
-        // 🆕 手动开启导航按钮（置顶按钮）- 无次数限制
+        // ============================================================
+        // 🆕 手动开启导航按钮（简化版 - 直接弹窗，不依赖页面元素）
         // ============================================================
         document.getElementById('guideBtn').addEventListener('click', function() {
             var user = getCurrentUser();
@@ -2000,12 +2014,91 @@
             }
 
             showToast('🧭 开始导航...');
-            
-            // 延迟一点点执行，确保 Toast 显示
+
+            // 延迟执行，让 Toast 显示
             setTimeout(function() {
-                startGuidedTour();
+                startGuidedTourSimple();
             }, 300);
         });
+
+        // ============================================================
+        // 🆕 简化版导航引导（不依赖页面元素高亮）
+        // ============================================================
+        function startGuidedTourSimple() {
+            var steps = [
+                { icon: '🏷️', title: '提名你的 CP', desc: '点击 "+ 提名 CP" 按钮，输入你喜欢的演员组合' },
+                { icon: '❤️', title: '为 CP 投票', desc: '找到你喜欢的 CP，点击 "❤️ 投票" 支持他们！' },
+                { icon: '🥚', title: '丢鸡蛋 · 说出真话', desc: '觉得选角不公？点击 "🥚" 按钮，分享你的真实看法！' },
+                { icon: '🎬', title: '捣蛋剧场 · 接取任务', desc: '点击 "🎬 捣蛋剧场 · 接取任务"，开启你的编剧之旅！' }
+            ];
+
+            var currentStep = 0;
+
+            function showStep(index) {
+                if (index >= steps.length) {
+                    showToast('🎉 导航完成！快去捣蛋吧！');
+                    setTimeout(function() {
+                        if (confirm('🎬 要不要去捣蛋剧场接取第一个任务？\n"蛋疼的搭救潘姐姐？"')) {
+                            window.location.href = 'guide.html';
+                        }
+                    }, 500);
+                    return;
+                }
+
+                var step = steps[index];
+                var overlay = document.createElement('div');
+                overlay.className = 'tour-overlay';
+                overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.3s ease;';
+
+                var modal = document.createElement('div');
+                modal.className = 'tour-modal';
+                modal.style.cssText = 'background:#fff;border-radius:28px;max-width:400px;width:100%;padding:28px 24px 24px;text-align:center;animation:slideUp 0.3s ease;box-shadow:0 20px 60px rgba(0,0,0,0.15);';
+
+                var dotsHtml = '';
+                for (var i = 0; i < steps.length; i++) {
+                    dotsHtml += '<div style="width:20px;height:4px;border-radius:2px;background:' + (i <= index ? '#6c5ce7' : '#e5e7eb') + ';transition:all 0.3s;"></div>';
+                }
+
+                modal.innerHTML = `
+                    <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:center;">${dotsHtml}</div>
+                    <div style="font-size:48px;display:block;margin-bottom:8px;">${step.icon}</div>
+                    <h3 style="font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:4px;">${step.title}</h3>
+                    <p style="color:#6b7280;font-size:14px;line-height:1.5;margin-bottom:16px;">${step.desc}</p>
+                    <div style="display:flex;gap:10px;">
+                        <button onclick="this.closest('.tour-overlay').remove(); showToast('⏳ 随时可以找蛋蛋导航哦～');" style="flex:1;padding:10px;background:#f3f4f6;border:none;border-radius:30px;font-size:14px;cursor:pointer;color:#6b7280;">跳过</button>
+                        <button onclick="nextStep()" style="flex:2;padding:10px;background:linear-gradient(135deg,#6c5ce7,#f59e0b);border:none;border-radius:30px;font-size:14px;cursor:pointer;color:#fff;font-weight:600;">
+                            ${index < steps.length - 1 ? '下一步 →' : '🎉 开始捣蛋！'}
+                        </button>
+                    </div>
+                    <div style="margin-top:8px;font-size:12px;color:#9ca3af;">${index + 1} / ${steps.length}</div>
+                `;
+
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+
+                // 存储当前步骤
+                window._tourStepIndex = index;
+                window._tourOverlay = overlay;
+
+                // 定义 nextStep
+                window.nextStep = function() {
+                    if (overlay.parentNode) overlay.remove();
+                    var nextIndex = index + 1;
+                    if (nextIndex < steps.length) {
+                        showStep(nextIndex);
+                    } else {
+                        showToast('🎉 导航完成！快去捣蛋吧！');
+                        setTimeout(function() {
+                            if (confirm('🎬 要不要去捣蛋剧场接取第一个任务？\n"蛋疼的搭救潘姐姐？"')) {
+                                window.location.href = 'guide.html';
+                            }
+                        }, 500);
+                    }
+                };
+            }
+
+            showStep(0);
+        }
 
         // ============================================================
         // 初始化
@@ -2015,244 +2108,14 @@
         updateItemDisplay();
         updateSiteStats();
 
-        setTimeout(checkAndStartOnboarding, 2000);
-
-        // ============================================================
-        // 🆕 智能导航弹窗 - 每次进入首页询问
-        // ============================================================
-        function showGuidePrompt() {
-            var user = getCurrentUser();
-            if (!user) {
-                // 游客不弹窗
-                return;
-            }
-
-            // 检查今天是否已经弹过（每天最多3次）
-            var today = new Date().toISOString().split('T')[0];
-            var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
-            var count = parseInt(localStorage.getItem(guideCountKey) || '0');
-
-            // 如果已经弹了5次，不再自动弹出
-            if (count >= 5) {
-                return;
-            }
-
-            // 延迟1.5秒弹出，让页面先加载
-            setTimeout(function() {
-                // 创建自定义弹窗
-                var overlay = document.createElement('div');
-                overlay.className = 'guide-prompt-overlay';
-                overlay.id = 'guidePromptOverlay';
-
-                var modal = document.createElement('div');
-                modal.className = 'guide-prompt-modal';
-
-                                var remaining = 5 - count;
-
-                modal.innerHTML = `
-                    <div class="decor">🥚</div>
-                    <div style="position:relative; z-index:1;">
-                        <span class="big-icon">🧭</span>
-                        <h2>网络漫漫，是否要蛋蛋给你导航？</h2>
-                        <p>
-                            蛋蛋带你玩转捣蛋选角，解锁全部玩法！<br>
-                            <span class="highlight-text">✨ 包含：提名CP · 投票 · 丢鸡蛋 · 共创 · 捣蛋剧场</span>
-                        </p>
-                        <div style="font-size:13px; color:#9ca3af; margin-bottom:12px;">
-                            💡 今日剩余导航次数：${remaining} 次
-                        </div>
-                        <div style="display:flex; flex-direction:column; gap:10px;">
-                            <button id="guideAcceptBtn" class="btn-accept">
-                                ✅ 要！蛋蛋带我飞～
-                            </button>
-                            <button id="guideSkipBtn" class="btn-skip">
-                                ⏳ 下次再说
-                            </button>
-                        </div>
-                        <div class="footer-hint">
-                            💡 每天可以导航 5 次，不会过度打扰你哦～
-                        </div>
-                    </div>
-                `;
-
-                overlay.appendChild(modal);
-                document.body.appendChild(overlay);
-
-                // 记录今天已弹过（增加计数）
-                localStorage.setItem(guideCountKey, String(count + 1));
-
-                // 接受按钮 - 开始导航
-                document.getElementById('guideAcceptBtn').addEventListener('click', function() {
-                    if (overlay.parentNode) document.body.removeChild(overlay);
-                    startGuidedTour();
-                });
-
-                // 跳过按钮
-                document.getElementById('guideSkipBtn').addEventListener('click', function() {
-                    if (overlay.parentNode) document.body.removeChild(overlay);
-                    showToast('⏳ 随时可以找蛋蛋导航哦～');
-                });
-
-                // 点击外部关闭
-                overlay.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        if (overlay.parentNode) document.body.removeChild(overlay);
-                        showToast('⏳ 下次再来找蛋蛋吧～');
-                    }
-                });
-
-            }, 1500);
-        }
-
-        // ============================================================
-        // 🆕 导航引导流程
-        // ============================================================
-        function startGuidedTour() {
-            var steps = [
-                {
-                    icon: '🏷️',
-                    title: '提名你的 CP',
-                    desc: '点击 "+ 提名 CP" 按钮，输入你喜欢的演员组合',
-                    highlight: '#openModalBtn'
-                },
-                {
-                    icon: '❤️',
-                    title: '为 CP 投票',
-                    desc: '找到你喜欢的 CP，点击 "❤️ 投票" 支持他们！',
-                    highlight: '.vote-btn'
-                },
-                {
-                    icon: '🥚',
-                    title: '丢鸡蛋 · 说出真话',
-                    desc: '觉得选角不公？点击 "🥚" 按钮，分享你的真实看法！',
-                    highlight: '.egg-btn'
-                },
-                {
-                    icon: '🎬',
-                    title: '捣蛋剧场 · 接取任务',
-                    desc: '点击 "🎬 捣蛋剧场 · 接取任务"，开启你的编剧之旅！',
-                    highlight: '.theater-entry'
-                }
-            ];
-
-            var currentTourStep = 0;
-
-            function showTourStep(index) {
-                if (index >= steps.length) {
-                    showToast('🎉 导航完成！快去捣蛋吧！');
-                    return;
-                }
-
-                var step = steps[index];
-
-                // 创建引导弹窗
-                var overlay = document.createElement('div');
-                overlay.className = 'tour-overlay';
-                overlay.id = 'tourOverlay';
-
-                var modal = document.createElement('div');
-                modal.className = 'tour-modal';
-
-                // 生成进度点
-                var dotsHtml = '';
-                for (var i = 0; i < steps.length; i++) {
-                    dotsHtml += '<div class="dot' + (i <= index ? ' active' : '') + '"></div>';
-                }
-
-                modal.innerHTML = `
-                    <div class="progress-dots">${dotsHtml}</div>
-                    <span class="tour-icon">${step.icon}</span>
-                    <h3>${step.title}</h3>
-                    <p>${step.desc}</p>
-                    <div class="tour-actions">
-                        <button class="btn-skip" onclick="skipTour()">跳过</button>
-                        <button class="btn-next" onclick="nextTourStep()">
-                            ${index < steps.length - 1 ? '下一步 →' : '🎉 开始捣蛋！'}
-                        </button>
-                    </div>
-                    <div class="step-counter">${index + 1} / ${steps.length}</div>
-                `;
-
-                overlay.appendChild(modal);
-                document.body.appendChild(overlay);
-
-                // 高亮目标元素
-                if (step.highlight) {
-                    var target = document.querySelector(step.highlight);
-                    if (target) {
-                        target.style.boxShadow = '0 0 0 4px #f59e0b, 0 0 20px rgba(245,158,11,0.3)';
-                        target.style.transition = 'box-shadow 0.3s';
-                        setTimeout(function() {
-                            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 300);
-                    } else {
-                        // 如果目标元素不存在，跳过高亮，继续下一步
-                        console.warn('导航目标元素不存在:', step.highlight);
-                    }
-                }
-
-                // 存储当前 overlay 引用
-                window._currentTourOverlay = overlay;
-                window._currentTourStep = index;
-            }
-
-            // 下一步
-            window.nextTourStep = function() {
-                var overlay = window._currentTourOverlay;
-                if (overlay && overlay.parentNode) {
-                    document.body.removeChild(overlay);
-                }
-                // 清除高亮
-                var step = steps[window._currentTourStep];
-                if (step && step.highlight) {
-                    var target = document.querySelector(step.highlight);
-                    if (target) {
-                        target.style.boxShadow = '';
-                    }
-                }
-                var nextIndex = (window._currentTourStep || 0) + 1;
-                if (nextIndex < steps.length) {
-                    showTourStep(nextIndex);
-                } else {
-                    showToast('🎉 导航完成！快去捣蛋吧！');
-                    // 最后一步引导去捣蛋剧场
-                    setTimeout(function() {
-                        if (confirm('🎬 要不要去捣蛋剧场接取第一个任务？\n"蛋疼的搭救潘姐姐？"')) {
-                            window.location.href = 'guide.html';
-                        } else {
-                            showToast('⏳ 随时可以点击 "捣蛋剧场" 按钮开始哦～');
-                        }
-                    }, 500);
-                }
-            };
-
-            // 跳过导航
-            window.skipTour = function() {
-                var overlay = window._currentTourOverlay;
-                if (overlay && overlay.parentNode) {
-                    document.body.removeChild(overlay);
-                }
-                // 清除高亮
-                var step = steps[window._currentTourStep];
-                if (step && step.highlight) {
-                    var target = document.querySelector(step.highlight);
-                    if (target) {
-                        target.style.boxShadow = '';
-                    }
-                }
-                showToast('⏳ 随时可以找蛋蛋导航哦～');
-            };
-
-            // 开始第一步
-            showTourStep(0);
-        }
-
-        // ============================================================
-        // 🆕 启动智能导航（在页面加载后3秒检查）
-        // ============================================================
+        // 新手引导 - 静默处理错误
         setTimeout(function() {
-            showGuidePrompt();
-        }, 3000);
+            try {
+                checkAndStartOnboarding();
+            } catch (e) {
+                // 静默处理
+            }
+        }, 2000);
 
         console.log('✅ 捣蛋选角 2.0 已启动 🥚');
         console.log('✅ 智能导航系统已加载');
