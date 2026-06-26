@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>捣蛋剧场 · 捣蛋选角</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #faf9ff;
+            color: #1a1a2e;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 20px 100px 20px;
+        }
+        .btn-primary {
+            background: #6c5ce7;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            text-decoration: none;
+        }
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .btn-secondary:active {
+            background: #e5e7eb;
+        }
+        .btn-gold {
+            background: #f59e0b;
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-gold:active {
+            transform: scale(0.96);
+        }
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 16px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            max-width: 80%;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .guide-hero {
+            text-align: center;
+            padding: 30px 0 20px 0;
+        }
+        .guide-hero .logo-icon {
+            font-size: 72px;
+            display: block;
+            margin-bottom: 12px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .guide-hero h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6c5ce7, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .guide-hero .sub {
+            font-size: 16px;
+            color: #6b7280;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        .guide-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 24px 0 32px 0;
+        }
+        .guide-features .feature-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 18px 12px;
+            text-align: center;
+            border: 1px solid #ede9fe;
+            transition: all 0.2s;
+        }
+        .guide-features .feature-card .icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .guide-features .feature-card .label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .guide-features .feature-card .desc {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        .guide-mission-cta {
+            background: linear-gradient(135deg, #fef3c7, #ede9fe);
+            border-radius: 32px;
+            padding: 32px 24px;
+            text-align: center;
+            border: 2px solid #f59e0b;
+            margin: 12px 0 20px 0;
+        }
+        .guide-mission-cta .big-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .guide-mission-cta h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .guide-mission-cta p {
+            color: #6b7280;
+            font-size: 15px;
+            margin: 8px 0 16px 0;
+        }
+        .guide-mission-cta .reward-tag {
+            display: inline-block;
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .custom-modal-overlay.active {
+            display: flex;
+        }
+        .custom-modal {
+            background: #fff;
+            border-radius: 32px;
+            max-width: 400px;
+            width: 100%;
+            padding: 32px 24px 24px;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        .custom-modal .modal-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .custom-modal h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+        .custom-modal p {
+            font-size: 15px;
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .custom-modal .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .custom-modal .modal-actions .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+        .custom-modal .modal-actions .btn-secondary {
+            width: 100%;
+            justify-content: center;
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @media (max-width: 400px) {
+            .guide-features {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .guide-features .feature-card {
+                padding: 14px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="appContainer">
+        <div class="guide-hero">
+            <span class="logo-icon">🎬</span>
+            <h1>捣蛋剧场</h1>
+            <div class="sub">选角不公？捣蛋有理！</div>
+        </div>
+
+        <div class="guide-features">
+            <div class="feature-card">
+                <span class="icon">🎭</span>
+                <div class="label">沉浸式任务</div>
+                <div class="desc">化身编剧，改写命运</div>
+            </div>
+            <div class="feature-card">
+                <span class="icon">⚡</span>
+                <div class="label">AI 生成</div>
+                <div class="desc">你的故事，AI 呈现</div>
+            </div>
+            <div class="feature-card">
+                <span class="icon">💰</span>
+                <div class="label">丰厚奖励</div>
+                <div class="desc">道具、人气、曝光</div>
+            </div>
+            <div class="feature-card">
+                <span class="icon">📈</span>
+                <div class="label">热度加持</div>
+                <div class="desc">助推你的 CP 上榜</div>
+            </div>
+        </div>
+
+        <div class="guide-mission-cta">
+            <span class="big-icon">🔥</span>
+            <span class="reward-tag">⭐ 首任务 · 奖励翻倍</span>
+            <h2>搭救潘金莲</h2>
+            <p>六步改写命运，解锁 AI 专属短片</p>
+            <button class="btn-gold" onclick="goToMission()">
+                🎬 接取任务
+            </button>
+            <div style="margin-top:12px; font-size:13px; color:#9ca3af;">
+                ⏳ 约 3 分钟 · 奖励 20 人气灯
+            </div>
+        </div>
+
+        <div style="text-align:center; margin-top:12px;">
+            <a href="index.html" class="btn-secondary" style="text-decoration:none;">← 返回捣蛋大厅</a>
+        </div>
+    </div>
+
+    <!-- 自定义弹窗（道具用尽） -->
+    <div class="custom-modal-overlay" id="customModal">
+        <div class="custom-modal">
+            <span class="modal-icon" id="modalIcon">🧨</span>
+            <h3 id="modalTitle">道具用尽</h3>
+            <p id="modalDesc">你的道具已经用完啦！分享给好友可以获得更多道具～</p>
+            <div class="modal-actions">
+                <button class="btn-primary" id="modalShareBtn">📤 分享得道具</button>
+                <button class="btn-secondary" id="modalLaterBtn">⏳ 稍后再说</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if (!t) { alert(msg); return; }
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        function getCurrentUser() {
+            try {
+                var raw = localStorage.getItem('cp_user');
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (e) { return null; }
+        }
+
+        function goToMission() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                setTimeout(function() {
+                    window.location.href = 'login.html';
+                }, 600);
+                return;
+            }
+            window.location.href = 'mission.html';
+        }
+
+        // 自定义弹窗
+        function showCustomModal(title, desc, icon) {
+            document.getElementById('modalIcon').textContent = icon || '🧨';
+            document.getElementById('modalTitle').textContent = title || '道具用尽';
+            document.getElementById('modalDesc').textContent = desc || '你的道具已经用完啦！分享给好友可以获得更多道具～';
+            document.getElementById('customModal').classList.add('active');
+        }
+
+        document.getElementById('modalShareBtn').addEventListener('click', function() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                return;
+            }
+            if (navigator.share) {
+                navigator.share({
+                    title: '🎬 捣蛋剧场 · 搭救潘金莲',
+                    text: '我在捣蛋选角改写潘金莲的命运！一起来玩吧！',
+                    url: window.location.href
+                }).then(function() {
+                    showToast('🎁 分享成功！获得 20 人气灯');
+                    document.getElementById('customModal').classList.remove('active');
+                }).catch(function() {});
+            } else {
+                navigator.clipboard.writeText('🎬 捣蛋剧场 · 搭救潘金莲\n' + window.location.href).then(function() {
+                    showToast('📋 链接已复制！分享给好友吧');
+                    document.getElementById('customModal').classList.remove('active');
+                });
+            }
+        });
+
+        document.getElementById('modalLaterBtn').addEventListener('click', function() {
+            document.getElementById('customModal').classList.remove('active');
+            showToast('⏳ 随时可以回来继续');
+        });
+
+        document.getElementById('customModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                showToast('⏳ 稍后再来');
+            }
+        });
+
+        window.goToMission = goToMission;
+        window.showCustomModal = showCustomModal;
+
+        console.log('✅ 捣蛋剧场 · 导航页已加载');
+    </script>
+</body>
+</html>

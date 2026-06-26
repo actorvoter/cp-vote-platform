@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>搭救潘金莲 · 捣蛋剧场</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #faf9ff;
+            color: #1a1a2e;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 20px 100px 20px;
+        }
+        .btn-primary {
+            background: #6c5ce7;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-secondary:active {
+            background: #e5e7eb;
+        }
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 16px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            max-width: 80%;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .mission-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0 16px 0;
+            border-bottom: 2px solid #ede9fe;
+            margin-bottom: 20px;
+        }
+        .mission-header .back-btn {
+            font-size: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 4px 8px;
+        }
+        .mission-header .title {
+            font-size: 20px;
+            font-weight: 700;
+            flex: 1;
+        }
+        .mission-header .step-badge {
+            background: #6c5ce7;
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .mission-progress {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 24px;
+            justify-content: center;
+        }
+        .mission-progress .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            transition: all 0.3s;
+        }
+        .mission-progress .dot.active {
+            background: #6c5ce7;
+            transform: scale(1.2);
+        }
+        .mission-progress .dot.done {
+            background: #10b981;
+        }
+        .step-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 24px 20px;
+            border: 1px solid #ede9fe;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+        }
+        .step-card .step-icon {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .step-card .step-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .step-card .step-desc {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 6px 0 16px 0;
+            line-height: 1.5;
+        }
+        .step-card .step-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .step-card .step-actions .btn-primary,
+        .step-card .step-actions .btn-secondary {
+            flex: 1;
+            min-width: 120px;
+            justify-content: center;
+            padding: 12px 16px;
+        }
+        .step-card .step-actions .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+        .step-card .step-result {
+            background: #f8f6ff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 16px;
+            border-left: 4px solid #6c5ce7;
+        }
+        .step-card .step-result .result-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c5ce7;
+        }
+        .step-card .step-result .result-text {
+            font-size: 14px;
+            color: #374151;
+            margin-top: 4px;
+        }
+        .mission-complete {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #d1fae5, #ede9fe);
+            border-radius: 32px;
+            border: 2px solid #10b981;
+        }
+        .mission-complete .big-icon {
+            font-size: 64px;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .mission-complete h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #065f46;
+        }
+        .mission-complete p {
+            color: #4b5563;
+            font-size: 15px;
+            margin: 8px 0 16px 0;
+        }
+        .mission-complete .reward-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            display: inline-block;
+            margin: 12px auto;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+        }
+        .mission-complete .reward-box .amount {
+            font-size: 32px;
+            font-weight: 800;
+            color: #f59e0b;
+        }
+        .mission-complete .reward-box .label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .custom-modal-overlay.active {
+            display: flex;
+        }
+        .custom-modal {
+            background: #fff;
+            border-radius: 32px;
+            max-width: 400px;
+            width: 100%;
+            padding: 32px 24px 24px;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        .custom-modal .modal-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .custom-modal h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+        .custom-modal p {
+            font-size: 15px;
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .custom-modal .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .custom-modal .modal-actions .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+        .custom-modal .modal-actions .btn-secondary {
+            width: 100%;
+            justify-content: center;
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @media (max-width: 400px) {
+            .step-card .step-actions .btn-primary,
+            .step-card .step-actions .btn-secondary {
+                min-width: 100px;
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="appContainer">
+        <!-- 由 JavaScript 动态渲染 -->
+    </div>
+
+    <!-- 自定义弹窗 -->
+    <div class="custom-modal-overlay" id="customModal">
+        <div class="custom-modal">
+            <span class="modal-icon" id="modalIcon">🧨</span>
+            <h3 id="modalTitle">道具用尽</h3>
+            <p id="modalDesc">你的道具已经用完啦！分享给好友可以获得更多道具～</p>
+            <div class="modal-actions">
+                <button class="btn-primary" id="modalShareBtn">📤 分享得道具</button>
+                <button class="btn-secondary" id="modalLaterBtn">⏳ 稍后再说</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if (!t) { alert(msg); return; }
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        function getCurrentUser() {
+            try {
+                var raw = localStorage.getItem('cp_user');
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (e) { return null; }
+        }
+
+        // ============================================================
+        // 任务数据
+        // ============================================================
+        var currentStep = 1;
+        var totalSteps = 6;
+        var missionData = {
+            step1: { title: '选角 · 谁来演？', desc: '选择你心中的潘金莲和武大郎', icon: '🎭', result: '' },
+            step2: { title: '逃离武大', desc: '设计一场逃离武大的戏码', icon: '🏃', result: '' },
+            step3: { title: '躲避西门', desc: '如何避开西门庆的纠缠？', icon: '🕵️', result: '' },
+            step4: { title: '过好日子', desc: '给潘金莲一个全新的幸福结局', icon: '🌸', result: '' },
+            step5: { title: '给自己加戏', desc: '你在这个故事里是什么角色？', icon: '🎬', result: '' },
+            step6: { title: 'AI 生成锁定', desc: '所有选择已就绪，生成专属短片', icon: '🤖', result: '' }
+        };
+
+        // ============================================================
+        // 渲染任务
+        // ============================================================
+        function renderMission() {
+            var container = document.getElementById('appContainer');
+            var step = currentStep;
+            var data = missionData['step' + step];
+            var isComplete = step > totalSteps;
+
+            // 进度条
+            var dotsHtml = '';
+            for (var i = 1; i <= totalSteps; i++) {
+                var cls = 'dot';
+                if (i < step) cls += ' done';
+                else if (i === step) cls += ' active';
+                dotsHtml += '<span class="' + cls + '"></span>';
+            }
+
+            var contentHtml = '';
+            if (isComplete) {
+                contentHtml = `
+                    <div class="mission-complete">
+                        <span class="big-icon">🎉</span>
+                        <h2>任务完成！</h2>
+                        <p>你成功改写了潘金莲的命运，AI 短片正在生成...</p>
+                        <div class="reward-box">
+                            <div class="amount">+20</div>
+                            <div class="label">人气灯</div>
+                        </div>
+                        <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                            <button class="btn-primary" onclick="showToast('🎬 AI 短片即将上线')">▶️ 观看 AI 短片</button>
+                            <button class="btn-secondary" onclick="window.location.href='guide.html'">🏠 返回剧场</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                var resultHtml = data.result ? `
+                    <div class="step-result">
+                        <div class="result-label">📌 你的选择</div>
+                        <div class="result-text">${data.result}</div>
+                    </div>
+                ` : '';
+
+                contentHtml = `
+                    <div class="step-card">
+                        <span class="step-icon">${data.icon}</span>
+                        <div class="step-title">${step}. ${data.title}</div>
+                        <div class="step-desc">${data.desc}</div>
+                        ${resultHtml}
+                        <div class="step-actions">
+                            <button class="btn-primary" onclick="handleStepAction(${step})">✅ 确认选择</button>
+                            <button class="btn-secondary" onclick="showToast('💡 试试不同的选择吧')">🔄 换一个</button>
+                        </div>
+                        ${step < totalSteps ? '<div style="margin-top:16px; text-align:right; font-size:13px; color:#9ca3af;">⏳ 完成当前步骤后自动进入下一步</div>' : ''}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="mission-header">
+                    <button class="back-btn" onclick="window.location.href='guide.html'">←</button>
+                    <div class="title">🎬 搭救潘金莲</div>
+                    <div class="step-badge">${isComplete ? '🎉 完成' : step + '/' + totalSteps}</div>
+                </div>
+                <div class="mission-progress">${dotsHtml}</div>
+                ${contentHtml}
+                <div style="margin-top:12px; text-align:center; font-size:12px; color:#9ca3af;">
+                    💡 所有选择都会影响 AI 生成的短片结局
+                </div>
+            `;
+        }
+
+        // ============================================================
+        // 步骤交互
+        // ============================================================
+        function handleStepAction(step) {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var results = {
+                1: '✨ 你选择了 刘亦菲 饰演潘金莲，张晚意 饰演武大郎',
+                2: '🏃 潘金莲在月黑风高夜，带着包袱从后门逃走',
+                3: '🕵️ 她女扮男装，混入集市，西门庆遍寻不着',
+                4: '🌸 潘金莲开了一家小酒馆，自食其力，日子红火',
+                5: '🎬 你化身为说书人，在街头讲述这段传奇故事',
+                6: '🤖 AI 已锁定所有设定，短片生成中...'
+            };
+
+            var resultText = results[step] || '✅ 已确认！';
+            missionData['step' + step].result = resultText;
+            renderMission();
+
+            if (step === totalSteps) {
+                setTimeout(function() {
+                    showToast('🎉 任务完成！获得 20 人气灯');
+                    currentStep = totalSteps + 1;
+                    renderMission();
+                    grantMissionReward(user.id);
+                }, 800);
+            } else {
+                setTimeout(function() {
+                    currentStep = step + 1;
+                    renderMission();
+                }, 600);
+            }
+        }
+
+        // ============================================================
+        // 发放奖励
+        // ============================================================
+        async function grantMissionReward(userId) {
+            try {
+                var client = window.supabase.createClient(
+                    'https://grsxmjvjtqmvylyxmktt.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA'
+                );
+                var today = new Date().toISOString().split('T')[0];
+                var { data: activity } = await client
+                    .from('daily_activities')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .eq('activity_date', today)
+                    .maybeSingle();
+
+                if (activity) {
+                    await client
+                        .from('daily_activities')
+                        .update({ items_light: (activity.items_light || 0) + 20 })
+                        .eq('id', activity.id);
+                } else {
+                    await client
+                        .from('daily_activities')
+                        .insert({
+                            user_id: userId,
+                            activity_date: today,
+                            items_light: 20,
+                            used_votes: []
+                        });
+                }
+            } catch (e) {
+                console.warn('奖励发放失败:', e);
+            }
+        }
+
+        // ============================================================
+        // 自定义弹窗
+        // ============================================================
+        function showCustomModal(title, desc, icon) {
+            document.getElementById('modalIcon').textContent = icon || '🧨';
+            document.getElementById('modalTitle').textContent = title || '道具用尽';
+            document.getElementById('modalDesc').textContent = desc || '你的道具已经用完啦！分享给好友可以获得更多道具～';
+            document.getElementById('customModal').classList.add('active');
+        }
+
+        document.getElementById('modalShareBtn').addEventListener('click', function() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                return;
+            }
+            if (navigator.share) {
+                navigator.share({
+                    title: '🎬 捣蛋剧场 · 搭救潘金莲',
+                    text: '我在捣蛋选角改写潘金莲的命运！一起来玩吧！',
+                    url: window.location.href
+                }).then(function() {
+                    showToast('🎁 分享成功！获得 20 人气灯');
+                    document.getElementById('customModal').classList.remove('active');
+                }).catch(function() {});
+            } else {
+                navigator.clipboard.writeText('🎬 捣蛋剧场 · 搭救潘金莲\n' + window.location.href).then(function() {
+                    showToast('📋 链接已复制！分享给好友吧');
+                    document.getElementById('customModal').classList.remove('active');
+                });
+            }
+        });
+
+        document.getElementById('modalLaterBtn').addEventListener('click', function() {
+            document.getElementById('customModal').classList.remove('active');
+            showToast('⏳ 随时可以回来继续');
+        });
+
+        document.getElementById('customModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                showToast('⏳ 稍后再来');
+            }
+        });
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        renderMission();
+        window.handleStepAction = handleStepAction;
+        window.showCustomModal = showCustomModal;
+
+        console.log('✅ 捣蛋剧场 · 任务页已加载');
+    </script>
+</body>
+</html>

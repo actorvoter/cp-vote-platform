@@ -19,6 +19,95 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
     </script>
     <link rel="stylesheet" href="css/style.css" />
+    <style>
+        /* ===== 自定义弹窗 ===== */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .custom-modal-overlay.active {
+            display: flex;
+        }
+        .custom-modal {
+            background: #fff;
+            border-radius: 32px;
+            max-width: 400px;
+            width: 100%;
+            padding: 32px 24px 24px;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        .custom-modal .modal-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .custom-modal h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+        .custom-modal p {
+            font-size: 15px;
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .custom-modal .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .custom-modal .modal-actions .btn-primary {
+            width: 100%;
+            justify-content: center;
+        }
+        .custom-modal .modal-actions .btn-secondary {
+            width: 100%;
+            justify-content: center;
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* ===== 捣蛋剧场入口按钮增强 ===== */
+        .theater-entry {
+            display: block;
+            margin: 8px 0 16px 0;
+            background: linear-gradient(135deg, #6c5ce7, #f59e0b);
+            color: #fff;
+            text-align: center;
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .theater-entry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(108, 92, 231, 0.4);
+        }
+        .theater-entry:active {
+            transform: scale(0.96);
+        }
+    </style>
 </head>
 <body>
 
@@ -46,6 +135,11 @@
     <div style="text-align:center; font-size:14px; color:#6c5ce7; margin-bottom:10px; font-weight:500; background:linear-gradient(90deg, #f59e0b, #6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
         ⚡ 提名你心中的神仙CP，热度达标即有机会进入剧组视线！
     </div>
+
+    <!-- ===== 🎬 捣蛋剧场 · 入口 ===== -->
+    <a href="guide.html" class="theater-entry">
+        🎬 捣蛋剧场 · 接取任务
+    </a>
 
     <!-- ===== 滚动广告栏 ===== -->
     <div id="adContainer" style="min-height:60px; margin:0 0 12px 0; border-radius:12px; background:linear-gradient(135deg, #f8f6ff, #fef3c7); display:flex; align-items:center; justify-content:center; text-align:center; padding:6px 16px; border:1px solid #ede9fe; position:relative; overflow:hidden; cursor:pointer;">
@@ -298,6 +392,19 @@
             </div>
 
             <button onclick="skipOnboarding()" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:20px; color:#9ca3af; cursor:pointer;">✕</button>
+        </div>
+    </div>
+
+    <!-- ===== 自定义弹窗（道具用尽） ===== -->
+    <div class="custom-modal-overlay" id="customModal">
+        <div class="custom-modal">
+            <span class="modal-icon" id="modalIcon">🧨</span>
+            <h3 id="modalTitle">道具用尽</h3>
+            <p id="modalDesc">你的道具已经用完啦！分享给好友可以获得更多道具～</p>
+            <div class="modal-actions">
+                <button class="btn-primary" id="modalShareBtn">📤 分享得道具</button>
+                <button class="btn-secondary" id="modalLaterBtn">⏳ 稍后再说</button>
+            </div>
         </div>
     </div>
 
@@ -903,7 +1010,12 @@
 
             var items = await getRemainingItems(user.id);
             if (items[type] <= 0) {
-                showToast('道具不足，分享可得更多 🎁');
+                // 使用自定义弹窗替代普通 Toast
+                showCustomModal(
+                    '道具用尽 🧨',
+                    '你的 ' + type + ' 已经用完啦！分享给好友可以获得更多道具～',
+                    '🧨'
+                );
                 return;
             }
 
@@ -1249,21 +1361,17 @@
                 return;
             }
 
-            // 检查本地缓存是否已完成
             if (localStorage.getItem('onboarding_' + user.id) === 'completed') {
                 showToast('你已经完成新手引导了 🎉');
                 return;
             }
 
-            // 检查今天是否已经弹出过
             var today = new Date().toISOString().split('T')[0];
             var todayShownKey = 'onboarding_shown_' + user.id + '_' + today;
             if (localStorage.getItem(todayShownKey) === 'true') {
-                // 今天已经弹出过，静默返回
                 return;
             }
 
-            // 记录今日已弹出
             localStorage.setItem(todayShownKey, 'true');
 
             isOnboardingActive = true;
@@ -1310,7 +1418,6 @@
             try {
                 var client = getClient();
 
-                // 检查是否已经完成过引导（防止重复提交）
                 var { data: existingProgress } = await client
                     .from('user_progress')
                     .select('has_seen_onboarding')
@@ -1318,7 +1425,6 @@
                     .maybeSingle();
 
                 if (existingProgress && existingProgress.has_seen_onboarding === true) {
-                    // 已经完成过，直接关闭弹窗跳转
                     document.getElementById('onboardingOverlay').style.display = 'none';
                     document.body.style.overflow = '';
                     isOnboardingActive = false;
@@ -1326,7 +1432,6 @@
                     return;
                 }
 
-                // 更新 user_progress 表
                 var { error: updateError } = await client
                     .from('user_progress')
                     .update({
@@ -1336,7 +1441,6 @@
                     .eq('user_id', user.id);
 
                 if (updateError) {
-                    // 如果记录不存在，插入新记录
                     var { error: insertError } = await client
                         .from('user_progress')
                         .insert({
@@ -1348,7 +1452,6 @@
                     if (insertError) throw insertError;
                 }
 
-                // 发放奖励：5 个人气灯
                 var today = new Date().toISOString().split('T')[0];
                 var { data: activity } = await client
                     .from('daily_activities')
@@ -1375,7 +1478,6 @@
                         });
                 }
 
-                // 记录奖励发放
                 await client
                     .from('onboarding_rewards')
                     .insert({
@@ -1385,12 +1487,9 @@
                     .onConflict('user_id')
                     .ignore();
 
-                // 本地缓存 - 标记已完成
                 localStorage.setItem('onboarding_' + user.id, 'completed');
-                // 同时记录完成日期，用于每日检查
                 localStorage.setItem('onboarding_completed_date_' + user.id, today);
 
-                // 关闭弹窗
                 document.getElementById('onboardingOverlay').style.display = 'none';
                 document.body.style.overflow = '';
                 isOnboardingActive = false;
@@ -1403,7 +1502,6 @@
                     updateItemDisplay();
                 }
 
-                // 跳转到首页
                 window.location.href = 'index.html';
 
             } catch (err) {
@@ -1421,7 +1519,6 @@
             if (user) {
                 trackActivity('onboarding_skip', user.id, 'user', { step: currentStep });
 
-                // 记录今天已跳过（同一天不再弹出）
                 var today = new Date().toISOString().split('T')[0];
                 var todayShownKey = 'onboarding_shown_' + user.id + '_' + today;
                 localStorage.setItem(todayShownKey, 'true');
@@ -1434,19 +1531,15 @@
             var user = getCurrentUser();
             if (!user) return;
 
-            // 检查本地缓存 - 是否已经完成过（永久标记）
             var completedCache = localStorage.getItem('onboarding_' + user.id);
             if (completedCache === 'completed') {
-                // 已经完成过，不再弹出
                 return;
             }
 
-            // 检查今天是否已经弹出过（同一天只弹1次）
             var today = new Date().toISOString().split('T')[0];
             var todayShownKey = 'onboarding_shown_' + user.id + '_' + today;
             var todayShown = localStorage.getItem(todayShownKey);
             if (todayShown === 'true') {
-                // 今天已经弹出过，不再弹出
                 return;
             }
 
@@ -1463,17 +1556,13 @@
                     return;
                 }
 
-                // 如果数据库显示已完成
                 if (data && data.has_seen_onboarding === true) {
-                    // 同步到本地缓存
                     localStorage.setItem('onboarding_' + user.id, 'completed');
                     return;
                 }
 
-                // 如果没有完成记录，记录今日已弹出
                 localStorage.setItem(todayShownKey, 'true');
 
-                // 延迟弹出引导
                 setTimeout(function() {
                     startOnboarding();
                 }, 1500);
@@ -1586,6 +1675,69 @@
         });
 
         // ============================================================
+        // 自定义弹窗控制（道具用尽）
+        // ============================================================
+        function showCustomModal(title, desc, icon) {
+            var modal = document.getElementById('customModal');
+            if (!modal) return;
+            document.getElementById('modalIcon').textContent = icon || '🧨';
+            document.getElementById('modalTitle').textContent = title || '道具用尽';
+            document.getElementById('modalDesc').textContent = desc || '你的道具已经用完啦！分享给好友可以获得更多道具～';
+            modal.classList.add('active');
+        }
+
+        // 分享按钮
+        var shareBtn = document.getElementById('modalShareBtn');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', function() {
+                var user = getCurrentUser();
+                if (!user) {
+                    showToast('请先登录 🚀');
+                    return;
+                }
+                var siteUrl = window.location.origin + window.location.pathname;
+                if (navigator.share) {
+                    navigator.share({
+                        title: '🥚 捣蛋选角',
+                        text: '我在捣蛋选角为喜欢的 CP 投票！快来一起捣蛋吧！\n\n' + siteUrl,
+                        url: siteUrl
+                    }).then(function() {
+                        showToast('🎁 分享成功！获得 20 人气灯');
+                        document.getElementById('customModal').classList.remove('active');
+                    }).catch(function() {});
+                } else {
+                    navigator.clipboard.writeText(siteUrl + '\n\n🥚 捣蛋选角 · 选角不公？捣蛋有理！').then(function() {
+                        showToast('📋 链接已复制！分享给好友吧');
+                        document.getElementById('customModal').classList.remove('active');
+                    });
+                }
+            });
+        }
+
+        // 稍后再说按钮
+        var laterBtn = document.getElementById('modalLaterBtn');
+        if (laterBtn) {
+            laterBtn.addEventListener('click', function() {
+                document.getElementById('customModal').classList.remove('active');
+                showToast('⏳ 随时可以回来继续');
+            });
+        }
+
+        // 点击外部关闭
+        var modalOverlay = document.getElementById('customModal');
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    showToast('⏳ 稍后再来');
+                }
+            });
+        }
+
+        // 导出供其他页面使用
+        window.showCustomModal = showCustomModal;
+
+        // ============================================================
         // 初始化
         // ============================================================
         updateUserUI();
@@ -1593,7 +1745,6 @@
         updateItemDisplay();
         updateSiteStats();
 
-        // 新手引导 - 延迟触发
         setTimeout(checkAndStartOnboarding, 2000);
 
         console.log('✅ 捣蛋选角 2.0 已启动 🥚');
