@@ -151,8 +151,58 @@
         .step-card .step-desc {
             font-size: 14px;
             color: #6b7280;
-            margin: 6px 0 16px 0;
+            margin: 6px 0 12px 0;
             line-height: 1.5;
+        }
+        .step-card .step-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            margin-bottom: 12px;
+            background: #faf9ff;
+            min-height: 60px;
+            resize: vertical;
+        }
+        .step-card .step-input:focus {
+            border-color: #6c5ce7;
+            background: #fff;
+        }
+        .step-card .step-input::placeholder {
+            color: #9ca3af;
+        }
+        .step-card .step-hint {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+        .step-card .step-examples {
+            background: #f8f6ff;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border-left: 3px solid #6c5ce7;
+        }
+        .step-card .step-examples .example-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c5ce7;
+            margin-bottom: 4px;
+        }
+        .step-card .step-examples .example-item {
+            font-size: 13px;
+            color: #4b5563;
+            padding: 2px 0;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .step-card .step-examples .example-item:hover {
+            color: #6c5ce7;
         }
         .step-card .step-actions {
             display: flex;
@@ -176,17 +226,19 @@
             border-radius: 16px;
             padding: 16px;
             margin-top: 16px;
-            border-left: 4px solid #6c5ce7;
+            border-left: 4px solid #10b981;
         }
         .step-card .step-result .result-label {
             font-size: 13px;
             font-weight: 600;
-            color: #6c5ce7;
+            color: #10b981;
         }
         .step-card .step-result .result-text {
             font-size: 14px;
             color: #374151;
             margin-top: 4px;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
         .mission-complete {
             text-align: center;
@@ -341,19 +393,101 @@
             } catch (e) { return null; }
         }
 
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // ============================================================
-        // 任务数据
+        // 任务数据 - 每个步骤的示例和提示
         // ============================================================
-        var currentStep = 1;
         var totalSteps = 6;
         var missionData = {
-            step1: { title: '选角 · 谁来演？', desc: '选择你心中的潘金莲和武大郎', icon: '🎭', result: '' },
-            step2: { title: '逃离武大', desc: '设计一场逃离武大的戏码', icon: '🏃', result: '' },
-            step3: { title: '躲避西门', desc: '如何避开西门庆的纠缠？', icon: '🕵️', result: '' },
-            step4: { title: '过好日子', desc: '给潘金莲一个全新的幸福结局', icon: '🌸', result: '' },
-            step5: { title: '给自己加戏', desc: '你在这个故事里是什么角色？', icon: '🎬', result: '' },
-            step6: { title: 'AI 生成锁定', desc: '所有选择已就绪，生成专属短片', icon: '🤖', result: '' }
+            step1: {
+                title: '选角 · 谁来演？',
+                desc: '选择你心中的潘金莲和武大郎',
+                icon: '🎭',
+                hint: '💡 输入你心目中理想的演员组合',
+                placeholder: '例如：刘亦菲 饰演潘金莲，张晚意 饰演武大郎',
+                examples: [
+                    '刘亦菲 ✕ 张晚意',
+                    '杨幂 ✕ 陈晓',
+                    '迪丽热巴 ✕ 吴磊',
+                    '赵露思 ✕ 王鹤棣'
+                ],
+                result: ''
+            },
+            step2: {
+                title: '逃离武大',
+                desc: '设计一场逃离武大的戏码',
+                icon: '🏃',
+                hint: '💡 描述潘金莲如何逃离武大的控制',
+                placeholder: '例如：月黑风高夜，潘金莲带着细软从后门悄悄溜走...',
+                examples: [
+                    '趁武大熟睡，从窗户翻出，消失在夜色中',
+                    '假意回娘家，一去不返',
+                    '在集市中故意走散，混入人群',
+                    '与卖花女互换衣服，蒙混过关'
+                ],
+                result: ''
+            },
+            step3: {
+                title: '躲避西门',
+                desc: '如何避开西门庆的纠缠？',
+                icon: '🕵️',
+                hint: '💡 潘金莲用什么方法摆脱西门庆？',
+                placeholder: '例如：女扮男装，混入集市...',
+                examples: [
+                    '女扮男装，混入集市当小贩',
+                    '躲进尼姑庵，暂避风头',
+                    '谎称染病，闭门不出',
+                    '请江湖朋友帮忙周旋'
+                ],
+                result: ''
+            },
+            step4: {
+                title: '过好日子',
+                desc: '给潘金莲一个全新的幸福结局',
+                icon: '🌸',
+                hint: '💡 她最终过上了什么样的生活？',
+                placeholder: '例如：开了一家小酒馆，自食其力...',
+                examples: [
+                    '开了一家小酒馆，自食其力，日子红火',
+                    '遇到真心人，远走他乡，相守一生',
+                    '成为女商人，事业有成，独立自主',
+                    '收养孤儿，行善积德，受人尊敬'
+                ],
+                result: ''
+            },
+            step5: {
+                title: '给自己加戏',
+                desc: '你在这个故事里是什么角色？',
+                icon: '🎬',
+                hint: '💡 你是旁观者？还是参与者？',
+                placeholder: '例如：我是街头说书人，讲述这段传奇...',
+                examples: [
+                    '我是街头说书人，讲述这段传奇',
+                    '我是路过的侠客，暗中相助',
+                    '我是潘金莲的闺蜜，出谋划策',
+                    '我是酒馆常客，见证一切'
+                ],
+                result: ''
+            },
+            step6: {
+                title: 'AI 生成锁定',
+                desc: '所有选择已就绪，生成专属短片',
+                icon: '🤖',
+                hint: '💡 点击确认，AI 将根据你的故事生成短片',
+                placeholder: '一切就绪，点击确认生成吧！',
+                examples: [],
+                result: ''
+            }
         };
+
+        var currentStep = 1;
+        var userInputs = {};
 
         // ============================================================
         // 渲染任务
@@ -391,22 +525,39 @@
                     </div>
                 `;
             } else {
+                var savedValue = userInputs['step' + step] || '';
                 var resultHtml = data.result ? `
                     <div class="step-result">
                         <div class="result-label">📌 你的选择</div>
-                        <div class="result-text">${data.result}</div>
+                        <div class="result-text">${escapeHtml(data.result)}</div>
                     </div>
                 ` : '';
+
+                // 生成示例列表
+                var examplesHtml = '';
+                if (data.examples && data.examples.length > 0) {
+                    examplesHtml = `
+                        <div class="step-examples">
+                            <div class="example-label">💡 参考示例（点击填入）</div>
+                            ${data.examples.map(function(ex) {
+                                return '<div class="example-item" onclick="fillExample(' + step + ', \'' + escapeHtml(ex) + '\')">' + escapeHtml(ex) + '</div>';
+                            }).join('')}
+                        </div>
+                    `;
+                }
 
                 contentHtml = `
                     <div class="step-card">
                         <span class="step-icon">${data.icon}</span>
                         <div class="step-title">${step}. ${data.title}</div>
                         <div class="step-desc">${data.desc}</div>
+                        ${data.hint ? `<div class="step-hint">${data.hint}</div>` : ''}
+                        ${examplesHtml}
+                        <textarea class="step-input" id="stepInput" placeholder="${data.placeholder || '输入你的答案...'}" rows="3">${escapeHtml(savedValue)}</textarea>
                         ${resultHtml}
                         <div class="step-actions">
                             <button class="btn-primary" onclick="handleStepAction(${step})">✅ 确认选择</button>
-                            <button class="btn-secondary" onclick="showToast('💡 试试不同的选择吧')">🔄 换一个</button>
+                            <button class="btn-secondary" onclick="clearStepInput(${step})">🗑️ 清空</button>
                         </div>
                         ${step < totalSteps ? '<div style="margin-top:16px; text-align:right; font-size:13px; color:#9ca3af;">⏳ 完成当前步骤后自动进入下一步</div>' : ''}
                     </div>
@@ -428,8 +579,25 @@
         }
 
         // ============================================================
-        // 步骤交互
+        // 交互函数
         // ============================================================
+        function fillExample(step, text) {
+            var input = document.getElementById('stepInput');
+            if (input) {
+                input.value = text;
+                input.focus();
+            }
+        }
+
+        function clearStepInput(step) {
+            var input = document.getElementById('stepInput');
+            if (input) {
+                input.value = '';
+                input.focus();
+                showToast('已清空 ✨');
+            }
+        }
+
         function handleStepAction(step) {
             var user = getCurrentUser();
             if (!user) {
@@ -438,31 +606,39 @@
                 return;
             }
 
-            var results = {
-                1: '✨ 你选择了 刘亦菲 饰演潘金莲，张晚意 饰演武大郎',
-                2: '🏃 潘金莲在月黑风高夜，带着包袱从后门逃走',
-                3: '🕵️ 她女扮男装，混入集市，西门庆遍寻不着',
-                4: '🌸 潘金莲开了一家小酒馆，自食其力，日子红火',
-                5: '🎬 你化身为说书人，在街头讲述这段传奇故事',
-                6: '🤖 AI 已锁定所有设定，短片生成中...'
-            };
+            var input = document.getElementById('stepInput');
+            if (!input) {
+                showToast('请先输入内容 ✏️');
+                return;
+            }
 
-            var resultText = results[step] || '✅ 已确认！';
-            missionData['step' + step].result = resultText;
-            renderMission();
+            var text = input.value.trim();
+            if (!text) {
+                showToast('请先填写内容再确认 ✏️');
+                input.focus();
+                return;
+            }
 
+            // 保存用户输入
+            userInputs['step' + step] = text;
+            missionData['step' + step].result = text;
+
+            showToast('✅ 已保存！');
+
+            // 如果是最后一步
             if (step === totalSteps) {
                 setTimeout(function() {
                     showToast('🎉 任务完成！获得 20 人气灯');
                     currentStep = totalSteps + 1;
                     renderMission();
                     grantMissionReward(user.id);
-                }, 800);
+                }, 600);
             } else {
+                // 自动进入下一步
                 setTimeout(function() {
                     currentStep = step + 1;
                     renderMission();
-                }, 600);
+                }, 500);
             }
         }
 
@@ -549,13 +725,27 @@
         });
 
         // ============================================================
+        // 键盘快捷键：Ctrl+Enter 提交
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                var step = currentStep;
+                if (step <= totalSteps) {
+                    handleStepAction(step);
+                }
+            }
+        });
+
+        // ============================================================
         // 初始化
         // ============================================================
         renderMission();
         window.handleStepAction = handleStepAction;
+        window.fillExample = fillExample;
+        window.clearStepInput = clearStepInput;
         window.showCustomModal = showCustomModal;
 
-        console.log('✅ 捣蛋剧场 · 任务页已加载');
+        console.log('✅ 捣蛋剧场 · 任务页已加载（带输入功能）');
     </script>
 </body>
 </html>

@@ -103,12 +103,12 @@
         }
         .guide-hero {
             text-align: center;
-            padding: 30px 0 20px 0;
+            padding: 20px 0 12px 0;
         }
         .guide-hero .logo-icon {
-            font-size: 72px;
+            font-size: 56px;
             display: block;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             animation: float 3s ease-in-out infinite;
         }
         @keyframes float {
@@ -117,7 +117,7 @@
             100% { transform: translateY(0px); }
         }
         .guide-hero h1 {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 800;
             background: linear-gradient(135deg, #6c5ce7, #f59e0b);
             -webkit-background-clip: text;
@@ -125,39 +125,10 @@
             background-clip: text;
         }
         .guide-hero .sub {
-            font-size: 16px;
-            color: #6b7280;
-            margin-top: 6px;
-            font-weight: 500;
-        }
-        .guide-features {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 24px 0 32px 0;
-        }
-        .guide-features .feature-card {
-            background: #fff;
-            border-radius: 20px;
-            padding: 18px 12px;
-            text-align: center;
-            border: 1px solid #ede9fe;
-            transition: all 0.2s;
-        }
-        .guide-features .feature-card .icon {
-            font-size: 28px;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .guide-features .feature-card .label {
             font-size: 14px;
-            font-weight: 600;
-            color: #1a1a2e;
-        }
-        .guide-features .feature-card .desc {
-            font-size: 12px;
-            color: #9ca3af;
-            margin-top: 2px;
+            color: #6b7280;
+            margin-top: 4px;
+            font-weight: 500;
         }
         .guide-mission-cta {
             background: linear-gradient(135deg, #fef3c7, #ede9fe);
@@ -165,7 +136,7 @@
             padding: 32px 24px;
             text-align: center;
             border: 2px solid #f59e0b;
-            margin: 12px 0 20px 0;
+            margin: 8px 0 20px 0;
         }
         .guide-mission-cta .big-icon {
             font-size: 48px;
@@ -191,6 +162,35 @@
             font-size: 13px;
             font-weight: 600;
             margin-bottom: 12px;
+        }
+        .guide-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0 20px 0;
+        }
+        .guide-features .feature-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 18px 12px;
+            text-align: center;
+            border: 1px solid #ede9fe;
+            transition: all 0.2s;
+        }
+        .guide-features .feature-card .icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .guide-features .feature-card .label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .guide-features .feature-card .desc {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
         }
         .custom-modal-overlay {
             position: fixed;
@@ -268,6 +268,21 @@
 </head>
 <body>
     <div class="container" id="appContainer">
+        <!-- 任务入口置顶 -->
+        <div class="guide-mission-cta">
+            <span class="big-icon">🔥</span>
+            <span class="reward-tag">⭐ 首任务 · 奖励翻倍</span>
+            <h2>搭救潘金莲</h2>
+            <p>六步改写命运，解锁 AI 专属短片</p>
+            <button class="btn-gold" onclick="goToMission()">
+                🎬 接取任务
+            </button>
+            <div style="margin-top:12px; font-size:13px; color:#9ca3af;">
+                ⏳ 约 3 分钟 · 奖励 20 人气灯
+            </div>
+        </div>
+
+        <!-- 功能卡片移到这里 -->
         <div class="guide-hero">
             <span class="logo-icon">🎬</span>
             <h1>捣蛋剧场</h1>
@@ -294,19 +309,6 @@
                 <span class="icon">📈</span>
                 <div class="label">热度加持</div>
                 <div class="desc">助推你的 CP 上榜</div>
-            </div>
-        </div>
-
-        <div class="guide-mission-cta">
-            <span class="big-icon">🔥</span>
-            <span class="reward-tag">⭐ 首任务 · 奖励翻倍</span>
-            <h2>搭救潘金莲</h2>
-            <p>六步改写命运，解锁 AI 专属短片</p>
-            <button class="btn-gold" onclick="goToMission()">
-                🎬 接取任务
-            </button>
-            <div style="margin-top:12px; font-size:13px; color:#9ca3af;">
-                ⏳ 约 3 分钟 · 奖励 20 人气灯
             </div>
         </div>
 
@@ -360,7 +362,6 @@
             window.location.href = 'mission.html';
         }
 
-        // 自定义弹窗
         function showCustomModal(title, desc, icon) {
             document.getElementById('modalIcon').textContent = icon || '🧨';
             document.getElementById('modalTitle').textContent = title || '道具用尽';

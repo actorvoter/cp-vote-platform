@@ -20,7 +20,7 @@
     </script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
-        /* ===== 自定义弹窗 ===== */
+        /* ===== 自定义弹窗（道具用尽） ===== */
         .custom-modal-overlay {
             position: fixed;
             top: 0;
@@ -80,12 +80,202 @@
             background: #f3f4f6;
             color: #6b7280;
         }
+
+        /* ===== 🆕 智能导航弹窗样式 ===== */
+        .guide-prompt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.4s ease;
+        }
+        .guide-prompt-modal {
+            background: #fff;
+            border-radius: 32px;
+            max-width: 440px;
+            width: 100%;
+            padding: 36px 28px 28px;
+            text-align: center;
+            animation: slideUp 0.4s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .guide-prompt-modal .decor {
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            font-size: 120px;
+            opacity: 0.06;
+            pointer-events: none;
+        }
+        .guide-prompt-modal .big-icon {
+            font-size: 64px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .guide-prompt-modal h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+        .guide-prompt-modal p {
+            color: #6b7280;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .guide-prompt-modal .highlight-text {
+            font-size: 13px;
+            color: #f59e0b;
+        }
+        .guide-prompt-modal .btn-accept {
+            background: linear-gradient(135deg, #6c5ce7, #f59e0b);
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+            width: 100%;
+        }
+        .guide-prompt-modal .btn-accept:active {
+            transform: scale(0.96);
+        }
+        .guide-prompt-modal .btn-skip {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .guide-prompt-modal .btn-skip:active {
+            background: #e5e7eb;
+        }
+        .guide-prompt-modal .footer-hint {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        /* ===== 🆕 导航引导弹窗样式 ===== */
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        .tour-modal {
+            background: #fff;
+            border-radius: 28px;
+            max-width: 400px;
+            width: 100%;
+            padding: 28px 24px 24px;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        .tour-modal .progress-dots {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            justify-content: center;
+        }
+        .tour-modal .progress-dots .dot {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+            background: #e5e7eb;
+            transition: all 0.3s;
+        }
+        .tour-modal .progress-dots .dot.active {
+            background: #6c5ce7;
+        }
+        .tour-modal .tour-icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .tour-modal h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        .tour-modal p {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .tour-modal .tour-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .tour-modal .tour-actions .btn-skip {
+            flex: 1;
+            padding: 10px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .tour-modal .tour-actions .btn-next {
+            flex: 2;
+            padding: 10px;
+            background: linear-gradient(135deg, #6c5ce7, #f59e0b);
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: 600;
+        }
+        .tour-modal .step-counter {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        /* ===== 共用动画 ===== */
         @keyframes slideUp {
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
-        /* ===== 捣蛋剧场入口按钮增强 ===== */
+        /* ===== 🎬 捣蛋剧场入口按钮 ===== */
         .theater-entry {
             display: block;
             margin: 8px 0 16px 0;
@@ -1747,7 +1937,234 @@
 
         setTimeout(checkAndStartOnboarding, 2000);
 
+        // ============================================================
+        // 🆕 智能导航弹窗 - 每次进入首页询问
+        // ============================================================
+        function showGuidePrompt() {
+            var user = getCurrentUser();
+            if (!user) {
+                // 游客不弹窗
+                return;
+            }
+
+            // 检查今天是否已经弹过（每天只弹一次）
+            var today = new Date().toISOString().split('T')[0];
+            var guideShownKey = 'guide_prompt_shown_' + user.id + '_' + today;
+            if (localStorage.getItem(guideShownKey) === 'true') {
+                return;
+            }
+
+            // 延迟1.5秒弹出，让页面先加载
+            setTimeout(function() {
+                // 创建自定义弹窗
+                var overlay = document.createElement('div');
+                overlay.className = 'guide-prompt-overlay';
+                overlay.id = 'guidePromptOverlay';
+
+                var modal = document.createElement('div');
+                modal.className = 'guide-prompt-modal';
+
+                modal.innerHTML = `
+                    <div class="decor">🥚</div>
+                    <div style="position:relative; z-index:1;">
+                        <span class="big-icon">🧭</span>
+                        <h2>网络漫漫，是否要蛋蛋给你导航？</h2>
+                        <p>
+                            蛋蛋带你玩转捣蛋选角，解锁全部玩法！<br>
+                            <span class="highlight-text">✨ 包含：提名CP · 投票 · 丢鸡蛋 · 共创 · 捣蛋剧场</span>
+                        </p>
+                        <div style="display:flex; flex-direction:column; gap:10px;">
+                            <button id="guideAcceptBtn" class="btn-accept">
+                                ✅ 要！蛋蛋带我飞～
+                            </button>
+                            <button id="guideSkipBtn" class="btn-skip">
+                                ⏳ 下次再说
+                            </button>
+                        </div>
+                        <div class="footer-hint">
+                            💡 每天只问一次，不会打扰你哦～
+                        </div>
+                    </div>
+                `;
+
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+
+                // 记录今天已弹过
+                localStorage.setItem(guideShownKey, 'true');
+
+                // 接受按钮 - 开始导航
+                document.getElementById('guideAcceptBtn').addEventListener('click', function() {
+                    if (overlay.parentNode) document.body.removeChild(overlay);
+                    startGuidedTour();
+                });
+
+                // 跳过按钮
+                document.getElementById('guideSkipBtn').addEventListener('click', function() {
+                    if (overlay.parentNode) document.body.removeChild(overlay);
+                    showToast('⏳ 随时可以找蛋蛋导航哦～');
+                });
+
+                // 点击外部关闭
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        if (overlay.parentNode) document.body.removeChild(overlay);
+                        showToast('⏳ 下次再来找蛋蛋吧～');
+                    }
+                });
+
+            }, 1500);
+        }
+
+        // ============================================================
+        // 🆕 导航引导流程
+        // ============================================================
+        function startGuidedTour() {
+            var steps = [
+                {
+                    icon: '🏷️',
+                    title: '提名你的 CP',
+                    desc: '点击 "+ 提名 CP" 按钮，输入你喜欢的演员组合',
+                    highlight: '#openModalBtn'
+                },
+                {
+                    icon: '❤️',
+                    title: '为 CP 投票',
+                    desc: '找到你喜欢的 CP，点击 "❤️ 投票" 支持他们！',
+                    highlight: '.vote-btn'
+                },
+                {
+                    icon: '🥚',
+                    title: '丢鸡蛋 · 说出真话',
+                    desc: '觉得选角不公？点击 "🥚" 按钮，分享你的真实看法！',
+                    highlight: '.egg-btn'
+                },
+                {
+                    icon: '🎬',
+                    title: '捣蛋剧场 · 接取任务',
+                    desc: '点击 "🎬 捣蛋剧场 · 接取任务"，开启你的编剧之旅！',
+                    highlight: '.theater-entry'
+                }
+            ];
+
+            var currentTourStep = 0;
+
+            function showTourStep(index) {
+                if (index >= steps.length) {
+                    showToast('🎉 导航完成！快去捣蛋吧！');
+                    return;
+                }
+
+                var step = steps[index];
+
+                // 创建引导弹窗
+                var overlay = document.createElement('div');
+                overlay.className = 'tour-overlay';
+                overlay.id = 'tourOverlay';
+
+                var modal = document.createElement('div');
+                modal.className = 'tour-modal';
+
+                // 生成进度点
+                var dotsHtml = '';
+                for (var i = 0; i < steps.length; i++) {
+                    dotsHtml += '<div class="dot' + (i <= index ? ' active' : '') + '"></div>';
+                }
+
+                modal.innerHTML = `
+                    <div class="progress-dots">${dotsHtml}</div>
+                    <span class="tour-icon">${step.icon}</span>
+                    <h3>${step.title}</h3>
+                    <p>${step.desc}</p>
+                    <div class="tour-actions">
+                        <button class="btn-skip" onclick="skipTour()">跳过</button>
+                        <button class="btn-next" onclick="nextTourStep()">
+                            ${index < steps.length - 1 ? '下一步 →' : '🎉 开始捣蛋！'}
+                        </button>
+                    </div>
+                    <div class="step-counter">${index + 1} / ${steps.length}</div>
+                `;
+
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+
+                // 高亮目标元素
+                if (step.highlight) {
+                    var target = document.querySelector(step.highlight);
+                    if (target) {
+                        target.style.boxShadow = '0 0 0 4px #f59e0b, 0 0 20px rgba(245,158,11,0.3)';
+                        target.style.transition = 'box-shadow 0.3s';
+                        setTimeout(function() {
+                            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                    }
+                }
+
+                // 存储当前 overlay 引用
+                window._currentTourOverlay = overlay;
+                window._currentTourStep = index;
+            }
+
+            // 下一步
+            window.nextTourStep = function() {
+                var overlay = window._currentTourOverlay;
+                if (overlay && overlay.parentNode) {
+                    document.body.removeChild(overlay);
+                }
+                // 清除高亮
+                var step = steps[window._currentTourStep];
+                if (step && step.highlight) {
+                    var target = document.querySelector(step.highlight);
+                    if (target) {
+                        target.style.boxShadow = '';
+                    }
+                }
+                var nextIndex = (window._currentTourStep || 0) + 1;
+                if (nextIndex < steps.length) {
+                    showTourStep(nextIndex);
+                } else {
+                    showToast('🎉 导航完成！快去捣蛋吧！');
+                    // 最后一步引导去捣蛋剧场
+                    setTimeout(function() {
+                        if (confirm('🎬 要不要去捣蛋剧场接取第一个任务？\n"蛋疼的搭救潘姐姐？"')) {
+                            window.location.href = 'guide.html';
+                        } else {
+                            showToast('⏳ 随时可以点击 "捣蛋剧场" 按钮开始哦～');
+                        }
+                    }, 500);
+                }
+            };
+
+            // 跳过导航
+            window.skipTour = function() {
+                var overlay = window._currentTourOverlay;
+                if (overlay && overlay.parentNode) {
+                    document.body.removeChild(overlay);
+                }
+                // 清除高亮
+                var step = steps[window._currentTourStep];
+                if (step && step.highlight) {
+                    var target = document.querySelector(step.highlight);
+                    if (target) {
+                        target.style.boxShadow = '';
+                    }
+                }
+                showToast('⏳ 随时可以找蛋蛋导航哦～');
+            };
+
+            // 开始第一步
+            showTourStep(0);
+        }
+
+        // ============================================================
+        // 🆕 启动智能导航（在页面加载后3秒检查）
+        // ============================================================
+        setTimeout(function() {
+            showGuidePrompt();
+        }, 3000);
+
         console.log('✅ 捣蛋选角 2.0 已启动 🥚');
+        console.log('✅ 智能导航系统已加载');
     </script>
 </body>
 </html>
