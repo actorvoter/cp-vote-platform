@@ -2004,8 +2004,8 @@
             var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
             var count = parseInt(localStorage.getItem(guideCountKey) || '0');
 
-            if (count >= 3) {
-                showToast('今天已经导航了3次啦，明天再来吧～ 🧭');
+            if (count >= 5) {
+                showToast('今天已经导航了5次啦，明天再来吧～ 🧭');
                 return;
             }
 
@@ -2038,8 +2038,8 @@
             var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
             var count = parseInt(localStorage.getItem(guideCountKey) || '0');
 
-            // 如果已经弹了3次，不再自动弹出
-            if (count >= 3) {
+            // 如果已经弹了5次，不再自动弹出
+            if (count >= 5) {
                 return;
             }
 
@@ -2053,7 +2053,7 @@
                 var modal = document.createElement('div');
                 modal.className = 'guide-prompt-modal';
 
-                var remaining = 3 - count;
+                                var remaining = 5 - count;
 
                 modal.innerHTML = `
                     <div class="decor">🥚</div>
@@ -2076,7 +2076,7 @@
                             </button>
                         </div>
                         <div class="footer-hint">
-                            💡 每天可以导航 3 次，不会过度打扰你哦～
+                            💡 每天可以导航 5 次，不会过度打扰你哦～
                         </div>
                     </div>
                 `;
