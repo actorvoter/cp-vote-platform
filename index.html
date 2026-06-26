@@ -341,13 +341,16 @@
         <div style="position:absolute; bottom:0; left:0; height:3px; background:#f59e0b; width:100%;" id="bannerProgress"></div>
     </div>
 
-    <!-- ===== 每日任务横幅 ===== -->
+        <!-- ===== 每日任务横幅 ===== -->
     <div class="daily-banner" id="dailyBanner">
         <div>
             <span class="info-item">🎁 今日捣蛋工具：</span>
             <span class="info-item" id="itemDisplay">🪄 3个 · 📢 0个 · 🚀 0个</span>
         </div>
-        <button class="share-btn" id="shareBtn">📤 分享得道具</button>
+        <div style="display:flex; gap:8px;">
+            <button class="share-btn" id="shareBtn">📤 分享得道具</button>
+            <button class="share-btn" id="guideBtn" style="background:#6c5ce7; color:#fff; border-color:#6c5ce7;">🧭 开启导航</button>
+        </div>
     </div>
 
     <!-- ===== 快捷入口 ===== -->
@@ -1926,6 +1929,31 @@
 
         // 导出供其他页面使用
         window.showCustomModal = showCustomModal;
+		
+		        // ============================================================
+        // 🆕 手动开启导航按钮
+        // ============================================================
+        document.getElementById('guideBtn').addEventListener('click', function() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // 检查今日剩余次数
+            var today = new Date().toISOString().split('T')[0];
+            var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
+            var count = parseInt(localStorage.getItem(guideCountKey) || '0');
+            
+            if (count >= 3) {
+                showToast('今天已经导航了3次啦，明天再来吧～ 🧭');
+                return;
+            }
+            
+            // 直接触发导航弹窗
+            showGuidePrompt();
+        });
 
         // ============================================================
         // 初始化
@@ -1937,7 +1965,7 @@
 
         setTimeout(checkAndStartOnboarding, 2000);
 
-        // ============================================================
+                // ============================================================
         // 🆕 智能导航弹窗 - 每次进入首页询问
         // ============================================================
         function showGuidePrompt() {
@@ -1947,10 +1975,13 @@
                 return;
             }
 
-            // 检查今天是否已经弹过（每天只弹一次）
+            // 检查今天是否已经弹过（每天最多3次）
             var today = new Date().toISOString().split('T')[0];
-            var guideShownKey = 'guide_prompt_shown_' + user.id + '_' + today;
-            if (localStorage.getItem(guideShownKey) === 'true') {
+            var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
+            var count = parseInt(localStorage.getItem(guideCountKey) || '0');
+            
+            // 如果已经弹了3次，不再自动弹出
+            if (count >= 3) {
                 return;
             }
 
@@ -1964,6 +1995,8 @@
                 var modal = document.createElement('div');
                 modal.className = 'guide-prompt-modal';
 
+                var remaining = 3 - count;
+
                 modal.innerHTML = `
                     <div class="decor">🥚</div>
                     <div style="position:relative; z-index:1;">
@@ -1973,6 +2006,9 @@
                             蛋蛋带你玩转捣蛋选角，解锁全部玩法！<br>
                             <span class="highlight-text">✨ 包含：提名CP · 投票 · 丢鸡蛋 · 共创 · 捣蛋剧场</span>
                         </p>
+                        <div style="font-size:13px; color:#9ca3af; margin-bottom:12px;">
+                            💡 今日剩余导航次数：${remaining} 次
+                        </div>
                         <div style="display:flex; flex-direction:column; gap:10px;">
                             <button id="guideAcceptBtn" class="btn-accept">
                                 ✅ 要！蛋蛋带我飞～
@@ -1982,7 +2018,7 @@
                             </button>
                         </div>
                         <div class="footer-hint">
-                            💡 每天只问一次，不会打扰你哦～
+                            💡 每天可以导航 ${3} 次，不会过度打扰你哦～
                         </div>
                     </div>
                 `;
@@ -1990,8 +2026,8 @@
                 overlay.appendChild(modal);
                 document.body.appendChild(overlay);
 
-                // 记录今天已弹过
-                localStorage.setItem(guideShownKey, 'true');
+                // 记录今天已弹过（增加计数）
+                localStorage.setItem(guideCountKey, String(count + 1));
 
                 // 接受按钮 - 开始导航
                 document.getElementById('guideAcceptBtn').addEventListener('click', function() {

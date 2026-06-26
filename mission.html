@@ -598,7 +598,7 @@
             }
         }
 
-        function handleStepAction(step) {
+                function handleStepAction(step) {
             var user = getCurrentUser();
             if (!user) {
                 showToast('请先登录 🚀');
@@ -613,10 +613,20 @@
             }
 
             var text = input.value.trim();
-            if (!text) {
-                showToast('请先填写内容再确认 ✏️');
-                input.focus();
-                return;
+            
+            // 如果是最后一步（AI生成锁定），允许空输入并自动填充
+            if (step === totalSteps) {
+                if (!text) {
+                    text = '🎬 我的故事已就绪，AI 请开始生成吧！';
+                    input.value = text;
+                }
+            } else {
+                // 其他步骤必须填写内容
+                if (!text) {
+                    showToast('请先填写内容再确认 ✏️');
+                    input.focus();
+                    return;
+                }
             }
 
             // 保存用户输入
