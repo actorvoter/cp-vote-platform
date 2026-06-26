@@ -667,7 +667,7 @@
                             <div class="label">人气灯</div>
                         </div>
                         <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-                            <button class="btn-primary" onclick="showToast('🎬 AI 短片即将上线')">▶️ 观看 AI 短片</button>
+                            <button class="btn-primary" onclick="showAIPreview()">▶️ 观看 AI 短片</button>
                             <button class="btn-secondary" onclick="window.location.href='guide.html'">🏠 返回剧场</button>
                             <button class="btn-secondary" onclick="resetMission()" style="background:#fef3c7; color:#d97706; border-color:#f59e0b;">
                                 💡 回炉再造
@@ -794,7 +794,7 @@
             await saveResponse(step, text, user);
 
             if (step === totalSteps) {
-                // 🆕 显示 AI 生成警告弹窗
+                // 显示 AI 生成警告弹窗
                 showAIGenerationWarning(user, function() {
                     // 用户确认后标记完成
                     markCompletion(user);
@@ -815,7 +815,7 @@
         }
 
         // ============================================================
-        // 🆕 AI 生成警告弹窗（俏皮版）
+        // AI 生成警告弹窗（俏皮版）
         // ============================================================
         function showAIGenerationWarning(user, callback) {
             var overlay = document.createElement('div');
@@ -949,7 +949,7 @@
         }
 
         // ============================================================
-        // 🆕 回炉再造 - 重置任务
+        // 回炉再造 - 重置任务
         // ============================================================
         function resetMission() {
             if (confirm('💡 确定要「回炉再造」吗？\n\n你可以重新修改所有步骤，之前的答案将被清空。')) {
@@ -964,6 +964,158 @@
                 showToast('🔄 已重置，开始重新创作吧！');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
+        }
+
+        // ============================================================
+        // AI 短片预览弹窗（俏皮版）
+        // ============================================================
+        function showAIPreview() {
+            var user = getCurrentUser();
+            if (!user) {
+                showToast('请先登录 🚀');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            var messages = [
+                { emoji: '🔥', title: 'CP 热度还不够哦！', desc: '想要看到你心目中的 CP 登上大银幕？赶紧召唤小伙伴来投票吧！', hint: '分享得道具，投票涨热度！' },
+                { emoji: '🎬', title: 'AI 导演还在观望中...', desc: '他说：这 CP 热度不够，我拍出来没人看啊！快来给 CP 加持！', hint: '每多 100 票，AI 就多拍 1 秒！' },
+                { emoji: '📢', title: '大声喊出你的 CP！', desc: '让更多人知道这对神仙 CP！分享、投票、丢鸡蛋，热度蹭蹭涨！', hint: '热度达到 1000，AI 立刻开工！' },
+                { emoji: '💪', title: '楼主赶紧加持！', desc: '你的 CP 需要你的力量！分享给好友，一起为 CP 打 call！', hint: '分享一次 = 10 点热度值！' },
+                { emoji: '✨', title: '热度蓄力中...', desc: 'AI 正在等待你的 CP 热度爆表！赶紧行动起来，让心目中的 CP 被看见！', hint: '投票 + 分享 = 热度翻倍！' },
+                { emoji: '🎯', title: '目标锁定！', desc: '你的 CP 已被 AI 导演列入候选名单！但需要更多热度才能开机！', hint: '还差 500 热度就能解锁预览！' }
+            ];
+
+            var msg = messages[Math.floor(Math.random() * messages.length)];
+            var currentHeat = Math.floor(Math.random() * 500) + 100;
+            var targetHeat = 1000;
+            var progress = Math.min((currentHeat / targetHeat) * 100, 100);
+
+            var overlay = document.createElement('div');
+            overlay.id = 'aiPreviewOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.65);
+                backdrop-filter: blur(8px);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                animation: fadeIn 0.4s ease;
+            `;
+
+            var modal = document.createElement('div');
+            modal.style.cssText = `
+                background: #fff;
+                border-radius: 28px;
+                max-width: 460px;
+                width: 100%;
+                padding: 32px 28px 28px;
+                text-align: center;
+                animation: slideUp 0.4s ease;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+                position: relative;
+                overflow: hidden;
+            `;
+
+            var decor = document.createElement('div');
+            decor.style.cssText = `position:absolute;top:-80px;right:-80px;font-size:160px;opacity:0.05;pointer-events:none;`;
+            decor.textContent = '🎬';
+
+            modal.innerHTML = `
+                <div style="position:relative; z-index:1;">
+                    <div style="font-size:64px; display:block; margin-bottom:8px;">${msg.emoji}</div>
+                    <h2 style="font-size:22px; font-weight:800; color:#1a1a2e; margin-bottom:6px;">${msg.title}</h2>
+                    <p style="color:#6b7280; font-size:15px; line-height:1.6; margin-bottom:12px;">${msg.desc}</p>
+
+                    <div style="background:#f3f4f6; border-radius:12px; padding:16px; margin:12px 0;">
+                        <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; margin-bottom:6px;">
+                            <span>🔥 当前热度：<strong style="color:#6c5ce7;">${currentHeat}</strong></span>
+                            <span>🎯 目标：<strong style="color:#f59e0b;">${targetHeat}</strong></span>
+                        </div>
+                        <div style="height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
+                            <div style="height:100%; width:${progress}%; background:linear-gradient(90deg, #6c5ce7, #f59e0b); border-radius:4px; transition:width 1s ease;"></div>
+                        </div>
+                        <div style="font-size:12px; color:#9ca3af; margin-top:6px;">
+                            ${progress >= 100 ? '🎉 热度已达标！AI 正在生成短片...' : `还差 <strong>${targetHeat - currentHeat}</strong> 热度就能解锁 AI 预览！`}
+                        </div>
+                    </div>
+
+                    <div style="font-size:14px; color:#f59e0b; font-weight:600; margin-bottom:12px; background:#fef3c7; padding:8px 16px; border-radius:12px;">
+                        💡 ${msg.hint}
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button id="shareHeatBtn" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;padding:14px 28px;border-radius:40px;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(245,158,11,0.3);">
+                            📤 分享得热度（+50）
+                        </button>
+                        <button id="voteHeatBtn" style="background:linear-gradient(135deg,#6c5ce7,#5a4bd1);color:#fff;border:none;padding:14px 28px;border-radius:40px;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(108,92,231,0.3);">
+                            ❤️ 去投票（+10）
+                        </button>
+                        <button id="closePreviewBtn" style="background:#f3f4f6;color:#6b7280;border:none;padding:12px 24px;border-radius:40px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;">
+                            ⏳ 下次再看
+                        </button>
+                    </div>
+                    <div style="margin-top:12px; font-size:12px; color:#9ca3af;">
+                        💡 热度达标后，AI 将为你生成专属 CP 短片预览！
+                    </div>
+                </div>
+            `;
+
+            modal.appendChild(decor);
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            if (!document.getElementById('aiPreviewStyle')) {
+                var style = document.createElement('style');
+                style.id = 'aiPreviewStyle';
+                style.textContent = `
+                    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                `;
+                document.head.appendChild(style);
+            }
+
+            document.getElementById('shareHeatBtn').addEventListener('click', function() {
+                var user = getCurrentUser();
+                if (!user) { showToast('请先登录 🚀'); return; }
+                var siteUrl = window.location.origin + window.location.pathname;
+                var shareText = '🎬 我在捣蛋选角创作 CP 故事！快来为我喜欢的 CP 投票，解锁 AI 短片！\n\n' + siteUrl;
+
+                if (navigator.share) {
+                    navigator.share({ title: '🎬 捣蛋选角 · CP 热度加持', text: shareText, url: siteUrl })
+                        .then(function() {
+                            showToast('🎉 分享成功！+50 热度！继续加油！');
+                            document.getElementById('shareHeatBtn').textContent = '✅ 已分享 (+50)';
+                            document.getElementById('shareHeatBtn').style.background = '#10b981';
+                        }).catch(function() {});
+                } else {
+                    navigator.clipboard.writeText(shareText).then(function() {
+                        showToast('📋 链接已复制！分享给好友吧！+50 热度！');
+                        document.getElementById('shareHeatBtn').textContent = '✅ 已分享 (+50)';
+                        document.getElementById('shareHeatBtn').style.background = '#10b981';
+                    }).catch(function() { showToast('复制失败，请手动复制链接'); });
+                }
+            });
+
+            document.getElementById('voteHeatBtn').addEventListener('click', function() {
+                showToast('❤️ 去首页为你的 CP 投票吧！+10 热度！');
+                setTimeout(function() { window.location.href = 'index.html'; }, 500);
+            });
+
+            document.getElementById('closePreviewBtn').addEventListener('click', function() {
+                if (overlay.parentNode) document.body.removeChild(overlay);
+                showToast('⏳ 随时回来，AI 等你哦～');
+            });
+
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    if (overlay.parentNode) document.body.removeChild(overlay);
+                    showToast('⏳ 随时回来，AI 等你哦～');
+                }
+            });
         }
 
         // ============================================================
@@ -1128,6 +1280,7 @@
         window.showCustomModal = showCustomModal;
         window.loadSurveyProject = loadSurveyProject;
         window.resetMission = resetMission;
+        window.showAIPreview = showAIPreview;
         window.showAIGenerationWarning = showAIGenerationWarning;
 
         console.log('✅ 捣蛋剧场 · 动态任务页已加载 (project_id: ' + projectId + ')');
