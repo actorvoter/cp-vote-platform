@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>调研管理后台 · 捣蛋选角</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f3ff;
+            color: #1a1a2e;
+        }
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 2px solid #ede9fe;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .admin-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .admin-header .badge {
+            background: #6c5ce7;
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+        .btn-primary {
+            background: #6c5ce7;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary:active { transform: scale(0.96); }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-danger {
+            background: #fef2f2;
+            color: #ef4444;
+            border: 1px solid #fecaca;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .project-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid #ede9fe;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .project-card:hover {
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.08);
+        }
+        .project-card .project-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .project-card .project-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .project-card .project-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .project-card .status-badge {
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-badge.draft { background: #f3f4f6; color: #6b7280; }
+        .status-badge.active { background: #d1fae5; color: #065f46; }
+        .status-badge.closed { background: #fef3c7; color: #92400e; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 24px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 32px 28px;
+            animation: slideUp 0.3s ease;
+        }
+        .modal-box .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-box .modal-header h2 { font-size: 22px; }
+        .modal-box .modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4b5563;
+            margin-bottom: 4px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: #6c5ce7;
+        }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .step-item {
+            background: #f8f6ff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+            border: 1px solid #ede9fe;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .step-item .step-info { flex: 1; }
+        .step-item .step-info .step-order {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .step-item .step-info .step-title {
+            font-weight: 500;
+        }
+        .step-item .step-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .step-item .step-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .step-item .step-actions button:hover { background: #ede9fe; }
+
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 16px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            max-width: 80%;
+            text-align: center;
+        }
+        .toast.show { opacity: 1; pointer-events: auto; }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .empty-state {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px 20px;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #ede9fe;
+        }
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #6c5ce7;
+        }
+        .stat-card .label {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+        .response-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            border: 1px solid #f3f4f6;
+            margin-bottom: 6px;
+        }
+        .response-item .response-text {
+            font-size: 14px;
+            color: #374151;
+        }
+        .response-item .response-meta {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .admin-header { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- 头部 -->
+        <div class="admin-header">
+            <div>
+                <h1>📊 调研管理后台</h1>
+                <div style="font-size:14px;color:#6b7280;">管理剧集调研项目，查看用户反馈数据</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn-secondary" onclick="location.href='index.html'">← 返回首页</button>
+                <button class="btn-primary" onclick="openCreateProject()">➕ 创建调研项目</button>
+            </div>
+        </div>
+
+        <!-- 项目列表 -->
+        <div id="projectList">
+            <div style="text-align:center;color:#9ca3af;padding:40px 0;">加载中...</div>
+        </div>
+    </div>
+
+    <!-- ===== 创建/编辑弹窗 ===== -->
+    <div class="modal-overlay" id="projectModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="modalTitle">📝 创建调研项目</h2>
+                <button class="close-btn" onclick="closeModal('projectModal')">✕</button>
+            </div>
+            <div id="projectForm">
+                <div class="form-group">
+                    <label>项目名称 *</label>
+                    <input type="text" id="projectName" placeholder="例如：赘婿2 剧情调研" />
+                </div>
+                <div class="form-group">
+                    <label>项目代码</label>
+                    <input type="text" id="projectCode" placeholder="例如：zhu_xu_2" />
+                    <div style="font-size:12px;color:#9ca3af;margin-top:4px;">用于快速查找，建议使用英文</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>剧集类型</label>
+                        <select id="projectGenre">
+                            <option value="古装">古装</option>
+                            <option value="现代">现代</option>
+                            <option value="仙侠">仙侠</option>
+                            <option value="悬疑">悬疑</option>
+                            <option value="甜宠">甜宠</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select id="projectStatus">
+                            <option value="draft">📝 草稿</option>
+                            <option value="active">🚀 已发布</option>
+                            <option value="closed">🔒 已关闭</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>项目描述</label>
+                    <textarea id="projectDesc" placeholder="描述这个调研项目的目的和背景..."></textarea>
+                </div>
+
+                <hr style="margin:16px 0;border-color:#ede9fe;" />
+
+                <h3 style="margin-bottom:12px;">📋 任务步骤</h3>
+                <div id="stepList">
+                    <!-- 由 JS 动态渲染 -->
+                </div>
+                <button class="btn-secondary" onclick="addStep()" style="width:100%;justify-content:center;">➕ 添加步骤</button>
+
+                <hr style="margin:16px 0;border-color:#ede9fe;" />
+
+                <div style="display:flex;gap:10px;margin-top:8px;">
+                    <button class="btn-primary" onclick="saveProject()" style="flex:1;justify-content:center;">💾 保存项目</button>
+                    <button class="btn-secondary" onclick="closeModal('projectModal')">取消</button>
+                </div>
+                <div id="projectId" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 数据查看弹窗 ===== -->
+    <div class="modal-overlay" id="dataModal">
+        <div class="modal-box" style="max-width:900px;">
+            <div class="modal-header">
+                <h2 id="dataModalTitle">📊 调研数据</h2>
+                <button class="close-btn" onclick="closeModal('dataModal')">✕</button>
+            </div>
+            <div id="dataContent">
+                <div style="text-align:center;color:#9ca3af;padding:20px 0;">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function showToast(msg) {
+            var t = document.getElementById('toast');
+            if (!t) { alert(msg); return; }
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+        }
+
+        function getCurrentUser() {
+            try {
+                var raw = localStorage.getItem('cp_user');
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (e) { return null; }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            var d = new Date(iso);
+            return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+        }
+
+        function getClient() {
+            if (!window._supabaseClient) {
+                window._supabaseClient = window.supabase.createClient(
+                    'https://grsxmjvjtqmvylyxmktt.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA'
+                );
+            }
+            return window._supabaseClient;
+        }
+
+        // ============================================================
+        // 权限检查
+        // ============================================================
+        function checkAdmin() {
+            var user = getCurrentUser();
+            // 简单检查：只有特定邮箱或用户 ID 才能访问
+            // 实际项目可以在 users 表中添加 role 字段
+            var adminEmails = ['admin@cpmaker.com', 'team@cpmaker.com'];
+            if (user && adminEmails.includes(user.email)) {
+                return true;
+            }
+            // 临时：允许所有登录用户（开发阶段）
+            return true;
+        }
+
+        // ============================================================
+        // 加载项目列表
+        // ============================================================
+        async function loadProjects() {
+            var container = document.getElementById('projectList');
+            try {
+                var client = getClient();
+                var { data, error } = await client
+                    .from('survey_projects')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size:48px;margin-bottom:12px;">📋</div>
+                            <div>还没有调研项目</div>
+                            <button class="btn-primary" onclick="openCreateProject()" style="margin-top:12px;">➕ 创建第一个项目</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                var html = '';
+                data.forEach(function(project) {
+                    var statusMap = {
+                        'draft': { label: '📝 草稿', cls: 'draft' },
+                        'active': { label: '🚀 已发布', cls: 'active' },
+                        'closed': { label: '🔒 已关闭', cls: 'closed' }
+                    };
+                    var status = statusMap[project.status] || statusMap['draft'];
+
+                    html += `
+                        <div class="project-card">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                                <div>
+                                    <div class="project-title">${escapeHtml(project.project_name)}</div>
+                                    <div class="project-meta">
+                                        <span>📂 ${escapeHtml(project.project_code || project.id)}</span>
+                                        <span>🎬 ${escapeHtml(project.genre || '未分类')}</span>
+                                        <span>📅 ${formatDate(project.created_at)}</span>
+                                        <span class="status-badge ${status.cls}">${status.label}</span>
+                                    </div>
+                                    ${project.description ? `<div style="font-size:14px;color:#6b7280;margin-top:4px;">${escapeHtml(project.description)}</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="project-actions">
+                                <button class="btn-secondary" onclick="editProject(${project.id})">✏️ 编辑</button>
+                                <button class="btn-secondary" onclick="viewData(${project.id})">📊 查看数据</button>
+                                <button class="btn-success" onclick="toggleProjectStatus(${project.id}, '${project.status}')">
+                                    ${project.status === 'draft' ? '🚀 发布' : project.status === 'active' ? '🔒 关闭' : '📝 重新打开'}
+                                </button>
+                                <button class="btn-danger" onclick="deleteProject(${project.id})">🗑️ 删除</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+
+            } catch (err) {
+                console.error('加载项目失败:', err);
+                container.innerHTML = `<div class="empty-state">❌ 加载失败: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        // ============================================================
+        // 创建/编辑项目
+        // ============================================================
+        var editProjectId = null;
+        var stepCounter = 0;
+        var tempSteps = [];
+
+        function openCreateProject() {
+            if (!checkAdmin()) {
+                showToast('请先登录管理员账号 🚀');
+                return;
+            }
+            editProjectId = null;
+            document.getElementById('modalTitle').textContent = '📝 创建调研项目';
+            document.getElementById('projectId').textContent = '';
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectCode').value = '';
+            document.getElementById('projectGenre').value = '古装';
+            document.getElementById('projectStatus').value = 'draft';
+            document.getElementById('projectDesc').value = '';
+            tempSteps = [];
+            renderStepList();
+            document.getElementById('projectModal').classList.add('active');
+        }
+
+        async function editProject(id) {
+            if (!checkAdmin()) {
+                showToast('请先登录管理员账号 🚀');
+                return;
+            }
+            try {
+                var client = getClient();
+                var { data: project, error } = await client
+                    .from('survey_projects')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                var { data: tasks, error: taskError } = await client
+                    .from('survey_tasks')
+                    .select('*')
+                    .eq('survey_project_id', id)
+                    .order('step_order');
+
+                if (taskError) throw taskError;
+
+                editProjectId = id;
+                document.getElementById('modalTitle').textContent = '✏️ 编辑项目';
+                document.getElementById('projectId').textContent = id;
+                document.getElementById('projectName').value = project.project_name || '';
+                document.getElementById('projectCode').value = project.project_code || '';
+                document.getElementById('projectGenre').value = project.genre || '古装';
+                document.getElementById('projectStatus').value = project.status || 'draft';
+                document.getElementById('projectDesc').value = project.description || '';
+
+                tempSteps = tasks || [];
+                renderStepList();
+
+                document.getElementById('projectModal').classList.add('active');
+
+            } catch (err) {
+                console.error('加载项目失败:', err);
+                showToast('加载失败: ' + err.message);
+            }
+        }
+
+        function addStep() {
+            tempSteps.push({
+                id: Date.now(),
+                step_order: tempSteps.length + 1,
+                task_title: '',
+                task_description: '',
+                task_icon: '📝',
+                placeholder_text: '请输入...',
+                hint_text: '',
+                is_required: true,
+                examples: [],
+                is_new: true
+            });
+            renderStepList();
+        }
+
+        function removeStep(index) {
+            if (confirm('确定要删除这个步骤吗？')) {
+                tempSteps.splice(index, 1);
+                // 重新排序
+                tempSteps.forEach(function(step, i) {
+                    step.step_order = i + 1;
+                });
+                renderStepList();
+            }
+        }
+
+        function renderStepList() {
+            var container = document.getElementById('stepList');
+            if (tempSteps.length === 0) {
+                container.innerHTML = '<div style="color:#9ca3af;text-align:center;padding:12px;font-size:14px;">暂无步骤，点击下方添加</div>';
+                return;
+            }
+
+            var html = '';
+            tempSteps.forEach(function(step, index) {
+                html += `
+                    <div class="step-item">
+                        <div class="step-info">
+                            <div class="step-order">步骤 ${step.step_order}</div>
+                            <div class="step-title">${escapeHtml(step.task_title || '未命名步骤')}</div>
+                            <div style="font-size:12px;color:#9ca3af;">${escapeHtml(step.task_description || '')}</div>
+                        </div>
+                        <div class="step-actions">
+                            <button onclick="editStep(${index})" title="编辑">✏️</button>
+                            <button onclick="removeStep(${index})" title="删除">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function editStep(index) {
+            var step = tempSteps[index];
+            // 简单编辑：使用 prompt 快速编辑
+            var newTitle = prompt('步骤标题：', step.task_title);
+            if (newTitle !== null) {
+                step.task_title = newTitle;
+            }
+            var newDesc = prompt('步骤描述：', step.task_description);
+            if (newDesc !== null) {
+                step.task_description = newDesc;
+            }
+            var newIcon = prompt('图标（emoji）：', step.task_icon || '📝');
+            if (newIcon !== null) {
+                step.task_icon = newIcon;
+            }
+            var newPlaceholder = prompt('输入框占位文字：', step.placeholder_text || '请输入...');
+            if (newPlaceholder !== null) {
+                step.placeholder_text = newPlaceholder;
+            }
+            var newHint = prompt('提示文字（选填）：', step.hint_text || '');
+            if (newHint !== null) {
+                step.hint_text = newHint;
+            }
+            var examplesStr = prompt('示例（用逗号分隔）：', (step.examples || []).join('，'));
+            if (examplesStr !== null && examplesStr.trim()) {
+                step.examples = examplesStr.split(/[，,、\s]+/).filter(function(s) { return s.trim(); });
+            }
+            renderStepList();
+        }
+
+        // ============================================================
+        // 保存项目
+        // ============================================================
+        async function saveProject() {
+            var name = document.getElementById('projectName').value.trim();
+            var code = document.getElementById('projectCode').value.trim();
+            var genre = document.getElementById('projectGenre').value;
+            var status = document.getElementById('projectStatus').value;
+            var desc = document.getElementById('projectDesc').value.trim();
+            var projectId = document.getElementById('projectId').textContent;
+
+            if (!name) {
+                showToast('请填写项目名称');
+                return;
+            }
+
+            if (tempSteps.length === 0) {
+                showToast('请至少添加一个步骤');
+                return;
+            }
+
+            try {
+                var client = getClient();
+                var user = getCurrentUser();
+
+                var projectData = {
+                    project_name: name,
+                    project_code: code || name.toLowerCase().replace(/\s/g, '_'),
+                    genre: genre,
+                    status: status,
+                    description: desc,
+                    updated_at: new Date().toISOString()
+                };
+
+                var projectResult;
+
+                if (projectId) {
+                    // 更新
+                    var { data: updated, error: updateError } = await client
+                        .from('survey_projects')
+                        .update(projectData)
+                        .eq('id', parseInt(projectId))
+                        .select()
+                        .single();
+                    if (updateError) throw updateError;
+                    projectResult = updated;
+                    // 删除旧任务
+                    await client
+                        .from('survey_tasks')
+                        .delete()
+                        .eq('survey_project_id', parseInt(projectId));
+                } else {
+                    // 新建
+                    projectData.created_by = user ? user.id : null;
+                    var { data: created, error: createError } = await client
+                        .from('survey_projects')
+                        .insert(projectData)
+                        .select()
+                        .single();
+                    if (createError) throw createError;
+                    projectResult = created;
+                }
+
+                // 插入任务
+                var tasksToInsert = tempSteps.map(function(step, index) {
+                    return {
+                        survey_project_id: projectResult.id,
+                        step_order: step.step_order || (index + 1),
+                        task_title: step.task_title,
+                        task_description: step.task_description || '',
+                        task_icon: step.task_icon || '📝',
+                        placeholder_text: step.placeholder_text || '请输入...',
+                        hint_text: step.hint_text || '',
+                        is_required: step.is_required !== undefined ? step.is_required : true,
+                        examples: step.examples || []
+                    };
+                });
+
+                var { error: taskError } = await client
+                    .from('survey_tasks')
+                    .insert(tasksToInsert);
+
+                if (taskError) throw taskError;
+
+                showToast('✅ 项目已保存！');
+                closeModal('projectModal');
+                loadProjects();
+
+            } catch (err) {
+                console.error('保存失败:', err);
+                showToast('保存失败: ' + err.message);
+            }
+        }
+
+        // ============================================================
+        // 查看数据
+        // ============================================================
+        async function viewData(projectId) {
+            try {
+                var client = getClient();
+
+                // 获取项目信息
+                var { data: project } = await client
+                    .from('survey_projects')
+                    .select('*')
+                    .eq('id', projectId)
+                    .single();
+
+                // 获取任务
+                var { data: tasks } = await client
+                    .from('survey_tasks')
+                    .select('*')
+                    .eq('survey_project_id', projectId)
+                    .order('step_order');
+
+                // 获取提交记录
+                var { data: responses } = await client
+                    .from('survey_responses')
+                    .select('*')
+                    .eq('survey_project_id', projectId)
+                    .order('submitted_at', { ascending: false })
+                    .limit(200);
+
+                // 获取完成统计
+                var { data: completions } = await client
+                    .from('survey_completion')
+                    .select('*')
+                    .eq('survey_project_id', projectId);
+
+                var totalResponses = responses ? responses.length : 0;
+                var totalCompletions = completions ? completions.filter(function(c) { return c.is_completed; }).length : 0;
+                var totalUsers = completions ? completions.length : 0;
+
+                document.getElementById('dataModalTitle').textContent = '📊 ' + (project ? project.project_name : '调研数据');
+
+                var html = `
+                    <div class="stat-grid">
+                        <div class="stat-card"><div class="number">${totalResponses}</div><div class="label">总提交数</div></div>
+                        <div class="stat-card"><div class="number">${totalUsers}</div><div class="label">参与用户</div></div>
+                        <div class="stat-card"><div class="number">${totalCompletions}</div><div class="label">完成人数</div></div>
+                        <div class="stat-card"><div class="number">${tasks ? tasks.length : 0}</div><div class="label">任务步骤</div></div>
+                    </div>
+                    <button class="btn-secondary" onclick="exportData(${projectId})" style="margin-bottom:16px;">📥 导出 CSV</button>
+                `;
+
+                // 按步骤分组显示
+                if (tasks && tasks.length > 0) {
+                    tasks.forEach(function(task) {
+                        var stepResponses = responses ? responses.filter(function(r) { return r.step_id === task.id; }) : [];
+                        html += `
+                            <div style="margin-top:16px;border-top:1px solid #ede9fe;padding-top:16px;">
+                                <h4 style="font-size:16px;">步骤 ${task.step_order}: ${escapeHtml(task.task_title)}</h4>
+                                <div style="font-size:13px;color:#6b7280;margin-bottom:8px;">${stepResponses.length} 条回复</div>
+                        `;
+                        if (stepResponses.length > 0) {
+                            stepResponses.slice(0, 10).forEach(function(r) {
+                                html += `
+                                    <div class="response-item">
+                                        <div class="response-text">“${escapeHtml(r.response_text)}”</div>
+                                        <div class="response-meta">${formatDate(r.submitted_at)}</div>
+                                    </div>
+                                `;
+                            });
+                            if (stepResponses.length > 10) {
+                                html += `<div style="font-size:13px;color:#9ca3af;">...还有 ${stepResponses.length - 10} 条回复</div>`;
+                            }
+                        } else {
+                            html += `<div style="color:#9ca3af;font-size:14px;">暂无回复</div>`;
+                        }
+                        html += `</div>`;
+                    });
+                }
+
+                document.getElementById('dataContent').innerHTML = html;
+                document.getElementById('dataModal').classList.add('active');
+
+            } catch (err) {
+                console.error('加载数据失败:', err);
+                showToast('加载失败: ' + err.message);
+            }
+        }
+
+        // ============================================================
+        // 导出数据
+        // ============================================================
+        async function exportData(projectId) {
+            try {
+                var client = getClient();
+
+                var { data: responses } = await client
+                    .from('survey_responses')
+                    .select('*, survey_tasks(task_title, step_order)')
+                    .eq('survey_project_id', projectId)
+                    .order('submitted_at', { ascending: false });
+
+                if (!responses || responses.length === 0) {
+                    showToast('暂无数据可导出');
+                    return;
+                }
+
+                // 构建 CSV
+                var headers = ['提交时间', '步骤', '回复内容', '用户ID'];
+                var rows = [headers.join(',')];
+
+                responses.forEach(function(r) {
+                    var taskTitle = r.survey_tasks ? r.survey_tasks.task_title : '未知';
+                    var row = [
+                        '"' + (r.submitted_at || '') + '"',
+                        '"' + taskTitle + '"',
+                        '"' + (r.response_text || '').replace(/"/g, '""') + '"',
+                        '"' + (r.user_id || r.device_id || '') + '"'
+                    ];
+                    rows.push(row.join(','));
+                });
+
+                var csv = rows.join('\n');
+                var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                var link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = '调研数据_' + new Date().toISOString().split('T')[0] + '.csv';
+                link.click();
+                URL.revokeObjectURL(link.href);
+
+                showToast('📥 数据导出成功！');
+
+            } catch (err) {
+                console.error('导出失败:', err);
+                showToast('导出失败: ' + err.message);
+            }
+        }
+
+        // ============================================================
+        // 切换状态
+        // ============================================================
+        async function toggleProjectStatus(id, currentStatus) {
+            var newStatus = currentStatus === 'draft' ? 'active' : currentStatus === 'active' ? 'closed' : 'draft';
+            try {
+                var client = getClient();
+                var { error } = await client
+                    .from('survey_projects')
+                    .update({ status: newStatus })
+                    .eq('id', id);
+                if (error) throw error;
+                showToast('✅ 状态已更新');
+                loadProjects();
+            } catch (err) {
+                showToast('操作失败: ' + err.message);
+            }
+        }
+
+        // ============================================================
+        // 删除项目
+        // ============================================================
+        async function deleteProject(id) {
+            if (!confirm('确定要删除这个项目吗？所有数据将被永久删除！')) return;
+            try {
+                var client = getClient();
+                var { error } = await client
+                    .from('survey_projects')
+                    .delete()
+                    .eq('id', id);
+                if (error) throw error;
+                showToast('✅ 已删除');
+                loadProjects();
+            } catch (err) {
+                showToast('删除失败: ' + err.message);
+            }
+        }
+
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        if (!checkAdmin()) {
+            document.getElementById('projectList').innerHTML = `
+                <div class="empty-state">
+                    <div style="font-size:48px;margin-bottom:12px;">🔒</div>
+                    <div>需要管理员权限</div>
+                    <button class="btn-primary" onclick="location.href='login.html'" style="margin-top:12px;">去登录</button>
+                </div>
+            `;
+        } else {
+            loadProjects();
+        }
+
+        console.log('✅ 调研管理后台已加载');
+    </script>
+</body>
+</html>

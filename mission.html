@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>搭救潘金莲 · 捣蛋剧场</title>
+    <title>调研任务 · 捣蛋选角</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
     </script>
     <link rel="stylesheet" href="css/style.css" />
@@ -400,94 +400,196 @@
             return div.innerHTML;
         }
 
-        // ============================================================
-        // 任务数据 - 每个步骤的示例和提示
-        // ============================================================
-        var totalSteps = 6;
-        var missionData = {
-            step1: {
-                title: '选角 · 谁来演？',
-                desc: '选择你心中的潘金莲和武大郎',
-                icon: '🎭',
-                hint: '💡 输入你心目中理想的演员组合',
-                placeholder: '例如：刘亦菲 饰演潘金莲，张晚意 饰演武大郎',
-                examples: [
-                    '刘亦菲 ✕ 张晚意',
-                    '杨幂 ✕ 陈晓',
-                    '迪丽热巴 ✕ 吴磊',
-                    '赵露思 ✕ 王鹤棣'
-                ],
-                result: ''
-            },
-            step2: {
-                title: '逃离武大',
-                desc: '设计一场逃离武大的戏码',
-                icon: '🏃',
-                hint: '💡 描述潘金莲如何逃离武大的控制',
-                placeholder: '例如：月黑风高夜，潘金莲带着细软从后门悄悄溜走...',
-                examples: [
-                    '趁武大熟睡，从窗户翻出，消失在夜色中',
-                    '假意回娘家，一去不返',
-                    '在集市中故意走散，混入人群',
-                    '与卖花女互换衣服，蒙混过关'
-                ],
-                result: ''
-            },
-            step3: {
-                title: '躲避西门',
-                desc: '如何避开西门庆的纠缠？',
-                icon: '🕵️',
-                hint: '💡 潘金莲用什么方法摆脱西门庆？',
-                placeholder: '例如：女扮男装，混入集市...',
-                examples: [
-                    '女扮男装，混入集市当小贩',
-                    '躲进尼姑庵，暂避风头',
-                    '谎称染病，闭门不出',
-                    '请江湖朋友帮忙周旋'
-                ],
-                result: ''
-            },
-            step4: {
-                title: '过好日子',
-                desc: '给潘金莲一个全新的幸福结局',
-                icon: '🌸',
-                hint: '💡 她最终过上了什么样的生活？',
-                placeholder: '例如：开了一家小酒馆，自食其力...',
-                examples: [
-                    '开了一家小酒馆，自食其力，日子红火',
-                    '遇到真心人，远走他乡，相守一生',
-                    '成为女商人，事业有成，独立自主',
-                    '收养孤儿，行善积德，受人尊敬'
-                ],
-                result: ''
-            },
-            step5: {
-                title: '给自己加戏',
-                desc: '你在这个故事里是什么角色？',
-                icon: '🎬',
-                hint: '💡 你是旁观者？还是参与者？',
-                placeholder: '例如：我是街头说书人，讲述这段传奇...',
-                examples: [
-                    '我是街头说书人，讲述这段传奇',
-                    '我是路过的侠客，暗中相助',
-                    '我是潘金莲的闺蜜，出谋划策',
-                    '我是酒馆常客，见证一切'
-                ],
-                result: ''
-            },
-            step6: {
-                title: 'AI 生成锁定',
-                desc: '所有选择已就绪，生成专属短片',
-                icon: '🤖',
-                hint: '💡 点击确认，AI 将根据你的故事生成短片',
-                placeholder: '一切就绪，点击确认生成吧！',
-                examples: [],
-                result: ''
+        function getClient() {
+            if (!window._supabaseClient) {
+                window._supabaseClient = window.supabase.createClient(
+                    'https://grsxmjvjtqmvylyxmktt.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA'
+                );
             }
-        };
+            return window._supabaseClient;
+        }
 
+        // ============================================================
+        // 从 URL 获取项目 ID
+        // ============================================================
+        function getProjectIdFromUrl() {
+            var params = new URLSearchParams(window.location.search);
+            var id = params.get('project_id');
+            if (id && !isNaN(id)) return parseInt(id);
+            // 默认返回 1（兼容旧链接）
+            return 1;
+        }
+
+        // ============================================================
+        // 全局变量
+        // ============================================================
+        var projectId = getProjectIdFromUrl();
         var currentStep = 1;
+        var totalSteps = 0;
+        var missionData = {};
         var userInputs = {};
+        var projectInfo = null;
+
+        // ============================================================
+        // 从数据库加载调研项目
+        // ============================================================
+        async function loadSurveyProject() {
+            try {
+                var client = getClient();
+
+                // 加载项目信息
+                var { data: project, error: projectError } = await client
+                    .from('survey_projects')
+                    .select('*')
+                    .eq('id', projectId)
+                    .single();
+
+                if (projectError) {
+                    // 如果项目不存在，使用默认数据（兼容旧版）
+                    console.warn('项目不存在，使用默认数据:', projectError);
+                    return loadDefaultProject();
+                }
+
+                projectInfo = project;
+
+                // 加载任务步骤
+                var { data: tasks, error: taskError } = await client
+                    .from('survey_tasks')
+                    .select('*')
+                    .eq('survey_project_id', projectId)
+                    .order('step_order', { ascending: true });
+
+                if (taskError) throw taskError;
+
+                if (!tasks || tasks.length === 0) {
+                    showToast('该项目暂无任务步骤');
+                    return loadDefaultProject();
+                }
+
+                // 构建 missionData
+                missionData = {};
+                tasks.forEach(function(task, index) {
+                    var stepNum = index + 1;
+                    missionData['step' + stepNum] = {
+                        id: task.id,
+                        title: task.task_title || '步骤 ' + stepNum,
+                        desc: task.task_description || '',
+                        icon: task.task_icon || '📝',
+                        hint: task.hint_text || '',
+                        placeholder: task.placeholder_text || '请输入...',
+                        examples: task.examples || [],
+                        is_required: task.is_required !== undefined ? task.is_required : true,
+                        result: ''
+                    };
+                });
+
+                totalSteps = tasks.length;
+                currentStep = 1;
+                userInputs = {};
+
+                // 检查用户是否已经完成
+                var user = getCurrentUser();
+                if (user) {
+                    var { data: completion } = await client
+                        .from('survey_completion')
+                        .select('*')
+                        .eq('survey_project_id', projectId)
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+
+                    if (completion && completion.is_completed) {
+                        // 用户已完成，显示完成页面
+                        currentStep = totalSteps + 1;
+                    }
+                }
+
+                renderMission();
+
+            } catch (err) {
+                console.error('加载调研项目失败:', err);
+                loadDefaultProject();
+            }
+        }
+
+        // ============================================================
+        // 默认数据（兼容旧版，当数据库无数据时使用）
+        // ============================================================
+        function loadDefaultProject() {
+            projectInfo = { project_name: '搭救潘金莲', description: '六步改写命运，解锁 AI 专属短片' };
+            totalSteps = 6;
+            missionData = {
+                step1: {
+                    id: null,
+                    title: '选角 · 谁来演？',
+                    desc: '选择你心中的潘金莲和武大郎',
+                    icon: '🎭',
+                    hint: '💡 输入你心目中理想的演员组合',
+                    placeholder: '例如：刘亦菲 饰演潘金莲，张晚意 饰演武大郎',
+                    examples: ['刘亦菲 ✕ 张晚意', '杨幂 ✕ 陈晓', '迪丽热巴 ✕ 吴磊', '赵露思 ✕ 王鹤棣'],
+                    is_required: true,
+                    result: ''
+                },
+                step2: {
+                    id: null,
+                    title: '逃离武大',
+                    desc: '设计一场逃离武大的戏码',
+                    icon: '🏃',
+                    hint: '💡 描述潘金莲如何逃离武大的控制',
+                    placeholder: '例如：月黑风高夜，潘金莲带着细软从后门悄悄溜走...',
+                    examples: ['趁武大熟睡，从窗户翻出，消失在夜色中', '假意回娘家，一去不返', '在集市中故意走散，混入人群', '与卖花女互换衣服，蒙混过关'],
+                    is_required: true,
+                    result: ''
+                },
+                step3: {
+                    id: null,
+                    title: '躲避西门',
+                    desc: '如何避开西门庆的纠缠？',
+                    icon: '🕵️',
+                    hint: '💡 潘金莲用什么方法摆脱西门庆？',
+                    placeholder: '例如：女扮男装，混入集市...',
+                    examples: ['女扮男装，混入集市当小贩', '躲进尼姑庵，暂避风头', '谎称染病，闭门不出', '请江湖朋友帮忙周旋'],
+                    is_required: true,
+                    result: ''
+                },
+                step4: {
+                    id: null,
+                    title: '过好日子',
+                    desc: '给潘金莲一个全新的幸福结局',
+                    icon: '🌸',
+                    hint: '💡 她最终过上了什么样的生活？',
+                    placeholder: '例如：开了一家小酒馆，自食其力...',
+                    examples: ['开了一家小酒馆，自食其力，日子红火', '遇到真心人，远走他乡，相守一生', '成为女商人，事业有成，独立自主', '收养孤儿，行善积德，受人尊敬'],
+                    is_required: true,
+                    result: ''
+                },
+                step5: {
+                    id: null,
+                    title: '给自己加戏',
+                    desc: '你在这个故事里是什么角色？',
+                    icon: '🎬',
+                    hint: '💡 你是旁观者？还是参与者？',
+                    placeholder: '例如：我是街头说书人，讲述这段传奇...',
+                    examples: ['我是街头说书人，讲述这段传奇', '我是路过的侠客，暗中相助', '我是潘金莲的闺蜜，出谋划策', '我是酒馆常客，见证一切'],
+                    is_required: true,
+                    result: ''
+                },
+                step6: {
+                    id: null,
+                    title: 'AI 生成锁定',
+                    desc: '所有选择已就绪，生成专属短片',
+                    icon: '🤖',
+                    hint: '💡 点击确认，AI 将根据你的故事生成短片',
+                    placeholder: '一切就绪，点击确认生成吧！',
+                    examples: [],
+                    is_required: false,
+                    result: ''
+                }
+            };
+            currentStep = 1;
+            userInputs = {};
+            renderMission();
+        }
 
         // ============================================================
         // 渲染任务
@@ -495,8 +597,18 @@
         function renderMission() {
             var container = document.getElementById('appContainer');
             var step = currentStep;
-            var data = missionData['step' + step];
             var isComplete = step > totalSteps;
+
+            // 如果 totalSteps 为 0，显示加载状态
+            if (totalSteps === 0 && !isComplete) {
+                container.innerHTML = `
+                    <div style="text-align:center;padding:60px 20px;color:#9ca3af;">
+                        <div style="font-size:48px;margin-bottom:12px;">⏳</div>
+                        <div>加载任务中...</div>
+                    </div>
+                `;
+                return;
+            }
 
             // 进度条
             var dotsHtml = '';
@@ -509,71 +621,79 @@
 
             var contentHtml = '';
             if (isComplete) {
+                var projectName = projectInfo ? projectInfo.project_name : '调研任务';
                 contentHtml = `
                     <div class="mission-complete">
                         <span class="big-icon">🎉</span>
                         <h2>任务完成！</h2>
-                        <p>你成功改写了潘金莲的命运，AI 短片正在生成...</p>
+                        <p>你已完成「${escapeHtml(projectName)}」的所有步骤</p>
                         <div class="reward-box">
                             <div class="amount">+20</div>
                             <div class="label">人气灯</div>
                         </div>
                         <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-                            <button class="btn-primary" onclick="showToast('🎬 AI 短片即将上线')">▶️ 观看 AI 短片</button>
+                            <button class="btn-primary" onclick="showToast('🎬 感谢你的参与！')">✅ 完成</button>
                             <button class="btn-secondary" onclick="window.location.href='guide.html'">🏠 返回剧场</button>
                         </div>
                     </div>
                 `;
             } else {
-                var savedValue = userInputs['step' + step] || '';
-                var resultHtml = data.result ? `
-                    <div class="step-result">
-                        <div class="result-label">📌 你的选择</div>
-                        <div class="result-text">${escapeHtml(data.result)}</div>
-                    </div>
-                ` : '';
+                var data = missionData['step' + step];
+                if (!data) {
+                    contentHtml = `<div style="text-align:center;padding:40px;color:#9ca3af;">步骤加载中...</div>`;
+                } else {
+                    var savedValue = userInputs['step' + step] || '';
+                    var resultHtml = data.result ? `
+                        <div class="step-result">
+                            <div class="result-label">📌 你的选择</div>
+                            <div class="result-text">${escapeHtml(data.result)}</div>
+                        </div>
+                    ` : '';
 
-                // 生成示例列表
-                var examplesHtml = '';
-                if (data.examples && data.examples.length > 0) {
-                    examplesHtml = `
-                        <div class="step-examples">
-                            <div class="example-label">💡 参考示例（点击选择填入，或者自建剧情在下面填入）</div>
-                            ${data.examples.map(function(ex) {
-                                return '<div class="example-item" onclick="fillExample(' + step + ', \'' + escapeHtml(ex) + '\')">' + escapeHtml(ex) + '</div>';
-                            }).join('')}
+                    // 生成示例列表
+                    var examplesHtml = '';
+                    if (data.examples && data.examples.length > 0) {
+                        examplesHtml = `
+                            <div class="step-examples">
+                                <div class="example-label">💡 参考示例（点击选择填入，或者自建剧情在下面填入）</div>
+                                ${data.examples.map(function(ex) {
+                                    return '<div class="example-item" onclick="fillExample(' + step + ', \'' + escapeHtml(ex) + '\')">' + escapeHtml(ex) + '</div>';
+                                }).join('')}
+                            </div>
+                        `;
+                    }
+
+                    contentHtml = `
+                        <div class="step-card">
+                            <span class="step-icon">${data.icon}</span>
+                            <div class="step-title">${step}. ${data.title}</div>
+                            <div class="step-desc">${data.desc}</div>
+                            ${data.hint ? `<div class="step-hint">${data.hint}</div>` : ''}
+                            ${examplesHtml}
+                            <textarea class="step-input" id="stepInput" placeholder="${data.placeholder || '输入你的答案...'}" rows="3">${escapeHtml(savedValue)}</textarea>
+                            ${resultHtml}
+                            <div class="step-actions">
+                                <button class="btn-primary" onclick="handleStepAction(${step})">✅ 确认选择</button>
+                                <button class="btn-secondary" onclick="clearStepInput(${step})">🗑️ 清空</button>
+                            </div>
+                            ${step < totalSteps ? '<div style="margin-top:16px; text-align:right; font-size:13px; color:#9ca3af;">⏳ 完成当前步骤后自动进入下一步</div>' : ''}
                         </div>
                     `;
                 }
-
-                contentHtml = `
-                    <div class="step-card">
-                        <span class="step-icon">${data.icon}</span>
-                        <div class="step-title">${step}. ${data.title}</div>
-                        <div class="step-desc">${data.desc}</div>
-                        ${data.hint ? `<div class="step-hint">${data.hint}</div>` : ''}
-                        ${examplesHtml}
-                        <textarea class="step-input" id="stepInput" placeholder="${data.placeholder || '输入你的答案...'}" rows="3">${escapeHtml(savedValue)}</textarea>
-                        ${resultHtml}
-                        <div class="step-actions">
-                            <button class="btn-primary" onclick="handleStepAction(${step})">✅ 确认选择</button>
-                            <button class="btn-secondary" onclick="clearStepInput(${step})">🗑️ 清空</button>
-                        </div>
-                        ${step < totalSteps ? '<div style="margin-top:16px; text-align:right; font-size:13px; color:#9ca3af;">⏳ 完成当前步骤后自动进入下一步</div>' : ''}
-                    </div>
-                `;
             }
+
+            var projectName = projectInfo ? projectInfo.project_name : '调研任务';
 
             container.innerHTML = `
                 <div class="mission-header">
                     <button class="back-btn" onclick="window.location.href='guide.html'">←</button>
-                    <div class="title">🎬 搭救潘金莲</div>
+                    <div class="title">🎬 ${escapeHtml(projectName)}</div>
                     <div class="step-badge">${isComplete ? '🎉 完成' : step + '/' + totalSteps}</div>
                 </div>
                 <div class="mission-progress">${dotsHtml}</div>
                 ${contentHtml}
                 <div style="margin-top:12px; text-align:center; font-size:12px; color:#9ca3af;">
-                    💡 所有选择都会影响 AI 生成的短片结局
+                    💡 所有选择都会保存到调研数据中
                 </div>
             `;
         }
@@ -598,7 +718,7 @@
             }
         }
 
-                function handleStepAction(step) {
+        async function handleStepAction(step) {
             var user = getCurrentUser();
             if (!user) {
                 showToast('请先登录 🚀');
@@ -613,11 +733,12 @@
             }
 
             var text = input.value.trim();
-            
-            // 如果是最后一步（AI生成锁定），允许空输入并自动填充
-            if (step === totalSteps) {
+            var data = missionData['step' + step];
+
+            // 如果是最后一步且非必填，允许空输入
+            if (step === totalSteps && data && !data.is_required) {
                 if (!text) {
-                    text = '🎬 我的故事已就绪，AI 请开始生成吧！';
+                    text = '✅ 已确认，无需填写';
                     input.value = text;
                 }
             } else {
@@ -629,14 +750,18 @@
                 }
             }
 
-            // 保存用户输入
+            // 保存用户输入到本地
             userInputs['step' + step] = text;
             missionData['step' + step].result = text;
+
+            // 保存到数据库
+            await saveResponse(step, text, user);
 
             showToast('✅ 已保存！');
 
             // 如果是最后一步
             if (step === totalSteps) {
+                await markCompletion(user);
                 setTimeout(function() {
                     showToast('🎉 任务完成！获得 20 人气灯');
                     currentStep = totalSteps + 1;
@@ -653,14 +778,80 @@
         }
 
         // ============================================================
+        // 保存响应到数据库
+        // ============================================================
+        async function saveResponse(step, text, user) {
+            try {
+                var client = getClient();
+                var data = missionData['step' + step];
+                var stepId = data.id;
+
+                // 如果没有 stepId（默认数据模式），不保存
+                if (!stepId) return;
+
+                var deviceId = localStorage.getItem('cp_device_id') || 'unknown';
+
+                var { error } = await client
+                    .from('survey_responses')
+                    .insert({
+                        survey_project_id: projectId,
+                        user_id: user.id,
+                        device_id: deviceId,
+                        step_id: stepId,
+                        response_text: text
+                    });
+
+                if (error) {
+                    console.warn('保存响应失败:', error);
+                }
+            } catch (err) {
+                console.warn('保存响应异常:', err);
+            }
+        }
+
+        // ============================================================
+        // 标记完成
+        // ============================================================
+        async function markCompletion(user) {
+            try {
+                var client = getClient();
+
+                // 获取所有步骤 ID
+                var stepIds = [];
+                for (var i = 1; i <= totalSteps; i++) {
+                    var data = missionData['step' + i];
+                    if (data && data.id) {
+                        stepIds.push(data.id);
+                    }
+                }
+
+                var { error } = await client
+                    .from('survey_completion')
+                    .upsert({
+                        survey_project_id: projectId,
+                        user_id: user.id,
+                        device_id: localStorage.getItem('cp_device_id') || 'unknown',
+                        completed_steps: stepIds,
+                        is_completed: true,
+                        completed_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'survey_project_id, user_id'
+                    });
+
+                if (error) {
+                    console.warn('标记完成失败:', error);
+                }
+            } catch (err) {
+                console.warn('标记完成异常:', err);
+            }
+        }
+
+        // ============================================================
         // 发放奖励
         // ============================================================
         async function grantMissionReward(userId) {
             try {
-                var client = window.supabase.createClient(
-                    'https://grsxmjvjtqmvylyxmktt.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyc3htanZqdHFtdnlseXhta3R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTM5OTYsImV4cCI6MjA5NzI2OTk5Nn0.yZVerun2-o1gJmbR3OGlG64wCFZtJPTMvVxZ37pkBvA'
-                );
+                var client = getClient();
                 var today = new Date().toISOString().split('T')[0];
                 var { data: activity } = await client
                     .from('daily_activities')
@@ -707,15 +898,15 @@
             }
             if (navigator.share) {
                 navigator.share({
-                    title: '🎬 捣蛋剧场 · 搭救潘金莲',
-                    text: '我在捣蛋选角改写潘金莲的命运！一起来玩吧！',
+                    title: '🎬 捣蛋剧场 · 调研任务',
+                    text: '我在捣蛋选角参与调研！一起来吧！',
                     url: window.location.href
                 }).then(function() {
-                    showToast('🎁 分享成功！获得 20 人气灯');
+                    showToast('🎁 分享成功！');
                     document.getElementById('customModal').classList.remove('active');
                 }).catch(function() {});
             } else {
-                navigator.clipboard.writeText('🎬 捣蛋剧场 · 搭救潘金莲\n' + window.location.href).then(function() {
+                navigator.clipboard.writeText('🎬 捣蛋剧场 · 调研任务\n' + window.location.href).then(function() {
                     showToast('📋 链接已复制！分享给好友吧');
                     document.getElementById('customModal').classList.remove('active');
                 });
@@ -749,13 +940,16 @@
         // ============================================================
         // 初始化
         // ============================================================
-        renderMission();
+        loadSurveyProject();
+
+        // 导出全局函数
         window.handleStepAction = handleStepAction;
         window.fillExample = fillExample;
         window.clearStepInput = clearStepInput;
         window.showCustomModal = showCustomModal;
+        window.loadSurveyProject = loadSurveyProject;
 
-        console.log('✅ 捣蛋剧场 · 任务页已加载（带输入功能）');
+        console.log('✅ 捣蛋剧场 · 动态任务页已加载 (project_id: ' + projectId + ')');
     </script>
 </body>
 </html>
