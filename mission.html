@@ -538,7 +538,7 @@
                 if (data.examples && data.examples.length > 0) {
                     examplesHtml = `
                         <div class="step-examples">
-                            <div class="example-label">💡 参考示例（点击填入）</div>
+                            <div class="example-label">💡 参考示例（点击选择填入，或者自建剧情在下面填入）</div>
                             ${data.examples.map(function(ex) {
                                 return '<div class="example-item" onclick="fillExample(' + step + ', \'' + escapeHtml(ex) + '\')">' + escapeHtml(ex) + '</div>';
                             }).join('')}
