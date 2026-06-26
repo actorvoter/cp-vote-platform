@@ -297,6 +297,31 @@
         .theater-entry:active {
             transform: scale(0.96);
         }
+
+        /* ===== 🆕 导航按钮样式 ===== */
+        .share-btn {
+            background: #f59e0b;
+            color: #fff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .share-btn:active {
+            transform: scale(0.95);
+        }
+        #guideBtn {
+            background: #6c5ce7;
+            color: #fff;
+            border-color: #6c5ce7;
+        }
+        #guideBtn:hover {
+            background: #5a4bd1;
+        }
     </style>
 </head>
 <body>
@@ -341,7 +366,7 @@
         <div style="position:absolute; bottom:0; left:0; height:3px; background:#f59e0b; width:100%;" id="bannerProgress"></div>
     </div>
 
-        <!-- ===== 每日任务横幅 ===== -->
+    <!-- ===== 每日任务横幅 ===== -->
     <div class="daily-banner" id="dailyBanner">
         <div>
             <span class="info-item">🎁 今日捣蛋工具：</span>
@@ -1929,8 +1954,8 @@
 
         // 导出供其他页面使用
         window.showCustomModal = showCustomModal;
-		
-		        // ============================================================
+
+        // ============================================================
         // 🆕 手动开启导航按钮
         // ============================================================
         document.getElementById('guideBtn').addEventListener('click', function() {
@@ -1940,17 +1965,17 @@
                 window.location.href = 'login.html';
                 return;
             }
-            
+
             // 检查今日剩余次数
             var today = new Date().toISOString().split('T')[0];
             var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
             var count = parseInt(localStorage.getItem(guideCountKey) || '0');
-            
+
             if (count >= 3) {
                 showToast('今天已经导航了3次啦，明天再来吧～ 🧭');
                 return;
             }
-            
+
             // 直接触发导航弹窗
             showGuidePrompt();
         });
@@ -1965,7 +1990,7 @@
 
         setTimeout(checkAndStartOnboarding, 2000);
 
-                // ============================================================
+        // ============================================================
         // 🆕 智能导航弹窗 - 每次进入首页询问
         // ============================================================
         function showGuidePrompt() {
@@ -1979,7 +2004,7 @@
             var today = new Date().toISOString().split('T')[0];
             var guideCountKey = 'guide_prompt_count_' + user.id + '_' + today;
             var count = parseInt(localStorage.getItem(guideCountKey) || '0');
-            
+
             // 如果已经弹了3次，不再自动弹出
             if (count >= 3) {
                 return;
@@ -2018,7 +2043,7 @@
                             </button>
                         </div>
                         <div class="footer-hint">
-                            💡 每天可以导航 ${3} 次，不会过度打扰你哦～
+                            💡 每天可以导航 3 次，不会过度打扰你哦～
                         </div>
                     </div>
                 `;
